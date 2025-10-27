@@ -168,10 +168,6 @@ cython_debug/
 # uv
 .uv/
 
-# Downloaded AppImages
-downloads/
-*.AppImage
-
 # GitHub tokens and credentials (NEVER COMMIT)
 *token*.json
 *github-token*

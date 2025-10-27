@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/appimage-updater
+      url: https://pypi.org/p/taskfile_help
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
       contents: read   # IMPORTANT: mandatory for trusted publishing

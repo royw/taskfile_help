@@ -44,7 +44,7 @@ if [ $# -eq 0 ]; then
     run_step "Linting" "uv run ruff check src/" || exit 1
     run_step "Type Checking" "uv run mypy src/" || exit 1
     run_step "Complexity Analysis" "uv run radon cc src/ --min C" || exit 1
-    run_step "Tests" "uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing" || exit 1
+    run_step "Tests" "uv run pytest --cov=src/taskfile_help --cov-report=xml --cov-report=term-missing" || exit 1
     run_step "Build Package" "uv build" || exit 1
     
     echo -e "\n${GREEN}🎉 All CI steps completed successfully!${NC}"

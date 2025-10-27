@@ -153,7 +153,7 @@ def detect_package_name(src_paths: list[Path]) -> str:
     Strategy:
     1. If exactly one package directory (containing __init__.py) exists in src_path, use it
     2. Otherwise, use snake_case of project.name from pyproject.toml
-    3. Fallback to "appimage_updater"
+    3. Fallback to "taskfile_help"
     """
     # Look for package directories (containing __init__.py) in src_path
     packages = []

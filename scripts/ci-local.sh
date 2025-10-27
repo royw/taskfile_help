@@ -17,7 +17,7 @@ export CI=true
 export RUNNER_OS=Linux
 export RUNNER_ARCH=X64
 
-echo -e "${PURPLE}🔧 AppImage Updater - Local CI Simulation${NC}"
+echo -e "${PURPLE}🔧 Taskfile Help  - Local CI Simulation${NC}"
 echo -e "${PURPLE}==========================================${NC}"
 echo -e "${BLUE}Simulating GitHub Actions CI environment locally${NC}"
 echo -e "${BLUE}Python version: $(python --version)${NC}"
@@ -80,7 +80,7 @@ run_ci_step "Complexity Analysis" "uv run radon cc src/ --min C" || {
 }
 
 # Run tests with same coverage settings as CI (sequential execution)
-run_ci_step "Tests with Coverage" "uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing --dist=no" || {
+run_ci_step "Tests with Coverage" "uv run pytest --cov=src/taskfile_help --cov-report=xml --cov-report=term-missing --dist=no" || {
     echo -e "${RED}💡 Check test failures above${NC}"
     exit 1
 }

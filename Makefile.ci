@@ -2,7 +2,7 @@
 .PHONY: help ci-local ci-docker ci-debug ci-test-only ci-build-only ci-clean
 
 help: ## Show this help message
-	@echo "🔧 AppImage Updater - CI Simulation Commands"
+	@echo "🔧 Taskfile Help - CI Simulation Commands"
 	@echo "============================================="
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
@@ -20,7 +20,7 @@ ci-debug: ## Debug environment differences
 
 ci-test-only: ## Run only tests (skip linting/formatting)
 	@echo "🧪 Running tests only..."
-	uv run pytest --cov=src/appimage_updater --cov-report=xml --cov-report=term-missing
+	uv run pytest --cov=src/taskfile_help --cov-report=xml --cov-report=term-missing
 
 ci-e2e-only: ## Run only E2E tests
 	@echo "🎯 Running E2E tests only..."
