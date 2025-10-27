@@ -105,7 +105,7 @@ taskfile-help -v
 
 Shows search directories being used:
 
-```
+```text
 Searching in directories:
   /home/user/project
   /home/user/shared
@@ -219,21 +219,25 @@ taskfile-help respects standard terminal behavior:
 When searching for Taskfiles:
 
 1. **Absolute paths**: Used as-is
+
    ```bash
    taskfile-help -s /opt/tasks
    ```
 
 2. **Relative paths**: Resolved from current working directory
+
    ```bash
    taskfile-help -s ../other-project
    ```
 
 3. **Home directory**: Tilde expansion supported
+
    ```bash
    taskfile-help -s ~/my-tasks
    ```
 
 4. **Multiple paths**: First match wins
+
    ```bash
    taskfile-help -s ./local:../shared:/opt/global
    ```

@@ -66,7 +66,7 @@ tasks:
 
 The output will be automatically grouped:
 
-```
+```text
 === Build ===
   build         Build the project
   compile       Compile sources
