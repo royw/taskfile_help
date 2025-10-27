@@ -113,6 +113,14 @@ task dev:help   # Development tasks only
 
 ### Example Output
 
+```html
+<span style="color:red;">This should be red using HTML span+style</span>
+```
+
+## $ \textcolor{red}{Red\ Text\ using\ LaTeX} $
+
+$ \textcolor{blue}{Blue\ Text\ using\ LaTeX} $
+
 ```text
 === Build ===
   build         Build the project
