@@ -113,16 +113,7 @@ task dev:help   # Development tasks only
 
 ### Example Output
 
-$\textcolor{blue}{===\ Build\ ===}$<br\>
-$\color{green}{build\ \color{white}Build\ the\ project}$<br\>
-$\color{green}{compile\ \color{white}Compile\ sources}$<br\>
-$\textcolor{blue}{===\ Testing\ ===}$<br\>
-
-$\color{green}{test\ \color{white}Run\ tests}$
-
-$\color{green}{test:unit\ \color{white}Run\ unit\ tests\ only}$
-
-$\color{green}{test:e2e\ \color{white}Run\ end-to-end\ tests}$
+[!task help](docs/images/task help.png)
 
 ```text
 === Build ===
