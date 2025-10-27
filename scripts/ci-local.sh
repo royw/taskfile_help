@@ -80,7 +80,7 @@ run_ci_step "Complexity Analysis" "uv run radon cc src/ --min C" || {
 }
 
 # Run tests with same coverage settings as CI (sequential execution)
-run_ci_step "Tests with Coverage" "uv run pytest --cov=src/taskfile_help --cov-report=xml --cov-report=term-missing --dist=no" || {
+run_ci_step "Tests with Coverage" "uv run pytest --cov=src/taskfile_help --cov-report=xml --cov-report=term-missing" || {
     echo -e "${RED}💡 Check test failures above${NC}"
     exit 1
 }
