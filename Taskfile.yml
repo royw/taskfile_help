@@ -48,7 +48,7 @@ tasks:
   sync:
     desc: Sync project dependencies with uv into .venv/
     cmds:
-      - uv sync --extra dev
+      - uv sync --group dev
 
   resync:
     desc: Resync project dependencies by first deleting .venv/ and then syncing with uv into .venv/
@@ -391,18 +391,8 @@ tasks:
         vars:
           MESSAGE: "v$(task version:pyproject)"
 
-# === Development Workflow ===
+  # === Build Packages ===
 
-  # === Quality Checks ===
-  check:
-    desc: Run all code quality checks including end-to-end tests
-    cmds:
-      - task: format
-      - task: lint
-      - task: complexity
-      - task: test
-
-  # === Build and Release ===
   build:
     desc: Build distribution packages
     deps:
@@ -416,6 +406,19 @@ tasks:
         vars:
           MESSAGE: "✅ Build complete! Packages created in dist/"
       - ls -la dist/
+
+# === Development Workflow ===
+
+  # === Quality Checks ===
+  check:
+    desc: Run all code quality checks including end-to-end tests
+    cmds:
+      - task: format
+      - task: lint
+      - task: complexity
+      - task: test
+
+  # === Build and Release ===
 
   make:
     desc: Complete build pipeline - run all checks, build, docs, and show version
@@ -447,6 +450,37 @@ tasks:
         fi
       - task: _output
         vars:
+          MESSAGE: "📝 Checking CHANGELOG.md..."
+      - |
+        # Check if there are unreleased changes in CHANGELOG
+        if ! grep -q "## \[Unreleased\]" CHANGELOG.md; then
+          task _output MESSAGE="❌ Error: No [Unreleased] section found in CHANGELOG.md"
+          exit 1
+        fi
+        
+        # Show current unreleased section to user (limit to first 30 lines)
+        task _output MESSAGE="📋 Current [Unreleased] section:"
+        echo "----------------------------------------"
+        awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
+        echo "----------------------------------------"
+        
+        # Check if unreleased section has content
+        if ! grep -A 5 "## \[Unreleased\]" CHANGELOG.md | grep -q "^- \|^### "; then
+          task _output MESSAGE="❌ Error: [Unreleased] section is empty"
+          task _output MESSAGE="💡 Please add release notes to CHANGELOG.md before bumping version"
+          exit 1
+        fi
+        
+        # Always ask user to confirm the changelog is complete
+        echo ""
+        printf "Is the CHANGELOG.md complete for this release? (y/N): "
+        read REPLY
+        case "$REPLY" in
+          [Yy]* ) task _output MESSAGE="✅ CHANGELOG.md confirmed ready for release";;
+          * ) task _output MESSAGE="❌ Aborted. Please update CHANGELOG.md and try again."; exit 1;;
+        esac
+      - task: _output
+        vars:
           MESSAGE: "📈 Bumping version..."
       - uv run version_bumper bump patch
       - task: _output
@@ -455,14 +489,27 @@ tasks:
       - task: version
       - task: _output
         vars:
+          MESSAGE: "📝 Updating CHANGELOG.md..."
+      - |
+        NEW_VERSION=$(task version:pyproject)
+        TODAY=$(date +%Y-%m-%d)
+        
+        # Replace [Unreleased] header with new version and add new [Unreleased] section
+        # This preserves all content under [Unreleased] and moves it to the new version
+        sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
+        
+        rm CHANGELOG.md.bak
+        task _output MESSAGE="✅ Updated CHANGELOG.md with version $NEW_VERSION"
+      - task: _output
+        vars:
           MESSAGE: "🏗️  Building package..."
       - task: build
       - task: _output
         vars:
-          MESSAGE: "📝 Committing version bump..."
+          MESSAGE: "📝 Committing version bump and changelog..."
       - |
         NEW_VERSION=$(task version:pyproject)
-        git add pyproject.toml
+        git add pyproject.toml CHANGELOG.md
         git commit -m "chore: bump version to v$NEW_VERSION"
         task _output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
     silent: true
@@ -495,6 +542,12 @@ tasks:
       - task: _output
         vars:
           MESSAGE: "✅ Tag v$VERSION created and pushed to origin!"
+
+  # === CI/CD Pipeline ===
+  ci:
+    desc: Run GitHub CI build locally using scripts/ci-local.sh.  This is the same pipeline that runs on GitHub Actions.
+    cmds:
+      - bash scripts/ci-local.sh
 
   # === Development and Running ===
   run:
