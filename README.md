@@ -113,7 +113,7 @@ task dev:help   # Development tasks only
 
 ### Example Output
 
-[!task help](docs/images/task help.png)
+![task help](docs/images/task_help.png)
 
 ```text
 === Build ===
