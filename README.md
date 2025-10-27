@@ -115,17 +115,6 @@ task dev:help   # Development tasks only
 
 ![task help](docs/images/task_help.png)
 
-```text
-=== Build ===
-  build         Build the project
-  compile       Compile sources
-
-=== Testing ===
-  test          Run tests
-  test:unit     Run unit tests only
-  test:e2e      Run end-to-end tests
-```
-
 ## Usage
 
 ```bash
