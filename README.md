@@ -113,14 +113,19 @@ task dev:help   # Development tasks only
 
 ### Example Output
 
-```html
-<span style="color:red;">This should be red using HTML span+style</span>
-```
+$\textcolor{blue}{===\ Build\ ===}$
 
-## $ \textcolor{red}{Red\ Text\ using\ LaTeX} $
+$\color{green}{build\ \color{white}Build\ the\ project}$
 
-$\textcolor{blue}{Blue\ Text\ using\ LaTeX}$
-$\color{green}{Green\ Text\ using\ LaTeX}$
+$\color{green}{compile\ \color{white}Compile\ sources}$
+
+$\textcolor{blue}{===\ Testing\ ===}$
+
+$\color{green}{test\ \color{white}Run\ tests}$
+
+$\color{green}{test:unit\ \color{white}Run\ unit\ tests\ only}$
+
+$\color{green}{test:e2e\ \color{white}Run\ end-to-end\ tests}$
 
 ```text
 === Build ===
