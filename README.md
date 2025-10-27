@@ -11,6 +11,119 @@ Dynamic Taskfile help generator.
 Parses Taskfile YAML files and outputs organized, colored help text similar to
 `task --list`, but with automatic grouping and namespace support.
 
+**Links:**
+
+- 📖 [Documentation](https://royw.github.io/taskfile_help/)
+- 💻 [GitHub Repository](https://github.com/royw/taskfile_help)
+- 🐛 [Issue Tracker](https://github.com/royw/taskfile_help/issues)
+
+## Why Taskfile Help?
+
+The built-in `task --list` command is useful, but has limitations:
+
+- No automatic grouping of related tasks
+- No namespace support for multiple Taskfiles
+- Limited customization options
+
+**taskfile-help** solves these problems by providing:
+
+- Automatic task grouping using comment markers
+- Support for multiple Taskfiles with namespaces
+- Flexible search paths and configuration
+- JSON output for integration with other tools
+- Consistent color handling (respects TTY detection)
+
+## Integration with Taskfiles
+
+Designed to be called from Taskfile help tasks. Here's how to integrate it into your workflow:
+
+### Basic Setup
+
+Add a help task to your main Taskfile:
+
+```yaml
+version: '3'
+
+tasks:
+  # === Main Tasks ===
+  build:
+    desc: Build the project
+    cmds: [...]
+  
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help
+    silent: true  # Suppress task command echo
+```
+
+Now you can run:
+
+```bash
+task help       # Show available tasks nicely grouped and formatted
+```
+
+### Multi-Taskfile Setup
+
+The real advantage comes when you have multiple Taskfiles with namespaces.
+
+Start by adding a `help:all` task to your main Taskfile:
+
+```yaml
+version: '3'
+
+tasks:
+  # ... main tasks ...
+  
+  help:all:
+    desc: Show all available tasks from all Taskfiles
+    cmd: taskfile-help all --search-dirs .:./tasks
+    silent: true
+```
+
+Then in your namespace Taskfiles (e.g., `Taskfile-dev.yml` for development tasks):
+
+```yaml
+version: '3'
+
+tasks:
+  # === Development Tasks ===
+  lint:
+    desc: Run linters
+    cmds: [...]
+  
+  test:
+    desc: Run tests
+    cmds: [...]
+  
+  # === Help ===
+  help:
+    desc: Show development tasks
+    cmd: taskfile-help dev
+    silent: true
+```
+
+Now you can run:
+
+```bash
+task help       # Main tasks only
+task help:all   # All tasks from all namespaces (Main + Dev + ...)
+task dev:help   # Development tasks only
+```
+
+### Example Output
+
+```text
+=== Build ===
+  build         Build the project
+  compile       Compile sources
+
+=== Testing ===
+  test          Run tests
+  test:unit     Run unit tests only
+  test:e2e      Run end-to-end tests
+```
+
 ## Usage
 
 ```bash
@@ -120,26 +233,3 @@ The output preserves the order of groups and tasks as they appear in the file.
 - **Colors enabled**: When output is to a terminal (TTY) and --no-color is not specified
 - **Colors disabled**: When output is piped, redirected, captured, or --no-color is used
 - Matches the behavior of 'task --list'
-
-## Integration
-
-Designed to be called from Taskfile help tasks:
-
-```yaml
-# In main Taskfile.yml
-help:
-  desc: Show task help
-  cmd: scripts/taskfile_help.py
-  silent: true
-
-help:all:
-  desc: Show help for all tasks
-  cmd: scripts/taskfile_help.py all
-  silent: true
-
-# In namespace Taskfile-rag.yml
-help:
-  desc: Show RAG task help
-  cmd: scripts/taskfile_help.py rag
-  silent: true
-```
