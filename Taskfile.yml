@@ -555,4 +555,9 @@ tasks:
     cmds:
       - uv run python -m {{.APP_NAME}} {{.CLI_ARGS}}
 
-
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help
+    silent: true  # Suppress task command echo
+    
