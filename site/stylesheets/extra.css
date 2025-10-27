@@ -1,0 +1,23 @@
+/* Custom styles for taskfile-help documentation */
+
+/* Improve code block styling */
+.highlight {
+    border-radius: 4px;
+}
+
+/* Better table styling */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table th,
+table td {
+    padding: 8px 12px;
+    border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* Admonition improvements */
+.admonition {
+    margin: 1.5em 0;
+}

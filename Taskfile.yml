@@ -1,0 +1,505 @@
+version: '3'
+
+vars:
+  APP_NAME: taskfile_help
+  SRC: src/
+  TESTS: tests/
+  # TESTS_CORE: tests/unit/ tests/functional/ tests/integration/ tests/e2e/
+  TESTS_CORE: tests/unit/ tests/e2e/
+  TEST_TIMEOUT: 30
+  PYTHON_VERSIONS:
+    sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
+  PYTHON_VERSION:
+    sh: cat .python-version | head -n1
+
+tasks:
+  default:
+    cmds:
+     - task --list --sort none
+    silent: true
+
+  _output:
+    desc: Internal task to output messages silently
+    internal: true
+    cmds:
+      - cmd: echo "{{.MESSAGE}}"
+        silent: true
+
+  # === Setup and Environment ===
+  
+  env:check:
+    desc: Verify development environment setup
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "Checking Prerequisite versions..."
+      - uv --version
+      - uv run python --version
+      - git --version
+      - pipx --version
+      - pymarkdownlnt version
+
+  install:
+    desc: Install project dependencies (first-time setup) into .venv/
+    deps:
+      - env:check
+      - sync
+
+  sync:
+    desc: Sync project dependencies with uv into .venv/
+    cmds:
+      - uv sync --extra dev
+
+  resync:
+    desc: Resync project dependencies by first deleting .venv/ and then syncing with uv into .venv/
+    cmds:
+      - rm -rf .venv/
+      - task: sync
+
+  clean:
+    desc: Clean up generated files
+    cmds:
+      - find . -type d -name "__pycache__" -exec rm -rf {} +
+      - find . -type f -name "*.pyc" -delete
+      - rm -rf .mypy_cache/
+      - rm -rf .pytest_cache/
+      - rm -rf dist/
+      - rm -rf build/
+      - rm -rf site/
+
+  # === Code Quality ===
+  format:
+    desc: Format code with ruff (including import sorting) and format markdown files with mdformat
+    deps:
+      - task: format:src
+      - task: format:markdown
+
+  format:src:
+    desc: Format source code with ruff (including import sorting)
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}  # Fix import sorting
+      - uv run ruff format {{.CLI_ARGS | default .SRC}}  # Format code
+
+  format:markdown:
+    desc: Format markdown files with mdformat
+    cmds:
+      - cmd: |
+          if ! command -v mdformat &> /dev/null; then
+            uv tool install mdformat
+          fi
+        silent: true
+      - sed -i 's/[[:space:]]*$//' {{.CLI_ARGS | default "*.md docs/*.md"}}
+      - mdformat {{.CLI_ARGS | default "*.md docs/*.md"}}
+
+  format:tests:
+    desc: Format tests with ruff (including import sorting)
+    deps:
+      - lint:fix:tests
+    cmds:
+      - uv run ruff format {{.CLI_ARGS | default .TESTS}}  # Format code
+
+  # === Linting ===
+  _check_tmp:
+    desc: Internal task to check for hardcoded /tmp/ paths
+    cmds:
+      - cmd: |
+          echo "Checking for hardcoded /tmp/ paths..."
+          TMP_FOUND=0
+          TMP_COUNT=0
+          SEARCH_PATH="{{.SEARCH_PATH}}"
+          
+          # Search for "/tmp/" in all Python files and count occurrences
+          # grep returns exit code 1 if no matches found, so we use || true to prevent script failure
+          TMP_RESULTS=$(grep -rn --include="*.py" '"/tmp/' $SEARCH_PATH 2>/dev/null || true)
+          if [ -n "$TMP_RESULTS" ]; then
+            echo "$TMP_RESULTS"
+            TMP_COUNT=$(echo "$TMP_RESULTS" | wc -l)
+            echo "FAIL Hardcoded /tmp/ paths found - use tmp_path fixture instead"
+            TMP_FOUND=1
+          fi
+          
+          if [ $TMP_FOUND -eq 0 ]; then
+            echo "PASS No hardcoded /tmp/ paths found"
+            exit 0
+          else
+            echo "FAIL Lint failed - $TMP_COUNT hardcoded /tmp/ paths found"
+            echo "Fix: Replace hardcoded /tmp/ paths with pytest's tmp_path fixture"
+            exit 1
+          fi
+        silent: true
+
+  lint:
+    desc: Run all linting tasks
+    cmds:
+      - task: lint:fix
+      - task: lint:ruff
+      - task: lint:mypy
+      - task: lint:markdown
+      - task: lint:deadcode
+      - task: lint:packages
+      - task: _check_tmp
+        vars:
+          SEARCH_PATH: "{{.SRC}}"
+
+  lint:tests:
+    desc: Run linting on core tests with ruff and check for hardcoded /tmp/ paths
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS_CORE}}
+      - uv run mypy {{.CLI_ARGS | default .TESTS_CORE}}
+      - task: _check_tmp
+        vars:
+          SEARCH_PATH: "{{.TESTS}}"
+
+  lint:ruff:
+    desc: Run linting with ruff
+    cmds:
+      - uv run ruff check {{.CLI_ARGS | default .SRC}}
+
+  lint:mypy:
+    desc: Run type checking with mypy
+    cmds:
+      - uv run mypy {{.CLI_ARGS | default .SRC}}
+
+  lint:fix:
+    desc: Automatically fix linting issues in src/ with ruff
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}
+
+  lint:fix:tests:
+    desc: Automatically fix linting issues in tests/ with ruff
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS}}
+
+  lint:markdown:
+    desc: Lint markdown files with pymarkdownlnt
+    cmds:
+      - cmd: |
+          if ! command -v pymarkdownlnt &> /dev/null; then
+            uv tool install pymarkdownlnt
+          fi
+        silent: true
+      - uv run pymarkdownlnt --config .pymarkdown.json scan {{.CLI_ARGS | default "*.md docs/*.md"}} || true
+
+  lint:deadcode:
+    desc: Find dead (unreachable/unused) code with deadcode (config in pyproject.toml)
+    cmds:
+      - cmd: echo "Checking deadcode..."
+        silent: true
+      - uv run deadcode {{.CLI_ARGS | default .SRC}}
+    silent: true
+
+  lint:packages:
+    desc: Verify that __init__.py files only contain docstrings (no code)
+    cmds:
+      - cmd: |
+          echo "Checking __init__.py files for code violations..."
+          VIOLATIONS=0
+          
+          # Find all __init__.py files in src/
+          while IFS= read -r file; do
+            # Skip if file doesn't exist or is empty
+            if [ ! -f "$file" ] || [ ! -s "$file" ]; then
+              continue
+            fi
+            
+            # Use Python to check if file contains only docstrings and comments
+            if ! python3 << PYTHON_SCRIPT
+          import ast
+          import sys
+          
+          try:
+              with open('$file', 'r') as f:
+                  content = f.read()
+              
+              # Parse the file
+              tree = ast.parse(content)
+              
+              # Check if there are any statements other than docstrings
+              has_code = False
+              for node in tree.body:
+                  # Allow module docstrings (Expr node with a Constant value)
+                  if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+                      continue
+                  # Everything else is considered code
+                  has_code = True
+                  break
+              
+              if has_code:
+                  print(f"FAIL: $file contains code beyond docstrings", file=sys.stderr)
+                  sys.exit(1)
+              
+              sys.exit(0)
+          except SyntaxError as e:
+              print(f"ERROR: $file has syntax error: {e}", file=sys.stderr)
+              sys.exit(1)
+          PYTHON_SCRIPT
+            then
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done < <(find src -name "__init__.py" -type f)
+          
+          if [ $VIOLATIONS -eq 0 ]; then
+            echo "PASS All __init__.py files are clean (docstrings only)"
+          else
+            echo "FAIL Found $VIOLATIONS __init__.py file(s) with code violations"
+            exit 1
+          fi
+        silent: true
+
+  lint:duplication:
+    desc: Check for duplicate code using pylint
+    cmds:
+      - cmd: echo "Checking for code duplication..."
+        silent: true
+      - uv run pylint --disable=all --enable=duplicate-code {{.CLI_ARGS | default .SRC}}
+
+  # === Metrics ===
+  metrics:
+    desc: Display comprehensive project metrics summary (config in pyproject.toml)
+    cmds:
+      - uv run python scripts/dev-metrics.py
+
+  complexity:
+    desc: Analyze code complexity with radon
+    cmds:
+      - cmd: echo "Checking complexity..."
+        silent: true
+      - cmd: |
+          # Read exclusion list from pyproject.toml
+          EXCLUDED=$(uv run --quiet python -c "
+          import sys
+          import tomllib
+          try:
+              with open('pyproject.toml', 'rb') as f:
+                  data = tomllib.load(f)
+              project_name = data.get('project', {}).get('name')
+              if not project_name:
+                  print('', file=sys.stderr)
+                  sys.exit(0)
+              excludes = data.get('tool', {}).get(project_name, {}).get('complexity', {}).get('exclude', [])
+              if not excludes:
+                  print('', file=sys.stderr)
+                  sys.exit(0)
+              # Escape dots and underscores for regex
+              pattern = '|'.join(e.replace('.', r'\.').replace('_', r'_') for e in excludes)
+              print(pattern)
+          except Exception as e:
+              print(f'Warning: Could not read exclusion list from pyproject.toml: {e}', file=sys.stderr)
+              sys.exit(0)
+          " 2>/dev/null)
+          
+          if [ -z "$EXCLUDED" ]; then
+            # No exclusion list, show all results
+            uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B
+          else
+            OUTPUT=$(uv run radon cc --show-complexity {{.CLI_ARGS | default .SRC}} --min B | \
+            grep -vE "($EXCLUDED)")
+            
+            if [ -z "$OUTPUT" ] || echo "$OUTPUT" | grep -qE "^src/.*\.py$" && ! echo "$OUTPUT" | grep -qE "^\s+[MFC]"; then
+              echo "✅ No complexity issues found (all B-rated functions are in exclusion list)"
+            else
+              echo "$OUTPUT"
+            fi
+          fi
+        silent: true
+
+  # === Testing ===
+  test:
+    desc: Run tests with pytest (sequential) with coverage
+    cmds:
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report={{.TEST_CORE}} {{.CLI_ARGS}}
+
+  test:unit:
+    desc: Run unit tests only with coverage
+    cmds:
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+
+  test:functional:
+    desc: Run functional tests only with coverage
+    cmds:
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+
+  test:integration:
+    desc: Run integration tests only with coverage
+    cmds:
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+
+  test:e2e:
+    desc: Run end-to-end tests to validate core functionality (serially for test isolation) without coverage
+    cmds:
+      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+
+  test:all:
+    desc: Run all tests against all Python versions without coverage
+    cmds:
+      - cmd: echo "🐍 Running tests against all Python versions..."
+        silent: true
+      - for:
+          var: PYTHON_VERSIONS
+          split: ' '
+        cmd: |
+          echo "📋 Testing with Python {{.ITEM}}"
+          bash -c 'set -o pipefail; uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - cmd: echo "✅ All Python versions tested successfully!"
+        silent: true
+
+  test:coverage:
+    desc: Run all tests with detailed coverage reporting (XML, HTML, terminal)
+    cmds:
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --cov=src/{{.APP_NAME}} --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
+      - task: _output
+        vars:
+          MESSAGE: "📊 Coverage report saved to htmlcov/index.html"
+
+  # === Documentation ===
+  docs:build:
+    desc: Build documentation with MkDocs
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "📚 Building documentation..."
+      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
+      - task: _output
+        vars:
+          MESSAGE: "✅ Documentation built successfully in site/"
+
+  docs:serve:
+    desc: Serve documentation locally for development
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "🌍 Starting documentation server..."
+      - uv run mkdocs serve {{.CLI_ARGS}}
+
+  docs:
+    desc: Build and serve documentation locally
+    deps:
+      - docs:build
+      - docs:serve
+
+  # === Version ===
+  version:pyproject:
+    desc: Extract version from pyproject.toml (internal task)
+    cmds:
+      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
+    silent: true
+
+  version:
+    desc: Display the current project version
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "v$(task version:pyproject)"
+
+# === Development Workflow ===
+
+  # === Quality Checks ===
+  check:
+    desc: Run all code quality checks including end-to-end tests
+    cmds:
+      - task: format
+      - task: lint
+      - task: complexity
+      - task: test
+
+  # === Build and Release ===
+  build:
+    desc: Build distribution packages
+    deps:
+      - clean
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "🏗️  Building Voice AI distribution packages..."
+      - uv build {{.CLI_ARGS}}
+      - task: _output
+        vars:
+          MESSAGE: "✅ Build complete! Packages created in dist/"
+      - ls -la dist/
+
+  make:
+    desc: Complete build pipeline - run all checks, build, docs, and show version
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "🚀 Starting build pipeline..."
+      - task: check
+      - task: build
+      - task: docs:build
+      - task: version
+      - task: _output
+        vars:
+          MESSAGE: "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
+
+  version:bump:
+    desc: Bump the patch version, build, and commit changes
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "🔍 Checking for uncommitted changes..."
+      - |
+        if [ -n "$(git status --porcelain)" ]; then
+          task _output MESSAGE="❌ Error: There are uncommitted changes. Please commit or stash them first."
+          git status --short
+          exit 1
+        else
+          task _output MESSAGE="✅ Working directory is clean"
+        fi
+      - task: _output
+        vars:
+          MESSAGE: "📈 Bumping version..."
+      - uv run version_bumper bump patch
+      - task: _output
+        vars:
+          MESSAGE: "✅ Version bumped! New version:"
+      - task: version
+      - task: _output
+        vars:
+          MESSAGE: "🏗️  Building package..."
+      - task: build
+      - task: _output
+        vars:
+          MESSAGE: "📝 Committing version bump..."
+      - |
+        NEW_VERSION=$(task version:pyproject)
+        git add pyproject.toml
+        git commit -m "chore: bump version to v$NEW_VERSION"
+        task _output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
+    silent: true
+
+  deploy:
+    desc: Deploy the built package locally with pipx
+    deps:
+      - build
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "🚀 Installing locally with pipx..."
+      - pipx install --force dist/*.whl
+      - task: _output
+        vars:
+          MESSAGE: "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
+
+  version:tag:
+    desc: Create and push a git tag for the current version
+    deps:
+      - version
+    cmds:
+      - cmd:  VERSION=$(task version:pyproject)
+        silent: true
+      - task: _output
+        vars:
+          MESSAGE: "Creating tag v$VERSION..."
+      - cmd:  git tag "v$VERSION"
+      - cmd:  git push origin "v$VERSION"
+      - task: _output
+        vars:
+          MESSAGE: "✅ Tag v$VERSION created and pushed to origin!"
+
+  # === Development and Running ===
+  run:
+    desc: Run the application
+    cmds:
+      - uv run python -m {{.APP_NAME}} {{.CLI_ARGS}}
+
+
