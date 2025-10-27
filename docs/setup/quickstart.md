@@ -209,39 +209,7 @@ taskfile-help --verbose
 
 Shows which directories are being searched.
 
-## Integration with Taskfile
-
-Add help tasks to your Taskfile:
-
-```yaml
-version: '3'
-
-tasks:
-  help:
-    desc: Show available tasks
-    cmd: taskfile-help
-    silent: true
-
-  help:all:
-    desc: Show all available tasks
-    cmd: taskfile-help all
-    silent: true
-
-  help:dev:
-    desc: Show development tasks
-    cmd: taskfile-help dev
-    silent: true
-```
-
-Now you can run:
-
-```bash
-task help
-task help:all
-task help:dev
-```
-
 ## Next Steps
 
-- [Configuration](configuration.md) - Learn about advanced configuration options
+- [Configuration](configuration.md) - Learn about advanced configuration options and integration with Taskfiles
 - [API Reference](../reference/taskfile_help/index.md) - Explore the complete API documentation

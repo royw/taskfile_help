@@ -68,6 +68,67 @@ The built-in `task --list` command is useful, but has limitations:
 - JSON output for integration with other tools
 - Consistent color handling (respects TTY detection)
 
+## Creating Help Tasks
+
+```yaml
+version: '3'
+
+tasks:
+  # === Main Tasks ===
+  # ...
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help
+    silent: true  # Suppress task command echo
+```
+
+Now you can run:
+
+```bash
+task help       # Show available tasks nicely grouped and formatted
+```
+
+But the real advantage is when you have multiple Taskfiles...
+
+Start by adding a help:all task to your main Taskfile:
+
+```yaml
+version: '3'
+
+tasks:
+  # ...
+  help:all:
+    desc: Show all available tasks from all Taskfiles
+    cmd: taskfile-help all --search-dirs .:./tasks
+    silent: true
+```
+
+Then in your other Taskfiles typically included in namespaces in your main Taskfile (e.g., Taskfile-dev.yml for development tasks):
+
+```yaml
+version: '3'
+
+tasks:
+  # === Development Tasks ===
+  # ...
+  # === Help ===
+  help:
+    desc: Show development tasks
+    cmd: taskfile-help dev
+    silent: true
+```
+
+Now you can run:
+
+```bash
+task help       # Main tasks
+task help:all   # All tasks from all namespaces (includes Main and Dev tasks)
+task dev:help   # Development tasks
+```
+
+See [Configuration](setup/configuration.md) for more details.
+
 ## Next Steps
 
 - [Installation Guide](setup/installation.md) - Detailed installation instructions
