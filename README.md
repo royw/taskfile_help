@@ -119,7 +119,8 @@ task dev:help   # Development tasks only
 
 ## $ \textcolor{red}{Red\ Text\ using\ LaTeX} $
 
-$ \textcolor{blue}{Blue\ Text\ using\ LaTeX} $
+$\textcolor{blue}{Blue\ Text\ using\ LaTeX}$
+$\color{green}{Green\ Text\ using\ LaTeX}$
 
 ```text
 === Build ===
