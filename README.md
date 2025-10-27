@@ -1,5 +1,11 @@
 # taskfile_help
 
+[![CI/CD](https://github.com/royw/taskfile_help/actions/workflows/ci.yml/badge.svg)](https://github.com/royw/taskfile_help/actions/workflows/ci.yml)
+[![Documentation](https://github.com/royw/taskfile_help/actions/workflows/docs.yml/badge.svg)](https://github.com/royw/taskfile_help/actions/workflows/docs.yml)
+[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/taskfile-help.svg)](https://badge.fury.io/py/taskfile-help)
+
 Dynamic Taskfile help generator.
 
 Parses Taskfile YAML files and outputs organized, colored help text similar to
