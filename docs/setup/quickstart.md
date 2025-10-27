@@ -28,7 +28,7 @@ taskfile-help test
 Display tasks from all Taskfiles:
 
 ```bash
-taskfile-help --all
+taskfile-help all
 ```
 
 ## Organizing Your Taskfile
@@ -162,7 +162,7 @@ Now you can access each namespace:
 taskfile-help          # Main tasks
 taskfile-help dev      # Development tasks
 taskfile-help test     # Testing tasks
-taskfile-help --all    # All tasks from all namespaces
+taskfile-help all      # All tasks from all namespaces
 ```
 
 ## Common Options
@@ -224,7 +224,7 @@ tasks:
 
   help:all:
     desc: Show all available tasks
-    cmd: taskfile-help --all
+    cmd: taskfile-help all
     silent: true
 
   help:dev:
@@ -244,4 +244,4 @@ task help:dev
 ## Next Steps
 
 - [Configuration](configuration.md) - Learn about advanced configuration options
-- [API Reference](../reference/) - Explore the complete API documentation
+- [API Reference](../reference/taskfile_help/index.md) - Explore the complete API documentation

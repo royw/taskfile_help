@@ -13,6 +13,27 @@ from taskfile_help.taskfile_help import main
 class TestCLIHelp:
     """Test CLI help output via different invocation methods."""
 
+    def test_main_with_none_argv(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test main() called with None (simulates console script entry point)."""
+        # Create a simple Taskfile
+        taskfile = tmp_path / "Taskfile.yml"
+        taskfile.write_text("""version: '3'
+
+tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        # Mock sys.argv to simulate console script invocation
+        with patch("sys.argv", ["taskfile-help"]):
+            with patch("sys.stdout.isatty", return_value=False):
+                result = main(None)
+        
+        assert result == 0
+
     def test_python_module_help(self) -> None:
         """Test 'python3 -m taskfile_help -h' shows help."""
         result = subprocess.run(
@@ -23,10 +44,10 @@ class TestCLIHelp:
         )
         assert result.returncode == 0
         assert "Dynamic Taskfile help generator" in result.stdout
-        assert "--all" in result.stdout
         assert "--no-color" in result.stdout
         assert "--search-dirs" in result.stdout
         assert "--json" in result.stdout
+        assert "'all'" in result.stdout or "all" in result.stdout  # 'all' namespace mentioned
 
     def test_console_script_help(self) -> None:
         """Test '.venv/bin/taskfile-help -h' shows help."""
@@ -45,10 +66,10 @@ class TestCLIHelp:
         )
         assert result.returncode == 0
         assert "Dynamic Taskfile help generator" in result.stdout
-        assert "--all" in result.stdout
         assert "--no-color" in result.stdout
         assert "--search-dirs" in result.stdout
         assert "--json" in result.stdout
+        assert "'all'" in result.stdout or "all" in result.stdout  # 'all' namespace mentioned
 
 
 class TestCLIWithTaskfiles:
@@ -117,7 +138,7 @@ tasks:
         return tmp_path
 
     def test_all_with_color_and_search_dirs(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test --all with color enabled using --search-dirs."""
+        """Test 'all' namespace with color enabled using --search-dirs."""
         # Change to a different directory to test --search-dirs
         other_dir = taskfiles_dir.parent / "other"
         other_dir.mkdir()
@@ -125,7 +146,7 @@ tasks:
         
         # Mock isatty to enable colors
         with patch("sys.stdout.isatty", return_value=True):
-            result = main(["taskfile-help", "--all", "--search-dirs", str(taskfiles_dir)])
+            result = main(["taskfile-help", "all", "--search-dirs", str(taskfiles_dir)])
         
         assert result == 0
 
@@ -184,12 +205,12 @@ tasks:
             assert "watch" in output
             assert "Start development server" in output
 
-    def test_all_flag_shows_all_namespaces(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --all flag shows all namespaces."""
+    def test_all_namespace_shows_all_namespaces(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test 'all' namespace shows all namespaces."""
         monkeypatch.chdir(taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "--all"])
+            result = main(["taskfile-help", "all"])
         
         assert result == 0
         

@@ -33,10 +33,9 @@ def _load_pyproject_config() -> dict[str, Any]:
 class Args:
     """Parsed command-line arguments."""
 
-    show_all: bool
     namespace: str
     no_color: bool
-    search_dirs: list[Path]
+    search_dirs: list[Path] | None
     verbose: bool
     json_output: bool
 
@@ -64,13 +63,7 @@ class Args:
             "namespace",
             nargs="?",
             default="",
-            help="Namespace to show help for (e.g., 'rag', 'dev', 'main')",
-        )
-        parser.add_argument(
-            "--all",
-            action="store_true",
-            dest="show_all",
-            help="Show help for all taskfiles",
+            help="Namespace to show help for (e.g., 'rag', 'dev', 'main', 'all')",
         )
         parser.add_argument(
             "--no-color",
@@ -83,7 +76,7 @@ class Args:
             "-s",
             type=list_of_paths,
             dest="search_dirs",
-            default=[Path.cwd()],
+            default=None,
             help="Colon-separated list of directories to search for taskfiles. "
             "Paths may be absolute or relative to current working directory. "
             "(default: current working directory)",
@@ -104,7 +97,6 @@ class Args:
 
         parsed = parser.parse_args(argv[1:])
         return Args(
-            show_all=parsed.show_all,
             namespace=parsed.namespace,
             no_color=parsed.no_color,
             search_dirs=parsed.search_dirs,
@@ -131,7 +123,7 @@ class Config:
         self.colorize = sys.stdout.isatty() and not self.args.no_color
 
         # Parse taskfile search directories
-        if self.args.search_dirs:
+        if self.args.search_dirs is not None:
             # Command-line argument takes precedence
             # Split colon-separated paths and convert to absolute Path objects
             search_dirs = self.args.search_dirs[:]
@@ -154,11 +146,6 @@ class Config:
         search_dirs = list(dict.fromkeys(search_dirs))
 
         self.discovery = TaskfileDiscovery(search_dirs)
-
-    @property
-    def show_all(self) -> bool:
-        """Whether to show all taskfiles."""
-        return self.args.show_all
 
     @property
     def namespace(self) -> str:

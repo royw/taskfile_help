@@ -47,8 +47,8 @@ tasks:
         
         assert result == 0
 
-    def test_main_with_all_flag(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test main with --all flag."""
+    def test_main_with_all_namespace(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test main with 'all' namespace."""
         main_taskfile = tmp_path / "Taskfile.yml"
         main_taskfile.write_text("""version: '3'
 
@@ -68,7 +68,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "--all"])
+            result = main(["script.py", "all"])
         
         assert result == 0
 
@@ -205,16 +205,16 @@ tasks:
         assert result == 0
 
     def test_main_all_with_no_taskfiles(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test main --all when no taskfiles exist."""
+        """Test main 'all' namespace when no taskfiles exist."""
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "--all"])
+            result = main(["script.py", "all"])
         
         assert result == 0
 
     def test_main_with_multiple_namespaces(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test main --all with multiple namespace taskfiles."""
+        """Test main 'all' namespace with multiple namespace taskfiles."""
         (tmp_path / "Taskfile.yml").write_text("""version: '3'
 tasks:
   build:
@@ -236,7 +236,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "--all"])
+            result = main(["script.py", "all"])
         
         assert result == 0
 

@@ -65,9 +65,8 @@ class TestArgs:
         args = Args.parse_args(["script.py"])
         
         assert args.namespace == ""
-        assert args.show_all is False
         assert args.no_color is False
-        assert args.search_dirs == [Path.cwd()]
+        assert args.search_dirs is None
         assert args.verbose is False
         assert args.json_output is False
 
@@ -76,20 +75,18 @@ class TestArgs:
         args = Args.parse_args(["script.py", "dev"])
         
         assert args.namespace == "dev"
-        assert args.show_all is False
         assert args.no_color is False
-        assert args.search_dirs == [Path.cwd()]
+        assert args.search_dirs is None
         assert args.verbose is False
         assert args.json_output is False
 
-    def test_parse_args_all_flag(self) -> None:
-        """Test parsing args with --all flag."""
-        args = Args.parse_args(["script.py", "--all"])
+    def test_parse_args_all_namespace(self) -> None:
+        """Test parsing args with 'all' namespace."""
+        args = Args.parse_args(["script.py", "all"])
         
-        assert args.show_all is True
-        assert args.namespace == ""
+        assert args.namespace == "all"
         assert args.no_color is False
-        assert args.search_dirs == [Path.cwd()]
+        assert args.search_dirs is None
         assert args.verbose is False
         assert args.json_output is False
 
@@ -99,8 +96,7 @@ class TestArgs:
         
         assert args.no_color is True
         assert args.namespace == ""
-        assert args.show_all is False
-        assert args.search_dirs == [Path.cwd()]
+        assert args.search_dirs is None
         assert args.verbose is False
         assert args.json_output is False
 
@@ -110,7 +106,6 @@ class TestArgs:
         
         assert args.search_dirs == [Path("/path1"), Path("/path2")]
         assert args.namespace == ""
-        assert args.show_all is False
         assert args.no_color is False
         assert args.verbose is False
         assert args.json_output is False
@@ -121,7 +116,6 @@ class TestArgs:
         
         assert args.search_dirs == [Path("/path")]
         assert args.namespace == ""
-        assert args.show_all is False
         assert args.no_color is False
         assert args.verbose is False
         assert args.json_output is False
@@ -132,9 +126,8 @@ class TestArgs:
         
         assert args.verbose is True
         assert args.namespace == ""
-        assert args.show_all is False
         assert args.no_color is False
-        assert args.search_dirs == [Path.cwd()]
+        assert args.search_dirs is None
         assert args.json_output is False
 
     def test_parse_args_verbose_short(self) -> None:
@@ -143,9 +136,8 @@ class TestArgs:
         
         assert args.verbose is True
         assert args.namespace == ""
-        assert args.show_all is False
         assert args.no_color is False
-        assert args.search_dirs == [Path.cwd()]
+        assert args.search_dirs is None
         assert args.json_output is False
 
     def test_parse_args_json(self) -> None:
@@ -154,9 +146,8 @@ class TestArgs:
         
         assert args.json_output is True
         assert args.namespace == ""
-        assert args.show_all is False
         assert args.no_color is False
-        assert args.search_dirs == [Path.cwd()]
+        assert args.search_dirs is None
         assert args.verbose is False
 
     def test_parse_args_combined(self) -> None:
@@ -174,7 +165,6 @@ class TestArgs:
         assert args.no_color is True
         assert args.verbose is True
         assert args.search_dirs == [Path("/path")]
-        assert args.show_all is False
         assert args.json_output is False
 
 
@@ -206,7 +196,7 @@ class TestConfig:
     def test_config_search_dirs_from_pyproject(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test config with search dirs from pyproject.toml."""
+        """Test config with search dirs from pyproject.toml as list."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("""
 [tool.taskfile-help]
@@ -216,7 +206,59 @@ search-dirs = [".", "../other"]
         
         config = Config(["script.py"])
         
+        # Should have at least current directory
         assert len(config.discovery.search_dirs) >= 1
+        assert tmp_path in config.discovery.search_dirs
+
+    def test_config_search_dirs_from_pyproject_single_string(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test config with search dirs from pyproject.toml as single string."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("""
+[tool.taskfile-help]
+search-dirs = "."
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        config = Config(["script.py"])
+        
+        assert len(config.discovery.search_dirs) == 1
+        assert config.discovery.search_dirs[0] == tmp_path
+
+    def test_config_search_dirs_from_pyproject_empty_string(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test config with search dirs from pyproject.toml as empty string."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("""
+[tool.taskfile-help]
+search-dirs = ""
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        config = Config(["script.py"])
+        
+        # Empty string should default to current directory
+        assert len(config.discovery.search_dirs) == 1
+        assert config.discovery.search_dirs[0] == tmp_path
+
+    def test_config_search_dirs_from_pyproject_list_with_empty(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test config with search dirs from pyproject.toml list containing empty strings."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("""
+[tool.taskfile-help]
+search-dirs = [".", "", "../other"]
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        config = Config(["script.py"])
+        
+        # Empty strings should be filtered out
+        assert len(config.discovery.search_dirs) >= 1
+        assert tmp_path in config.discovery.search_dirs
 
     def test_config_args_override_pyproject(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -264,11 +306,11 @@ search-dirs = [".", "../other"]
         
         assert config.colorize is False
 
-    def test_config_show_all_property(self, tmp_path: Path) -> None:
-        """Test show_all property."""
-        config = Config(["script.py", "--all"])
+    def test_config_all_namespace(self, tmp_path: Path) -> None:
+        """Test 'all' namespace."""
+        config = Config(["script.py", "all"])
         
-        assert config.show_all is True
+        assert config.namespace == "all"
 
     def test_config_namespace_property(self, tmp_path: Path) -> None:
         """Test namespace property."""

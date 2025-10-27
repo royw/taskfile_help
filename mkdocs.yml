@@ -143,8 +143,7 @@ nav:
     - Development Guide: development/guide.md
     - Testing: development/testing.md
     - Contributing: development/contributing.md
-  - Reference:
-    - API Documentation: reference/
+  - Reference: reference/
 
 watch:
   - src/taskfile_help

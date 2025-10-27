@@ -20,7 +20,7 @@ taskfile-help rag
 ### Show All Taskfiles
 
 ```bash
-taskfile-help --all
+taskfile-help all
 ```
 
 Displays tasks from all Taskfiles (main + all namespaces).

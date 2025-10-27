@@ -18,7 +18,7 @@ taskfile_help.py rag
 taskfile_help.py dev
 
 # Show help for all Taskfiles
-taskfile_help.py --all
+taskfile_help.py all
 
 # Disable colored output
 taskfile_help.py --no-color
@@ -48,10 +48,11 @@ taskfile_help.py rag --json
 
 ## Options
 
-- `namespace` - Optional namespace to show help for (e.g., 'rag', 'dev', 'main')
-- `--all` - Show help for all taskfiles
+- `namespace` - Optional namespace to show help for (e.g., 'rag', 'dev', 'main', 'all')
+  - Use 'all' to show help for all taskfiles
 - `--no-color` - Disable colored output
-- `-s, --search-dirs DIRS` - Colon-separated list of directories to search for taskfiles. Paths may be absolute or relative to current working directory. (default: current working directory)
+- `-s, --search-dirs DIRS` - Colon-separated list of directories to search for taskfiles. Paths may be absolute or
+  relative to current working directory. (default: current working directory)
 - `-v, --verbose` - Show verbose output including search directories
 - `--json` - Output tasks in JSON format
 - `-h, --help` - Show this help message and exit
@@ -70,7 +71,7 @@ Command-line arguments take precedence over pyproject.toml settings.
 ## File Naming Conventions
 
 - **Main Taskfile**: Taskfile.yml or Taskfile.yaml
-- **Namespace Taskfiles**: Taskfile-<namespace>.yml or Taskfile-<namespace>.yaml
+- **Namespace Taskfiles**: Taskfile-_namespace_.yml or Taskfile-_namespace_.yaml
   - Examples: Taskfile-rag.yml, Taskfile-dev.yml, Taskfile-agent.yml
 
 ## Search Behavior
@@ -127,7 +128,7 @@ help:
 
 help:all:
   desc: Show help for all tasks
-  cmd: scripts/taskfile_help.py --all
+  cmd: scripts/taskfile_help.py all
   silent: true
 
 # In namespace Taskfile-rag.yml

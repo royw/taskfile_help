@@ -85,8 +85,8 @@ def main(argv: list[str] | None = None) -> int:
 
     namespace = config.namespace
 
-    # Special case: --all flag with no namespace shows all Taskfiles
-    if config.show_all and not namespace:
+    # Special case: 'all' namespace shows all Taskfiles
+    if namespace == "all":
         # Collect all tasks
         taskfiles: list[tuple[str, list[tuple[str, str, str]]]] = []
 

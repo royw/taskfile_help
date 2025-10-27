@@ -8,8 +8,10 @@ import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()
 
-src = Path("src")
-for path in sorted(src.rglob("*.py")):
+src = Path(__file__).parent.parent / "src"
+package_dir = src / "taskfile_help"
+
+for path in sorted(package_dir.rglob("*.py")):
     module_path = path.relative_to(src).with_suffix("")
     doc_path = path.relative_to(src).with_suffix(".md")
     full_doc_path = Path("reference", doc_path)

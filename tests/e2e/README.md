@@ -15,11 +15,11 @@ Tests that verify the help output works correctly through different invocation m
 
 Tests that verify the CLI works correctly with actual Taskfile content:
 
-- **`test_all_with_color_and_search_dirs`**: Tests `--all` flag with color enabled using `--search-dirs`
+- **`test_all_with_color_and_search_dirs`**: Tests 'all' namespace with color enabled using `--search-dirs`
 - **`test_no_color_from_current_dir`**: Tests `--no-color` flag disables colors even when output is a TTY
 - **`test_specific_namespace`**: Tests showing a specific namespace (e.g., `test`)
 - **`test_piped_output_no_color`**: Tests that piped output (e.g., `dev | cat`) doesn't include ANSI color codes
-- **`test_all_flag_shows_all_namespaces`**: Tests `--all` flag displays all namespaces
+- **`test_all_namespace_shows_all_namespaces`**: Tests 'all' namespace displays all namespaces
 - **`test_json_output`**: Tests `--json` flag produces valid JSON output
 - **`test_verbose_output`**: Tests `--verbose` flag shows search directories
 - **`test_search_dirs_with_multiple_paths`**: Tests `--search-dirs` with colon-separated paths

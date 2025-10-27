@@ -1,6 +1,7 @@
 # Taskfile Help
 
-A dynamic Taskfile help generator that parses Taskfile YAML files and outputs organized, colored help text similar to `task --list`, but with automatic grouping and namespace support.
+A dynamic Taskfile help generator that parses Taskfile YAML files and outputs organized, colored help text
+similar to `task --list`, but with automatic grouping and namespace support.
 
 ## Features
 
@@ -35,12 +36,12 @@ taskfile-help dev
 Show all available tasks across all Taskfiles:
 
 ```bash
-taskfile-help --all
+taskfile-help all
 ```
 
 ## Example Output
 
-```
+```text
 === Build ===
   build         Build the project
   compile       Compile sources
@@ -72,4 +73,4 @@ The built-in `task --list` command is useful, but has limitations:
 - [Installation Guide](setup/installation.md) - Detailed installation instructions
 - [Quick Start](setup/quickstart.md) - Get up and running quickly
 - [Configuration](setup/configuration.md) - Configure taskfile-help for your project
-- [API Reference](reference/) - Complete API documentation
+- [API Reference](reference/taskfile_help/index.md) - Complete API documentation

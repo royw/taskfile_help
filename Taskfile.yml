@@ -307,7 +307,7 @@ tasks:
   test:
     desc: Run tests with pytest (sequential) with coverage
     cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report={{.TEST_CORE}} {{.CLI_ARGS}}
+      - uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term-missing --cov-report=html {{.TEST_CORE}} {{.CLI_ARGS}}
 
   test:unit:
     desc: Run unit tests only with coverage
@@ -410,7 +410,7 @@ tasks:
     cmds:
       - task: _output
         vars:
-          MESSAGE: "🏗️  Building Voice AI distribution packages..."
+          MESSAGE: "🏗️  Building distribution packages..."
       - uv build {{.CLI_ARGS}}
       - task: _output
         vars:
