@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# commit-msg hook to enforce conventional commit format
+
+set -e
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Skip merge commits
+if [[ "$COMMIT_MSG" =~ ^Merge ]]; then
+    exit 0
+fi
+
+# Skip revert commits (they're allowed)
+if [[ "$COMMIT_MSG" =~ ^Revert ]]; then
+    exit 0
+fi
+
+# Define supported commit types
+SUPPORTED_TYPES="feat|fix|docs|refactor|perf|test|chore|style|ci|build|revert"
+
+# Check if commit message follows conventional commit format
+if ! [[ "$COMMIT_MSG" =~ ^($SUPPORTED_TYPES):\ .+ ]]; then
+    echo "❌ ERROR: Commit message does not follow conventional commit format!"
+    echo ""
+    echo "Format: <type>: <description>"
+    echo ""
+    echo "Supported types:"
+    echo "  feat:     New feature (added to CHANGELOG)"
+    echo "  fix:      Bug fix (added to CHANGELOG)"
+    echo "  docs:     Documentation changes (added to CHANGELOG)"
+    echo "  refactor: Code refactoring (added to CHANGELOG)"
+    echo "  perf:     Performance improvements (added to CHANGELOG)"
+    echo "  test:     Test-related changes"
+    echo "  chore:    Maintenance tasks"
+    echo "  style:    Code style/formatting"
+    echo "  ci:       CI/CD changes"
+    echo "  build:    Build system changes"
+    echo "  revert:   Revert previous commits"
+    echo ""
+    echo "Examples:"
+    echo "  feat: add user authentication"
+    echo "  fix: resolve memory leak in parser"
+    echo "  docs: update installation guide"
+    echo ""
+    echo "Your commit message:"
+    echo "  $COMMIT_MSG"
+    echo ""
+    exit 1
+fi
+
+# Success
+exit 0

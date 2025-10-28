@@ -1,5 +1,10 @@
 version: '3'
 
+includes:
+  git:
+    taskfile: ./taskfiles/Taskfile-git.yml
+    dir: .
+
 vars:
   APP_NAME: taskfile_help
   SRC: src/
@@ -557,3 +562,7 @@ tasks:
     cmd: taskfile-help
     silent: true  # Suppress task command echo
     
+  help:all:
+    desc: Show available tasks from all Taskfiles
+    cmd: taskfile-help all
+    silent: true  # Suppress task command echo

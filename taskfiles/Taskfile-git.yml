@@ -1,0 +1,29 @@
+version: '3'
+
+tasks:
+
+  # === Git hooks ===
+
+  hooks:install:
+    desc: Install git hooks from .githooks/ directory
+    cmds:
+      - git config core.hooksPath .githooks
+      - chmod +x .githooks/*
+      - echo "✅ Git hooks installed! Hooks will run automatically on commits."
+
+  hooks:uninstall:
+    desc: Uninstall git hooks (revert to default .git/hooks/)
+    cmds:
+      - git config --unset core.hooksPath
+      - echo "✅ Git hooks uninstalled. Using default .git/hooks/ directory."
+
+  hooks:test:
+    desc: Test the post-commit hook manually
+    cmds:
+      - .githooks/post-commit
+
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help git
+    silent: true  # Suppress task command echo

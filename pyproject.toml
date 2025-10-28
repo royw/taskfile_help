@@ -184,6 +184,10 @@ ignore-names = [
     "main",
 ]
 
+[tool.taskfile-help]
+# Search paths for Taskfiles
+search-dirs = [".", "taskfiles"]
+
 [tool.dev-metrics]
 # Paths for metrics calculation
 src-paths = "src"
