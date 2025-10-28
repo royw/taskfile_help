@@ -113,6 +113,13 @@ def main(argv: list[str] | None = None) -> int:
         possible_paths = config.discovery.get_possible_paths(namespace)
         outputter.output_error(f"No Taskfile found for namespace '{namespace}'")
         outputter.output_warning(f"Tried: {', '.join(str(p) for p in possible_paths)}")
+        
+        # Suggest available namespaces
+        available_namespaces = config.discovery.get_all_namespace_taskfiles()
+        if available_namespaces:
+            namespace_names = [ns for ns, _ in available_namespaces]
+            outputter.output_message(f"\nAvailable namespaces: {', '.join(namespace_names)}")
+        
         return 1
 
     # Parse and display tasks

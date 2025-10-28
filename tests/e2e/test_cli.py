@@ -294,7 +294,12 @@ tasks:
         assert result == 1
         
         captured = capsys.readouterr()
-        assert "No Taskfile found" in captured.out or "No Taskfile found" in captured.err
+        output = captured.out + captured.err
+        assert "No Taskfile found" in output
+        # Should suggest available namespaces
+        assert "Available namespaces:" in output
+        assert "dev" in output
+        assert "test" in output
 
     def test_no_taskfile_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test error when no Taskfile exists."""
