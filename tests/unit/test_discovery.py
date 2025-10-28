@@ -64,6 +64,38 @@ class TestTaskfileDiscovery:
         
         assert result == taskfile
 
+    def test_find_main_taskfile_lowercase_yml(self, tmp_path: Path) -> None:
+        """Test finding lowercase taskfile.yml."""
+        taskfile = tmp_path / "taskfile.yml"
+        taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.find_main_taskfile()
+        
+        assert result == taskfile
+
+    def test_find_main_taskfile_lowercase_yaml(self, tmp_path: Path) -> None:
+        """Test finding lowercase taskfile.yaml."""
+        taskfile = tmp_path / "taskfile.yaml"
+        taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.find_main_taskfile()
+        
+        assert result == taskfile
+
+    def test_find_main_taskfile_prefers_uppercase(self, tmp_path: Path) -> None:
+        """Test that uppercase Taskfile is preferred over lowercase."""
+        uppercase = tmp_path / "Taskfile.yml"
+        lowercase = tmp_path / "taskfile.yml"
+        uppercase.write_text("version: '3'\ntasks: {}")
+        lowercase.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.find_main_taskfile()
+        
+        assert result == uppercase
+
     def test_find_namespace_taskfile_hyphen(self, tmp_path: Path) -> None:
         """Test finding namespace taskfile with hyphen separator."""
         taskfile = tmp_path / "Taskfile-dev.yml"
@@ -163,18 +195,22 @@ class TestTaskfileDiscovery:
         discovery = TaskfileDiscovery([tmp_path])
         result = discovery.get_possible_paths("main")
         
-        assert len(result) == 2
+        assert len(result) == 4
         assert tmp_path / "Taskfile.yml" in result
         assert tmp_path / "Taskfile.yaml" in result
+        assert tmp_path / "taskfile.yml" in result
+        assert tmp_path / "taskfile.yaml" in result
 
     def test_get_possible_paths_empty_namespace(self, tmp_path: Path) -> None:
         """Test getting possible paths for empty namespace."""
         discovery = TaskfileDiscovery([tmp_path])
         result = discovery.get_possible_paths("")
         
-        assert len(result) == 2
+        assert len(result) == 4
         assert tmp_path / "Taskfile.yml" in result
         assert tmp_path / "Taskfile.yaml" in result
+        assert tmp_path / "taskfile.yml" in result
+        assert tmp_path / "taskfile.yaml" in result
 
     def test_get_possible_paths_namespace(self, tmp_path: Path) -> None:
         """Test getting possible paths for a namespace."""

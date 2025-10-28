@@ -7,11 +7,11 @@ taskfile-help can be configured via command-line arguments or `pyproject.toml`.
 ### Namespace Selection
 
 ```bash
-# Show main Taskfile
+# Show main Taskfile ([Tt]askfile\.ya?ml)
 taskfile-help
 taskfile-help main
 
-# Show specific namespace
+# Show specific namespace (Taskfile[-_](?P<namespace>\w+)\.ya?ml)
 taskfile-help dev
 taskfile-help test
 taskfile-help rag
@@ -149,10 +149,14 @@ search-dirs = [
 
 ### Main Taskfile
 
-The main Taskfile must be named:
+The main Taskfile can be named (case-sensitive, matches regex `[Tt]askfile\.ya?ml`):
 
 - `Taskfile.yml`
 - `Taskfile.yaml`
+- `taskfile.yml`
+- `taskfile.yaml`
+
+**Note**: Uppercase variants (`Taskfile.*`) are preferred and checked first.
 
 ### Namespace Taskfiles
 

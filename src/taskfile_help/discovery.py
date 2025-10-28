@@ -11,8 +11,11 @@ class TaskfileDiscovery:
     # Naming patterns for namespace taskfiles
     NAMESPACE_PATTERNS = ["Taskfile-{}", "Taskfile_{}"]
 
-    # Main taskfile names
-    MAIN_NAMES = ["Taskfile.yml", "Taskfile.yaml"]
+    # Main taskfile names (order matters - first match wins)
+    MAIN_NAMES = ["Taskfile.yml", "Taskfile.yaml", "taskfile.yml", "taskfile.yaml"]
+    
+    # Regex pattern to match main taskfiles
+    MAIN_REGEX = re.compile(r"^[Tt]askfile\.ya?ml$")
     
     # Regex pattern to match namespace taskfiles and extract namespace
     NAMESPACE_REGEX = re.compile(r"^[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml$")
