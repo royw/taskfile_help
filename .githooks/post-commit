@@ -3,12 +3,17 @@
 
 set -e
 
+# Prevent infinite loop - check if we're already updating CHANGELOG
+if [[ -n "$UPDATING_CHANGELOG" ]]; then
+    exit 0
+fi
+
 CHANGELOG="CHANGELOG.md"
 LAST_COMMIT_MSG=$(git log -1 --pretty=format:"%s")
 LAST_COMMIT_HASH=$(git log -1 --pretty=format:"%h")
 
-# Check if this is the CHANGELOG update commit itself (avoid infinite loop)
-if [[ "$LAST_COMMIT_MSG" == "chore: update CHANGELOG.md" ]]; then
+# Check if CHANGELOG was modified in this commit (avoid re-running on amend)
+if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^CHANGELOG.md$"; then
     exit 0
 fi
 
@@ -90,8 +95,9 @@ if [[ "$ADDED_ENTRY" == true ]]; then
     mv "$TEMP_FILE" "$CHANGELOG"
     
     # Stage and amend the commit to include CHANGELOG
+    # Set environment variable to prevent infinite loop
     git add "$CHANGELOG"
-    git commit --amend --no-edit --no-verify
+    UPDATING_CHANGELOG=1 git commit --amend --no-edit --no-verify
     
     echo "✓ CHANGELOG.md updated with: $COMMIT_DESC"
 else
