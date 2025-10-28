@@ -41,11 +41,25 @@ Thank you for considering contributing to taskfile-help!
 
 ## Code Standards
 
+### General
+
 - **Type hints**: All functions must have type hints
-- **Docstrings**: Use Google-style docstrings
 - **Tests**: Unit tests for all new code
 - **Formatting**: Use ruff for formatting
 - **Linting**: Pass all linters (ruff, mypy, pylint)
+
+### Docstrings
+
+- **Style**: Use Google-style docstrings
+- **`__init__.py` files**: Only docstrings in `__init__.py` files (easier to maintain)
+- **Module docstrings**: All modules must have a module docstring that explains what is in the module and optionally why the module exists (aids maintainers)
+
+### Code Quality
+
+- **Complexity**: Cyclomatic complexity shall be ≤10
+  - Valid reason required for complexities >5
+- **No emojis**: Do not use emojis in production code (use words instead to lower chance of misinterpretation)
+- **No hard-coded paths**: Do not use hard-coded paths (e.g., use `tempfile` package instead of `/tmp`)
 
 ## Commit Messages
 

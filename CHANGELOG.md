@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive edge case testing for namespace discovery
 
 ### Changed
+- add git hooks and CHANGELOG workflow to development guide (08dbce9)
 
 - Refactored namespace taskfile discovery to use regex patterns
 - Updated all documentation to reflect complete taskfile naming support

@@ -22,7 +22,74 @@ uv sync --dev
 
 # Or using pip
 pip install -e ".[dev]"
+
+# Install git hooks (optional but recommended)
+task git:hooks:install
 ```
+
+### Git Hooks
+
+The project uses git hooks to enforce commit standards and automate CHANGELOG updates.
+
+#### Installation
+
+```bash
+# Install hooks (recommended for all contributors)
+task git:hooks:install
+
+# Uninstall hooks
+task git:hooks:uninstall
+
+# Test hooks
+task git:hooks:test
+```
+
+#### Available Hooks
+
+**commit-msg** - Enforces conventional commit format:
+
+- Validates commit messages before commit is created
+- Rejects invalid messages with helpful error
+- Ensures all commits follow project standards
+
+**post-commit** - Automates CHANGELOG updates:
+
+- Parses conventional commit messages
+- Adds entries to appropriate CHANGELOG sections
+- Amends commit to include CHANGELOG changes
+
+#### Conventional Commits
+
+All commits must follow the conventional commit format:
+
+```text
+<type>: <description>
+```
+
+**Supported types:**
+
+- `feat:` - New feature (added to CHANGELOG)
+- `fix:` - Bug fix (added to CHANGELOG)
+- `docs:` - Documentation changes (added to CHANGELOG)
+- `refactor:` - Code refactoring (added to CHANGELOG)
+- `perf:` - Performance improvements (added to CHANGELOG)
+- `test:` - Test-related changes
+- `chore:` - Maintenance tasks
+- `style:` - Code style/formatting
+- `ci:` - CI/CD changes
+- `build:` - Build system changes
+- `revert:` - Revert previous commits
+
+**Examples:**
+
+```bash
+git commit -m "feat: add shell auto-completion support"
+git commit -m "fix: resolve memory leak in parser"
+git commit -m "docs: update installation guide"
+git commit -m "test: add edge case tests for discovery"
+```
+
+See [.githooks/README.md](../../.githooks/README.md) for complete documentation.
 
 ### Development Dependencies
 
@@ -39,7 +106,7 @@ The project includes these development tools:
 
 ## Project Structure
 
-```
+```text
 taskfile-help/
 ├── src/
 │   └── taskfile_help/
@@ -181,12 +248,46 @@ tasks:
 
 #### End-to-End Tests
 
+E2E tests can use two approaches:
+
+##### **Direct `main()` calls** (preferred for most tests)
+
+- Simpler and faster
+- Easier to inject dependencies and mock behavior
+- Better for testing application logic
+
+```python
+from taskfile_help.taskfile_help import main
+from unittest.mock import patch
+
+def test_main_taskfile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test main taskfile display."""
+    taskfile = tmp_path / "Taskfile.yml"
+    taskfile.write_text("""version: '3'
+tasks:
+  build:
+    desc: Build the project
+""")
+    monkeypatch.chdir(tmp_path)
+    
+    with patch("sys.stdout.isatty", return_value=False):
+        result = main(["taskfile-help"])
+    
+    assert result == 0
+```
+
+##### **Subprocess calls** (for external access testing)
+
+- Tests actual installed scripts and module invocation
+- Validates package installation and entry points
+- Use for testing: `python -m taskfile_help`, console scripts, etc.
+
 ```python
 import subprocess
 import sys
 
-def test_help_command() -> None:
-    """Test that help command works."""
+def test_module_invocation() -> None:
+    """Test that module can be invoked with -m flag."""
     result = subprocess.run(
         [sys.executable, "-m", "taskfile_help", "-h"],
         capture_output=True,
@@ -217,7 +318,7 @@ The project uses **ruff** for formatting:
 uv run ruff format src/
 
 # Check formatting
-uv run ruff format --check src/
+uv run ruff check --fix --select I src/
 ```
 
 ### Linting
@@ -237,7 +338,7 @@ uv run pylint src/
 
 ### Type Hints
 
-All code must include type hints:
+All code must include modern type hints (at least what python 3.11 supports (PEP 484, 563, 585, 604, 673, 646)):
 
 ```python
 def parse_taskfile(
@@ -346,6 +447,60 @@ import pdb; pdb.set_trace()
 taskfile-help --verbose
 ```
 
+## CHANGELOG Maintenance
+
+The project uses automated CHANGELOG updates via git hooks.
+
+### Automatic Updates
+
+When you commit with a conventional commit message, the post-commit hook automatically:
+
+1. Parses your commit message
+2. Adds an entry to the appropriate section in `CHANGELOG.md`
+3. Amends your commit to include the CHANGELOG update
+
+**Example workflow:**
+
+```bash
+# Make your changes
+git add src/taskfile_help/parser.py
+
+# Commit with conventional format
+git commit -m "feat: add dependency parsing support"
+
+# Hook automatically updates CHANGELOG.md:
+#   ### Added
+#   - add dependency parsing support (abc123)
+```
+
+### CHANGELOG Structure
+
+The `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/) format:
+
+- **[Unreleased]** - Current development work (auto-updated by hooks)
+  - **Added** - New features (`feat:` commits)
+  - **Changed** - Changes in existing functionality (`docs:`, `refactor:`, `perf:` commits)
+  - **Fixed** - Bug fixes (`fix:` commits)
+- **[Version]** - Released versions with date
+
+### Manual Updates
+
+You can manually edit `CHANGELOG.md` when needed:
+
+- Reorganizing entries for clarity
+- Adding breaking changes notes
+- Preparing for a release
+- Adding migration guides
+
+### Release Process
+
+When releasing a new version:
+
+1. Move entries from `[Unreleased]` to a new version section
+2. Add the version number and date: `## [0.2.0] - 2025-10-28`
+3. Update version links at the bottom of the file
+4. Commit with: `chore: prepare release v0.2.0`
+
 ## Documentation
 
 ### Building Documentation
@@ -370,14 +525,13 @@ open http://127.0.0.1:8000
 
 ## Release Process
 
-1. Update version in `pyproject.toml`
-2. Update CHANGELOG.md
-3. Run all tests: `task make`
-4. Build package: `task build`
-5. Create git tag: `git tag v0.2.0`
-6. Push tag: `git push origin v0.2.0`
-7. Create GitHub release
-8. Publish to PyPI: `uv publish`
+1. Run all tests: `task make`
+2. Update and commit CHANGELOG.md
+3. Update version in `task version:bump`
+4. Create git tag: `task tag`
+5. Push tag: `git push origin v0.2.0`
+6. Create GitHub release
+7. Publish to PyPI: `uv publish`
 
 ## Getting Help
 
