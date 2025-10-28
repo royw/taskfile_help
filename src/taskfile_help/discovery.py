@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -12,6 +13,9 @@ class TaskfileDiscovery:
 
     # Main taskfile names
     MAIN_NAMES = ["Taskfile.yml", "Taskfile.yaml"]
+    
+    # Regex pattern to match namespace taskfiles and extract namespace
+    NAMESPACE_REGEX = re.compile(r"^[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml$")
 
     def __init__(self, search_dirs: list[Path]) -> None:
         """Initialize with search directories.
@@ -58,28 +62,27 @@ class TaskfileDiscovery:
         Returns:
             List of (namespace, path) tuples sorted by namespace
         """
-        taskfiles: list[tuple[str, Path]] = []
+        taskfiles: dict[str, Path] = {}
 
-        # Search for all namespace patterns in all search directories
+        # Search for all taskfiles matching the namespace pattern
         for search_dir in self.search_dirs:
-            for pattern in self.NAMESPACE_PATTERNS:
-                for ext in self.EXTENSIONS:
-                    glob_pattern = pattern.format("*") + ext
-                    for path in sorted(search_dir.glob(glob_pattern)):
-                        # Extract namespace from filename
-                        stem = path.stem
-                        for pat in self.NAMESPACE_PATTERNS:
-                            prefix = pat.format("").rstrip("_").rstrip("-")
-                            if stem.startswith(prefix):
-                                # Remove prefix and separator
-                                namespace = stem.removeprefix(prefix + "_").removeprefix(prefix + "-")
-                                if namespace:  # Ensure we got a valid namespace
-                                    taskfiles.append((namespace, path))
-                                break
+            if not search_dir.exists():
+                continue
+                
+            for path in search_dir.iterdir():
+                if not path.is_file():
+                    continue
+                    
+                # Try to match the filename against the namespace pattern
+                match = self.NAMESPACE_REGEX.match(path.name)
+                if match:
+                    namespace = match.group("namespace")
+                    # Only add if not already found (first match wins)
+                    if namespace not in taskfiles:
+                        taskfiles[namespace] = path
 
-        # Remove duplicates and sort by namespace (dict preserves insertion order in Python 3.7+)
-        unique_dict = dict(sorted(taskfiles, key=lambda x: x[0]))
-        return list(unique_dict.items())
+        # Return sorted by namespace
+        return sorted(taskfiles.items(), key=lambda x: x[0])
 
     def get_possible_paths(self, namespace: str) -> list[Path]:
         """Get all possible paths for a namespace (for error messages).

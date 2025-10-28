@@ -217,3 +217,116 @@ class TestTaskfileDiscovery:
         result = discovery.find_namespace_taskfile("dev")
         
         assert result == taskfile1
+
+    def test_namespace_with_underscores(self, tmp_path: Path) -> None:
+        """Test namespace with underscores in the name."""
+        taskfile = tmp_path / "Taskfile-my_namespace.yml"
+        taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 1
+        assert result[0][0] == "my_namespace"
+        assert result[0][1] == taskfile
+
+    def test_namespace_with_numbers(self, tmp_path: Path) -> None:
+        """Test namespace with numbers in the name."""
+        taskfile = tmp_path / "Taskfile-v2_prod.yml"
+        taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 1
+        assert result[0][0] == "v2_prod"
+
+    def test_lowercase_taskfile_prefix(self, tmp_path: Path) -> None:
+        """Test lowercase 'taskfile' prefix is recognized."""
+        taskfile = tmp_path / "taskfile-dev.yml"
+        taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 1
+        assert result[0][0] == "dev"
+
+    def test_mixed_case_taskfile_prefix(self, tmp_path: Path) -> None:
+        """Test mixed case 'Taskfile' prefix is recognized."""
+        taskfile = tmp_path / "Taskfile-dev.yml"
+        taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 1
+        assert result[0][0] == "dev"
+
+    def test_ignores_wrong_extension(self, tmp_path: Path) -> None:
+        """Test that files with wrong extensions are ignored."""
+        (tmp_path / "Taskfile-dev.txt").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile-dev.json").write_text("{}")
+        (tmp_path / "Taskfile-dev.py").write_text("# python file")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 0
+
+    def test_ignores_wrong_prefix(self, tmp_path: Path) -> None:
+        """Test that files with wrong prefix are ignored."""
+        (tmp_path / "MyTaskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Task-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "taskfile-dev.yml").write_text("version: '3'\ntasks: {}")  # Valid one
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Only the valid lowercase taskfile should be found
+        assert len(result) == 1
+        assert result[0][0] == "dev"
+
+    def test_ignores_empty_namespace(self, tmp_path: Path) -> None:
+        """Test that files with empty namespace are ignored."""
+        (tmp_path / "Taskfile-.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile_.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 0
+
+    def test_ignores_directories(self, tmp_path: Path) -> None:
+        """Test that directories matching the pattern are ignored."""
+        # Create a directory that matches the pattern
+        dir_with_pattern = tmp_path / "Taskfile-dev.yml"
+        dir_with_pattern.mkdir()
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 0
+
+    def test_handles_nonexistent_search_dir(self, tmp_path: Path) -> None:
+        """Test that nonexistent search directories are handled gracefully."""
+        nonexistent = tmp_path / "nonexistent"
+        
+        discovery = TaskfileDiscovery([nonexistent])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 0
+
+    def test_multiple_namespaces_mixed_separators(self, tmp_path: Path) -> None:
+        """Test multiple namespaces with mixed separators and extensions."""
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile_prod.yaml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "taskfile-test.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "taskfile_staging.yaml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 4
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"dev", "prod", "test", "staging"}
