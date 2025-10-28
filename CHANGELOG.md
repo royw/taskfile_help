@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.2.0] - 2025-10-28
+
+### Added
+
 - Git hooks for conventional commits and automated CHANGELOG updates
 - Namespace suggestion when invalid namespace is requested
 - Support for lowercase main taskfile names (`taskfile.yml`, `taskfile.yaml`)
@@ -29,9 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced error messages to suggest available namespaces
 
 ### Fixed
-- correct task references to _bumper in version namespace (84d42e3)
+
+- correct task references to \_bumper in version namespace (84d42e3)
 
 - Infinite loop prevention in post-commit hook
+
 - Documentation accuracy for taskfile naming conventions
 
 ## [0.1.0] - 2025-10-27
