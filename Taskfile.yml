@@ -67,7 +67,7 @@ tasks:
       - rm -rf build/
       - rm -rf site/
 
-  # === Code Quality ===
+  # === Code Formatting ===
   format:
     desc: Format code with ruff (including import sorting) and format markdown files with mdformat
     deps:
@@ -392,7 +392,6 @@ tasks:
           MESSAGE: "v$(task version:pyproject)"
 
   # === Build Packages ===
-
   build:
     desc: Build distribution packages
     deps:
@@ -407,8 +406,6 @@ tasks:
           MESSAGE: "✅ Build complete! Packages created in dist/"
       - ls -la dist/
 
-# === Development Workflow ===
-
   # === Quality Checks ===
   check:
     desc: Run all code quality checks including end-to-end tests
@@ -419,7 +416,6 @@ tasks:
       - task: test
 
   # === Build and Release ===
-
   make:
     desc: Complete build pipeline - run all checks, build, docs, and show version
     cmds:
@@ -549,7 +545,7 @@ tasks:
     cmds:
       - bash scripts/ci-local.sh
 
-  # === Development and Running ===
+  # === Running ===
   run:
     desc: Run the application
     cmds:
