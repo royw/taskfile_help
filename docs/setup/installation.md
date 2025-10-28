@@ -25,19 +25,24 @@ pip install .
 
 For development, install with dev dependencies:
 
+### Using uv
+
 ```bash
 git clone https://github.com/royw/taskfile-help.git
 cd taskfile-help
-uv sync --dev
+uv sync --dev  # creates .venv/ and installs dependencies
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-Or using pip:
+### Or using pip
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-## Verify Installation
+### Verify Installation
 
 Check that the installation was successful:
 

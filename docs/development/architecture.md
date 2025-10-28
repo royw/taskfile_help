@@ -52,8 +52,8 @@ Manages application configuration from multiple sources:
 
 Handles Taskfile discovery across search paths:
 
-- Finds main Taskfile (`Taskfile.yml` or `Taskfile.yaml`)
-- Finds namespace Taskfiles (`Taskfile-<namespace>.yml`)
+- Finds main Taskfile (matches `[Tt]askfile\.ya?ml`)
+- Finds namespace Taskfiles (matches `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`)
 - Searches multiple directories
 - Returns first match (priority-based)
 

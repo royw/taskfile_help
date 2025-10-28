@@ -12,11 +12,11 @@ taskfile-help
 taskfile-help main
 ```
 
-This displays all public tasks from `Taskfile.yml` or `Taskfile.yaml` in the current directory.
+This displays all public tasks from your main Taskfile (e.g., `Taskfile.yml`, `Taskfile.yaml`, `taskfile.yml`, or `taskfile.yaml`) in the current directory.
 
 ### Show Namespace Help
 
-If you have namespace-specific Taskfiles (e.g., `Taskfile-dev.yml`, `Taskfile-test.yml`):
+If you have namespace-specific Taskfiles (e.g., `Taskfile-dev.yml`, `Taskfile_test.yaml`, `taskfile-rag.yml`):
 
 ```bash
 taskfile-help dev

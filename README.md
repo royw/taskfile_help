@@ -49,7 +49,7 @@ tasks:
   build:
     desc: Build the project
     cmds: [...]
-  
+
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
@@ -74,14 +74,14 @@ version: '3'
 
 tasks:
   # ... main tasks ...
-  
+
   help:all:
     desc: Show all available tasks from all Taskfiles
     cmd: taskfile-help all --search-dirs .:./tasks
     silent: true
 ```
 
-Then in your namespace Taskfiles (e.g., `Taskfile-dev.yml` for development tasks):
+Then in your namespace Taskfiles (e.g., `Taskfile-dev.yml`, `Taskfile_test.yaml`, or `taskfile-rag.yml`):
 
 ```yaml
 version: '3'
@@ -91,11 +91,11 @@ tasks:
   lint:
     desc: Run linters
     cmds: [...]
-  
+
   test:
     desc: Run tests
     cmds: [...]
-  
+
   # === Help ===
   help:
     desc: Show development tasks
@@ -118,7 +118,7 @@ task dev:help   # Development tasks only
 ## Usage
 
 ```bash
-# Show help for main Taskfile.yml in current directory
+# Show help for main Taskfile in current directory
 taskfile_help.py
 taskfile_help.py main
 
@@ -180,9 +180,23 @@ Command-line arguments take precedence over pyproject.toml settings.
 
 ## File Naming Conventions
 
-- **Main Taskfile**: Taskfile.yml or Taskfile.yaml
-- **Namespace Taskfiles**: Taskfile-_namespace_.yml or Taskfile-_namespace_.yaml
-  - Examples: Taskfile-rag.yml, Taskfile-dev.yml, Taskfile-agent.yml
+### Main Taskfile
+
+Supported names (matches regex `[Tt]askfile\.ya?ml`):
+
+- `Taskfile.yml`, `Taskfile.yaml` (preferred)
+- `taskfile.yml`, `taskfile.yaml`
+
+### Namespace Taskfiles
+
+Supported patterns (matches regex `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`):
+
+- `Taskfile-<namespace>.yml`, `Taskfile-<namespace>.yaml` (preferred)
+- `Taskfile_<namespace>.yml`, `Taskfile_<namespace>.yaml`
+- `taskfile-<namespace>.yml`, `taskfile-<namespace>.yaml`
+- `taskfile_<namespace>.yml`, `taskfile_<namespace>.yaml`
+
+Examples: `Taskfile-dev.yml`, `Taskfile_test.yaml`, `taskfile-rag.yml`
 
 ## Search Behavior
 

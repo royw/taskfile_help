@@ -11,7 +11,7 @@ taskfile-help can be configured via command-line arguments or `pyproject.toml`.
 taskfile-help
 taskfile-help main
 
-# Show specific namespace (Taskfile[-_](?P<namespace>\w+)\.ya?ml)
+# Show specific namespace ([Tt]askfile[-_](?P<namespace>\w+)\.ya?ml)
 taskfile-help dev
 taskfile-help test
 taskfile-help rag
@@ -160,17 +160,25 @@ The main Taskfile can be named (case-sensitive, matches regex `[Tt]askfile\.ya?m
 
 ### Namespace Taskfiles
 
-Namespace Taskfiles follow the pattern:
+Namespace Taskfiles follow the pattern (case-sensitive, matches regex `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`):
 
 - `Taskfile-<namespace>.yml`
 - `Taskfile-<namespace>.yaml`
+- `Taskfile_<namespace>.yml`
+- `Taskfile_<namespace>.yaml`
+- `taskfile-<namespace>.yml`
+- `taskfile-<namespace>.yaml`
+- `taskfile_<namespace>.yml`
+- `taskfile_<namespace>.yaml`
+
+**Note**: Uppercase variants (`Taskfile*`) and hyphen separator (`-`) are preferred.
 
 Examples:
 
 - `Taskfile-dev.yml` → namespace: `dev`
-- `Taskfile-test.yaml` → namespace: `test`
-- `Taskfile-rag.yml` → namespace: `rag`
-- `Taskfile-agent.yml` → namespace: `agent`
+- `Taskfile_test.yaml` → namespace: `test`
+- `taskfile-rag.yml` → namespace: `rag`
+- `Taskfile_agent.yml` → namespace: `agent`
 
 ## Task Visibility Rules
 

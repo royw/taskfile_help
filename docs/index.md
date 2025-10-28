@@ -104,7 +104,7 @@ tasks:
     silent: true
 ```
 
-Then in your other Taskfiles typically included in namespaces in your main Taskfile (e.g., Taskfile-dev.yml for development tasks):
+Then in your namespace Taskfiles (e.g., `Taskfile-dev.yml`, `Taskfile_test.yaml`, or `taskfile-rag.yml`):
 
 ```yaml
 version: '3'
