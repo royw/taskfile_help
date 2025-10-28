@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive edge case testing for namespace discovery
 
 ### Changed
+- pre-release code cleanup and documentation improvements (7e07d8b)
+
 - reorganize version and release tasks with namespace support (1acb551)
 
 - add git hooks and CHANGELOG workflow to development guide (08dbce9)

@@ -1,5 +1,5 @@
-import re
 from pathlib import Path
+import re
 
 
 class TaskfileDiscovery:
@@ -13,10 +13,9 @@ class TaskfileDiscovery:
 
     # Main taskfile names (order matters - first match wins)
     MAIN_NAMES = ["Taskfile.yml", "Taskfile.yaml", "taskfile.yml", "taskfile.yaml"]
-    
-    # Regex pattern to match main taskfiles
-    MAIN_REGEX = re.compile(r"^[Tt]askfile\.ya?ml$")
-    
+
+    # Regex pattern to match main taskfiles (for reference): ^[Tt]askfile\.ya?ml$
+
     # Regex pattern to match namespace taskfiles and extract namespace
     NAMESPACE_REGEX = re.compile(r"^[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml$")
 
@@ -71,11 +70,11 @@ class TaskfileDiscovery:
         for search_dir in self.search_dirs:
             if not search_dir.exists():
                 continue
-                
+
             for path in search_dir.iterdir():
                 if not path.is_file():
                     continue
-                    
+
                 # Try to match the filename against the namespace pattern
                 match = self.NAMESPACE_REGEX.match(path.name)
                 if match:

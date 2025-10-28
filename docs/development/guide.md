@@ -89,7 +89,7 @@ git commit -m "docs: update installation guide"
 git commit -m "test: add edge case tests for discovery"
 ```
 
-See [.githooks/README.md](../../.githooks/README.md) for complete documentation.
+See [Git Hooks Documentation](../githooks.md) for complete documentation.
 
 ### Development Dependencies
 

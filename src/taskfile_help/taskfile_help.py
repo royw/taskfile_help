@@ -56,6 +56,67 @@ from .output import Colors, JsonOutputter, Outputter, TextOutputter
 from .parser import parse_taskfile
 
 
+def _show_verbose_output(config: Config, outputter: Outputter) -> None:
+    """Display verbose output showing search directories.
+
+    Args:
+        config: Configuration object containing args and discovery settings
+        outputter: Outputter instance for formatted output
+    """
+    if config.args.verbose and not config.args.json_output:
+        outputter.output_heading("Searching in directories:", output_fn=lambda msg: print(msg, file=sys.stderr))
+        for search_dir in config.discovery.search_dirs:
+            outputter.output_message(f"  {search_dir}", output_fn=lambda msg: print(msg, file=sys.stderr))
+        outputter.output_message("", output_fn=lambda msg: print(msg, file=sys.stderr))
+
+
+def _show_all_tasks(config: Config, outputter: Outputter) -> None:
+    """Display tasks from all taskfiles (main and all namespaces).
+
+    Collects tasks from the main taskfile and all namespace taskfiles,
+    then outputs them in a consolidated format.
+
+    Args:
+        config: Configuration object containing discovery settings
+        outputter: Outputter instance for formatted output
+    """
+    # Collect all tasks
+    taskfiles: list[tuple[str, list[tuple[str, str, str]]]] = []
+
+    main_taskfile = config.discovery.find_main_taskfile()
+    if main_taskfile:
+        tasks = parse_taskfile(main_taskfile, "", outputter)
+        taskfiles.append(("", tasks))
+
+    for ns, taskfile_path in config.discovery.get_all_namespace_taskfiles():
+        tasks = parse_taskfile(taskfile_path, ns, outputter)
+        taskfiles.append((ns, tasks))
+
+    outputter.output_all(taskfiles)
+
+
+def _show_namespace_not_found(config: Config, outputter: Outputter, namespace: str) -> None:
+    """Display error message when taskfile not found and suggest alternatives.
+
+    Shows which paths were tried and lists available namespaces to help
+    the user find the correct namespace.
+
+    Args:
+        config: Configuration object containing discovery settings
+        outputter: Outputter instance for formatted output
+        namespace: The namespace that was not found
+    """
+    possible_paths = config.discovery.get_possible_paths(namespace)
+    outputter.output_error(f"No Taskfile found for namespace '{namespace}'")
+    outputter.output_warning(f"Tried: {', '.join(str(p) for p in possible_paths)}")
+
+    # Suggest available namespaces
+    available_namespaces = config.discovery.get_all_namespace_taskfiles()
+    if available_namespaces:
+        namespace_names = [ns for ns, _ in available_namespaces]
+        outputter.output_message(f"\nAvailable namespaces: {', '.join(namespace_names)}")
+
+
 def main(argv: list[str] | None = None) -> int:
     """Main entry point.
 
@@ -77,29 +138,13 @@ def main(argv: list[str] | None = None) -> int:
         Colors.disable()
 
     # Show verbose output if requested
-    if config.args.verbose and not config.args.json_output:
-        outputter.output_heading("Searching in directories:", output_fn=lambda msg: print(msg, file=sys.stderr))
-        for search_dir in config.discovery.search_dirs:
-            outputter.output_message(f"  {search_dir}", output_fn=lambda msg: print(msg, file=sys.stderr))
-        outputter.output_message("", output_fn=lambda msg: print(msg, file=sys.stderr))
+    _show_verbose_output(config, outputter)
 
     namespace = config.namespace
 
     # Special case: 'all' namespace shows all Taskfiles
     if namespace == "all":
-        # Collect all tasks
-        taskfiles: list[tuple[str, list[tuple[str, str, str]]]] = []
-
-        main_taskfile = config.discovery.find_main_taskfile()
-        if main_taskfile:
-            tasks = parse_taskfile(main_taskfile, "", outputter)
-            taskfiles.append(("", tasks))
-
-        for ns, taskfile_path in config.discovery.get_all_namespace_taskfiles():
-            tasks = parse_taskfile(taskfile_path, ns, outputter)
-            taskfiles.append((ns, tasks))
-
-        outputter.output_all(taskfiles)
+        _show_all_tasks(config, outputter)
         return 0
 
     # Find the appropriate Taskfile
@@ -110,16 +155,7 @@ def main(argv: list[str] | None = None) -> int:
         taskfile = config.discovery.find_namespace_taskfile(namespace)
 
     if not taskfile:
-        possible_paths = config.discovery.get_possible_paths(namespace)
-        outputter.output_error(f"No Taskfile found for namespace '{namespace}'")
-        outputter.output_warning(f"Tried: {', '.join(str(p) for p in possible_paths)}")
-        
-        # Suggest available namespaces
-        available_namespaces = config.discovery.get_all_namespace_taskfiles()
-        if available_namespaces:
-            namespace_names = [ns for ns, _ in available_namespaces]
-            outputter.output_message(f"\nAvailable namespaces: {', '.join(namespace_names)}")
-        
+        _show_namespace_not_found(config, outputter, namespace)
         return 1
 
     # Parse and display tasks

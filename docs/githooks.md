@@ -113,13 +113,13 @@ git log -1 --stat
    ls -la .githooks/
    ```
 
-2. Verify git configuration:
+1. Verify git configuration:
 
    ```bash
    git config core.hooksPath
    ```
 
-3. Check for errors:
+1. Check for errors:
 
    ```bash
    # Run hook manually
@@ -129,9 +129,9 @@ git log -1 --stat
 ### CHANGELOG not updating
 
 1. Ensure CHANGELOG.md exists
-2. Verify `[Unreleased]` section exists
-3. Check that appropriate subsections exist (`### Added`, `### Fixed`, etc.)
-4. Use conventional commit format: `type: description`
+1. Verify `[Unreleased]` section exists
+1. Check that appropriate subsections exist (`### Added`, `### Fixed`, etc.)
+1. Use conventional commit format: `type: description`
 
 ## Hook Behavior
 
@@ -140,10 +140,10 @@ git log -1 --stat
 Runs **before** the commit is created:
 
 1. ✅ Validates commit message format
-2. ✅ Checks against allowed types
-3. ✅ Rejects invalid messages with helpful error
-4. ✅ Allows merge and revert commits
-5. ✅ Prevents commits with bad format
+1. ✅ Checks against allowed types
+1. ✅ Rejects invalid messages with helpful error
+1. ✅ Allows merge and revert commits
+1. ✅ Prevents commits with bad format
 
 **Example:**
 
@@ -162,11 +162,11 @@ git commit -m "feat: add new feature"
 Runs **after** the commit is created:
 
 1. ✅ Parses the commit message
-2. ✅ Determines the appropriate CHANGELOG section
-3. ✅ Adds an entry with commit hash
-4. ✅ Amends the commit to include CHANGELOG
-5. ✅ Prevents infinite loops
-6. ✅ Skips non-conventional commits
+1. ✅ Determines the appropriate CHANGELOG section
+1. ✅ Adds an entry with commit hash
+1. ✅ Amends the commit to include CHANGELOG
+1. ✅ Prevents infinite loops
+1. ✅ Skips non-conventional commits
 
 **Example:**
 

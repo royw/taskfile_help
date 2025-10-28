@@ -1,3 +1,5 @@
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 import re
 
@@ -62,6 +64,25 @@ def _save_task_if_valid(
         tasks.append((group, task_name, description))
 
 
+@contextmanager
+def taskfile_lines(filepath: Path, outputter: Outputter) -> Generator[list[str], None, None]:
+    """Context manager to read lines from a taskfile.
+
+    Args:
+        filepath: Path to the taskfile
+        outputter: Outputter instance for error messages
+
+    Yields:
+        List of lines from the file, or empty list on error
+    """
+    try:
+        with open(filepath, encoding="utf-8") as f:
+            yield f.readlines()
+    except (OSError, UnicodeDecodeError) as e:
+        outputter.output_error(f"Error reading {filepath}: {e}")
+        yield []
+
+
 def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list[tuple[str, str, str]]:
     """
     Parse a Taskfile and extract public tasks with their descriptions and groups.
@@ -86,51 +107,45 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
     is_internal = False
     in_tasks_section = False
 
-    try:
-        with open(filepath, encoding="utf-8") as f:
-            lines = f.readlines()
-    except (OSError, UnicodeDecodeError) as e:
-        outputter.output_error(f"Error reading {filepath}: {e}")
-        return []
-
-    for line in lines:
-        # Check if we're in the tasks section
-        if line.strip() == "tasks:":
-            in_tasks_section = True
-            continue
-
-        if not in_tasks_section:
-            continue
-
-        # Check for group marker
-        group_name = _extract_group_name(line)
-        if group_name:
-            _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
-            current_group = group_name
-            current_task = None
-            current_desc = None
-            is_internal = False
-            continue
-
-        # Check for task definition
-        task_name = _extract_task_name(line)
-        if task_name:
-            _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
-            current_task = task_name
-            current_desc = None
-            is_internal = False
-            continue
-
-        # If tracking a task, look for desc and internal flags
-        if current_task:
-            desc = _extract_description(line)
-            if desc:
-                current_desc = desc
+    with taskfile_lines(filepath, outputter) as lines:
+        for line in lines:
+            # Check if we're in the tasks section
+            if line.strip() == "tasks:":
+                in_tasks_section = True
                 continue
 
-            if _is_internal_task(line):
-                is_internal = True
+            if not in_tasks_section:
                 continue
+
+            # Check for group marker
+            group_name = _extract_group_name(line)
+            if group_name:
+                _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
+                current_group = group_name
+                current_task = None
+                current_desc = None
+                is_internal = False
+                continue
+
+            # Check for task definition
+            task_name = _extract_task_name(line)
+            if task_name:
+                _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
+                current_task = task_name
+                current_desc = None
+                is_internal = False
+                continue
+
+            # If tracking a task, look for desc and internal flags
+            if current_task:
+                desc = _extract_description(line)
+                if desc:
+                    current_desc = desc
+                    continue
+
+                if _is_internal_task(line):
+                    is_internal = True
+                    continue
 
     # Save the last task
     _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
