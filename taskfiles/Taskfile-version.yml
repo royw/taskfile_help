@@ -2,15 +2,6 @@ version: '3'
 
 tasks:
 
-  # === Internal Helpers ===
-
-  _output:
-    desc: Internal task to output messages silently
-    internal: true
-    cmds:
-      - cmd: echo "{{.MESSAGE}}"
-        silent: true
-
   # === Version Management ===
 
   default:
@@ -22,9 +13,8 @@ tasks:
   current:
     desc: Display the current project version (default task)
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "v$(task version:pyproject)"
+      - cmd: echo "v$(task version:pyproject)"
+        silent: true
 
   pyproject:
     desc: Extract version from pyproject.toml (internal task)
@@ -36,17 +26,14 @@ tasks:
     desc: Internal task to bump version (use version:bump, version:bump:minor, or version:bump:major)
     internal: true
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "📈 Bumping {{.LEVEL}} version..."
+      - cmd: echo "📈 Bumping {{.LEVEL}} version..."
+        silent: true
       - uv run version_bumper bump {{.LEVEL}}
-      - task: _output
-        vars:
-          MESSAGE: "✅ Version bumped! New version:"
+      - cmd: echo "✅ Version bumped! New version:"
+        silent: true
       - task: current
-      - task: _output
-        vars:
-          MESSAGE: "💡 Run 'task release' to prepare and build the release"
+      - cmd: echo "💡 Run 'task release' to prepare and build the release"
+        silent: true
     silent: true
 
   bump:

@@ -26,20 +26,13 @@ tasks:
      - task --list --sort none
     silent: true
 
-  _output:
-    # desc: Internal task to output messages silently
-    cmds:
-      - cmd: echo "{{.MESSAGE}}"
-        silent: true
-
   # === Setup and Environment ===
   
   env:check:
     desc: Verify development environment setup
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "Checking Prerequisite versions..."
+      - cmd: echo "Checking Prerequisite versions..."
+        silent: true
       - uv --version
       - uv run python --version
       - git --version
@@ -354,50 +347,25 @@ tasks:
     desc: Run all tests with detailed coverage reporting (XML, HTML, terminal)
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --cov=src/{{.APP_NAME}} --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
-      - task: _output
-        vars:
-          MESSAGE: "📊 Coverage report saved to htmlcov/index.html"
+      - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
+        silent: true
 
   # === Documentation ===
   docs:build:
     desc: Build documentation with MkDocs
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "📚 Building documentation..."
+      - cmd: echo "📚 Building documentation..."
+        silent: true
       - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
-      - task: _output
-        vars:
-          MESSAGE: "✅ Documentation built successfully in site/"
+      - cmd: echo "✅ Documentation built successfully in site/"
+        silent: true
 
   docs:serve:
     desc: Serve documentation locally for development
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🌍 Starting documentation server..."
+      - cmd: echo "🌍 Starting documentation server..."
+        silent: true
       - uv run mkdocs serve {{.CLI_ARGS}}
-
-  docs:
-    desc: Build and serve documentation locally
-    deps:
-      - docs:build
-      - docs:serve
-
-  # === Build Packages ===
-  build:
-    desc: Build distribution packages
-    deps:
-      - clean
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🏗️  Building distribution packages..."
-      - uv build {{.CLI_ARGS}}
-      - task: _output
-        vars:
-          MESSAGE: "✅ Build complete! Packages created in dist/"
-      - ls -la dist/
 
   # === Quality Checks ===
   check:
@@ -409,34 +377,43 @@ tasks:
       - task: test
 
   # === Build and Release ===
+  build:
+    desc: Build distribution packages
+    deps:
+      - clean
+    cmds:
+      - cmd: echo "🏗️  Building distribution packages..."
+        silent: true
+      - uv build {{.CLI_ARGS}}
+      - cmd: echo "✅ Build complete! Packages created in dist/"
+        silent: true
+      - ls -la dist/
+
   make:
     desc: Complete build pipeline - run all checks, build, docs, and show version
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🚀 Starting build pipeline..."
+      - cmd: echo "🚀 Starting build pipeline..."
+        silent: true
       - task: check
       - task: build
       - task: docs:build
       - task: version:current
-      - task: _output
-        vars:
-          MESSAGE: "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
+      - cmd: echo "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
+        silent: true
 
   release:
     desc: Prepare and build a release (run after version:bump)
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🔍 Verifying release readiness..."
+      - cmd: echo "🔍 Verifying release readiness..."
+        silent: true
       - |
         # Check for uncommitted changes
         if [ -n "$(git status --porcelain)" ]; then
-          task _output MESSAGE="❌ Error: There are uncommitted changes. Please commit or stash them first."
+          echo "❌ Error: There are uncommitted changes. Please commit or stash them first."
           git status --short
           exit 1
         fi
-        task _output MESSAGE="✅ Working directory is clean"
+        echo "✅ Working directory is clean"
       - |
         # Check if version has changed from last release
         CURRENT_VERSION=$(task version:pyproject)
@@ -444,39 +421,36 @@ tasks:
         LAST_VERSION=${LAST_TAG#v}
         
         if [ "$CURRENT_VERSION" = "$LAST_VERSION" ]; then
-          task _output MESSAGE="❌ Error: Version $CURRENT_VERSION matches last release $LAST_TAG"
-          task _output MESSAGE="💡 Run 'task version:bump' first to bump the version"
+          echo "❌ Error: Version $CURRENT_VERSION matches last release $LAST_TAG"
+          echo "💡 Run 'task version:bump' first to bump the version"
           exit 1
         fi
-        task _output MESSAGE="✅ Version changed: $LAST_VERSION → $CURRENT_VERSION"
+        echo "✅ Version changed: $LAST_VERSION → $CURRENT_VERSION"
       - |
         # Check CHANGELOG has unreleased content
         if ! grep -q "## \[Unreleased\]" CHANGELOG.md; then
-          task _output MESSAGE="❌ Error: No [Unreleased] section found in CHANGELOG.md"
+          echo "❌ Error: No [Unreleased] section found in CHANGELOG.md"
           exit 1
         fi
         
         if ! grep -A 5 "## \[Unreleased\]" CHANGELOG.md | grep -q "^- \|^### "; then
-          task _output MESSAGE="❌ Error: [Unreleased] section is empty"
-          task _output MESSAGE="💡 Commit your changes first to auto-update CHANGELOG"
+          echo "❌ Error: [Unreleased] section is empty"
+          echo "💡 Commit your changes first to auto-update CHANGELOG"
           exit 1
         fi
         
         # Show what will be released
-        task _output MESSAGE="📋 Changes to be released:"
+        echo "📋 Changes to be released:"
         echo "----------------------------------------"
         awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
         echo "----------------------------------------"
-      - task: _output
-        vars:
-          MESSAGE: "🧪 Running full test suite..."
+      - cmd: echo "🧪 Running full test suite..."
+        silent: true
       - task: make
-      - task: _output
-        vars:
-          MESSAGE: "✅ All tests passed!"
-      - task: _output
-        vars:
-          MESSAGE: "📝 Preparing CHANGELOG for release..."
+      - cmd: echo "✅ All tests passed!"
+        silent: true
+      - cmd: echo "📝 Preparing CHANGELOG for release..."
+        silent: true
       - |
         NEW_VERSION=$(task version:pyproject)
         TODAY=$(date +%Y-%m-%d)
@@ -486,45 +460,37 @@ tasks:
         sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n### Added\n\n### Changed\n\n### Fixed\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
         
         rm CHANGELOG.md.bak
-        task _output MESSAGE="✅ CHANGELOG.md prepared for v$NEW_VERSION"
-      - task: _output
-        vars:
-          MESSAGE: "📝 Committing release preparation..."
+        echo "✅ CHANGELOG.md prepared for v$NEW_VERSION"
+      - cmd: echo "📝 Committing release preparation..."
+        silent: true
       - |
         NEW_VERSION=$(task version:pyproject)
         git add pyproject.toml CHANGELOG.md
         git commit -m "chore: prepare release v$NEW_VERSION" --no-verify
-        task _output MESSAGE="✅ Committed release preparation for v$NEW_VERSION"
-      - task: _output
-        vars:
-          MESSAGE: "🏗️  Building release package..."
+        echo "✅ Committed release preparation for v$NEW_VERSION"
+      - cmd: echo "🏗️  Building release package..."
+        silent: true
       - task: build
-      - task: _output
-        vars:
-          MESSAGE: "✅ Release v$NEW_VERSION ready!"
-      - task: _output
-        vars:
-          MESSAGE: "📌 Next steps:"
-      - task: _output
-        vars:
-          MESSAGE: "   • Tag release: task release:tag"
-      - task: _output
-        vars:
-          MESSAGE: "   • Or continue development (changes will go to next release)"
+      - cmd: echo "✅ Release v$NEW_VERSION ready!"
+        silent: true
+      - cmd: 'echo "📌 Next steps:"'
+        silent: true
+      - cmd: 'echo "   • Tag release: task release:tag"'
+        silent: true
+      - cmd: 'echo "   • Or continue development (changes will go to next release)"'
+        silent: true
     silent: true
 
-  deploy:
-    desc: Deploy the built package locally with pipx
+  deploy:local:
+    desc: Install the built package locally using pipx
     deps:
       - build
     cmds:
-      - task: _output
-        vars:
-          MESSAGE: "🚀 Installing locally with pipx..."
+      - cmd: echo "🚀 Installing locally with pipx..."
+        silent: true
       - pipx install --force dist/*.whl
-      - task: _output
-        vars:
-          MESSAGE: "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
+      - cmd: echo "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
+        silent: true
 
   release:tag:
     desc: Create and push a git tag for the current version
@@ -533,10 +499,10 @@ tasks:
     cmds:
       - |
         VERSION=$(task version:pyproject)
-        task _output MESSAGE="Creating tag v$VERSION..."
+        echo "Creating tag v$VERSION..."
         git tag "v$VERSION"
         git push origin "v$VERSION"
-        task _output MESSAGE="✅ Tag v$VERSION created and pushed to origin!"
+        echo "✅ Tag v$VERSION created and pushed to origin!"
 
   # === CI/CD Pipeline ===
   ci:

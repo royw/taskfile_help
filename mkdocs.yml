@@ -1,8 +1,8 @@
 site_name: Taskfile Help
 site_description: Dynamic Taskfile help generator
-site_url: https://royw.github.io/taskfile-help
-repo_url: https://github.com/royw/taskfile-help
-repo_name: royw/taskfile-help
+site_url: https://royw.github.io/taskfile_help
+repo_url: https://github.com/royw/taskfile_help
+repo_name: royw/taskfile_help
 
 copyright: Copyright &copy; 2025 Roy Wright
 

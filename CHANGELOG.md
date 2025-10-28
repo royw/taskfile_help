@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- remove _output helper task and use direct echo commands (225c7ee)
 
 ### Fixed
 - correct VERSION variable scope in release:tag task (7f191e4)
