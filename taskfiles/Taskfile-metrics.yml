@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   SRC:
-    sh: cd .. && python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data.get('tool', {}).get('dev-metrics', {}).get('src-paths', 'src/'))"
+    sh: python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data.get('tool', {}).get('dev-metrics', {}).get('src-paths', 'src/'))"
 
 tasks:
 
