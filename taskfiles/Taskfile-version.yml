@@ -43,7 +43,7 @@ tasks:
       - task: _output
         vars:
           MESSAGE: "✅ Version bumped! New version:"
-      - task: version:current
+      - task: current
       - task: _output
         vars:
           MESSAGE: "💡 Run 'task release' to prepare and build the release"
