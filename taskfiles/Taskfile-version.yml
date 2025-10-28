@@ -5,13 +5,12 @@ tasks:
   # === Version Management ===
 
   default:
-    # desc: Display the current project version (default task)
     cmds:
       - task: current
     silent: true
 
   current:
-    desc: Display the current project version (default task)
+    desc: Display the current project version (default version task)
     cmds:
       - cmd: echo "v$(task version:pyproject)"
         silent: true

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- add default tasks to all namespace Taskfiles (8af0407)
 
 ### Changed
 - move metrics tasks to dedicated Taskfile-metrics.yml (7cc1d7d)

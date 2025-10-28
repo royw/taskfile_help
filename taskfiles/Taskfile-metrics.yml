@@ -6,10 +6,15 @@ vars:
 
 tasks:
 
+  default:
+    cmds:
+      - task: summary
+    silent: true
+
   # === Metrics ===
 
   summary:
-    desc: Display comprehensive project metrics summary (config in pyproject.toml)
+    desc: Display comprehensive project metrics summary, config in pyproject.toml (default metrics task)
     cmds:
       - uv run python scripts/dev-metrics.py
 

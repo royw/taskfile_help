@@ -2,6 +2,11 @@ version: '3'
 
 tasks:
 
+  default:
+    cmds:
+      - task: serve
+    silent: true
+
   # === Documentation ===
 
   build:
@@ -14,7 +19,7 @@ tasks:
         silent: true
 
   serve:
-    desc: Serve documentation locally for development
+    desc: Serve documentation locally for development (default docs task)
     cmds:
       - cmd: echo "🌍 Starting documentation server..."
         silent: true
