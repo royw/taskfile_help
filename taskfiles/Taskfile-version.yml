@@ -52,21 +52,21 @@ tasks:
   bump:
     desc: Bump the patch version in pyproject.toml
     cmds:
-      - task: version:_bumper
+      - task: _bumper
         vars:
           LEVEL: patch
 
   bump:minor:
     desc: Bump the minor version in pyproject.toml
     cmds:
-      - task: version:_bumper
+      - task: _bumper
         vars:
           LEVEL: minor
 
   bump:major:
     desc: Bump the major version in pyproject.toml
     cmds:
-      - task: version:_bumper
+      - task: _bumper
         vars:
           LEVEL: major
 
