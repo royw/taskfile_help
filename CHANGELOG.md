@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- move metrics tasks to dedicated Taskfile-metrics.yml (7cc1d7d)
 - move documentation tasks to dedicated Taskfile-docs.yml (fbe3058)
 - remove _output helper task and use direct echo commands (225c7ee)
 
