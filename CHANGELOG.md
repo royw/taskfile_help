@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- correct VERSION variable scope in release:tag task (7f191e4)
 
 ## [0.2.0] - 2025-10-28
 

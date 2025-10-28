@@ -531,16 +531,12 @@ tasks:
     deps:
       - version:current
     cmds:
-      - cmd:  VERSION=$(task version:pyproject)
-        silent: true
-      - task: _output
-        vars:
-          MESSAGE: "Creating tag v$VERSION..."
-      - cmd:  git tag "v$VERSION"
-      - cmd:  git push origin "v$VERSION"
-      - task: _output
-        vars:
-          MESSAGE: "✅ Tag v$VERSION created and pushed to origin!"
+      - |
+        VERSION=$(task version:pyproject)
+        task _output MESSAGE="Creating tag v$VERSION..."
+        git tag "v$VERSION"
+        git push origin "v$VERSION"
+        task _output MESSAGE="✅ Tag v$VERSION created and pushed to origin!"
 
   # === CI/CD Pipeline ===
   ci:
