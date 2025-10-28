@@ -27,8 +27,7 @@ tasks:
     silent: true
 
   _output:
-    desc: Internal task to output messages silently
-    internal: true
+    # desc: Internal task to output messages silently
     cmds:
       - cmd: echo "{{.MESSAGE}}"
         silent: true
