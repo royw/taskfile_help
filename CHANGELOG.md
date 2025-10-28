@@ -15,10 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive edge case testing for namespace discovery
 
 ### Changed
+- reorganize version and release tasks with namespace support (1acb551)
+
 - add git hooks and CHANGELOG workflow to development guide (08dbce9)
 
 - Refactored namespace taskfile discovery to use regex patterns
+
 - Updated all documentation to reflect complete taskfile naming support
+
 - Enhanced error messages to suggest available namespaces
 
 ### Fixed
@@ -55,25 +59,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 
 - **Namespace Support**: Organize tasks across multiple Taskfiles
+
   - Main Taskfile for core tasks
   - Namespace Taskfiles for specialized tasks (dev, test, deploy, etc.)
   - Cross-namespace task visibility
 
 - **Automatic Grouping**: Tasks are automatically grouped using comment markers
+
   - Preserves order as defined in Taskfile
   - Clear visual separation of task categories
 
 - **Smart Output**:
+
   - Colored output for terminals
   - Plain text for pipes and redirects
   - JSON format for programmatic use
 
 - **Flexible Discovery**:
+
   - Search in current directory by default
   - Multiple search directories supported
   - First match wins (priority-based)
 
 - **Task Visibility**:
+
   - Public tasks: Have `desc` field and no `internal: true`
   - Internal tasks: Marked with `internal: true` (hidden from help)
   - Tasks without descriptions are excluded
@@ -94,5 +103,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MkDocs documentation deployment
 - Status badges in README
 
-[Unreleased]: https://github.com/royw/taskfile-help/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/royw/taskfile-help/releases/tag/v0.1.0
+[unreleased]: https://github.com/royw/taskfile-help/compare/v0.1.0...HEAD

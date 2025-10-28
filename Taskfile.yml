@@ -4,6 +4,9 @@ includes:
   git:
     taskfile: ./taskfiles/Taskfile-git.yml
     dir: .
+  version:
+    taskfile: ./taskfiles/Taskfile-version.yml
+    dir: .
 
 vars:
   APP_NAME: taskfile_help
@@ -382,20 +385,6 @@ tasks:
       - docs:build
       - docs:serve
 
-  # === Version ===
-  version:pyproject:
-    desc: Extract version from pyproject.toml (internal task)
-    cmds:
-      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
-    silent: true
-
-  version:
-    desc: Display the current project version
-    cmds:
-      - task: _output
-        vars:
-          MESSAGE: "v$(task version:pyproject)"
-
   # === Build Packages ===
   build:
     desc: Build distribution packages
@@ -430,89 +419,99 @@ tasks:
       - task: check
       - task: build
       - task: docs:build
-      - task: version
+      - task: version:current
       - task: _output
         vars:
           MESSAGE: "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
 
-  version:bump:
-    desc: Bump the patch version, build, and commit changes
+  release:
+    desc: Prepare and build a release (run after version:bump)
     cmds:
       - task: _output
         vars:
-          MESSAGE: "🔍 Checking for uncommitted changes..."
+          MESSAGE: "🔍 Verifying release readiness..."
       - |
+        # Check for uncommitted changes
         if [ -n "$(git status --porcelain)" ]; then
           task _output MESSAGE="❌ Error: There are uncommitted changes. Please commit or stash them first."
           git status --short
           exit 1
-        else
-          task _output MESSAGE="✅ Working directory is clean"
         fi
-      - task: _output
-        vars:
-          MESSAGE: "📝 Checking CHANGELOG.md..."
+        task _output MESSAGE="✅ Working directory is clean"
       - |
-        # Check if there are unreleased changes in CHANGELOG
+        # Check if version has changed from last release
+        CURRENT_VERSION=$(task version:pyproject)
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        LAST_VERSION=${LAST_TAG#v}
+        
+        if [ "$CURRENT_VERSION" = "$LAST_VERSION" ]; then
+          task _output MESSAGE="❌ Error: Version $CURRENT_VERSION matches last release $LAST_TAG"
+          task _output MESSAGE="💡 Run 'task version:bump' first to bump the version"
+          exit 1
+        fi
+        task _output MESSAGE="✅ Version changed: $LAST_VERSION → $CURRENT_VERSION"
+      - |
+        # Check CHANGELOG has unreleased content
         if ! grep -q "## \[Unreleased\]" CHANGELOG.md; then
           task _output MESSAGE="❌ Error: No [Unreleased] section found in CHANGELOG.md"
           exit 1
         fi
         
-        # Show current unreleased section to user (limit to first 30 lines)
-        task _output MESSAGE="📋 Current [Unreleased] section:"
-        echo "----------------------------------------"
-        awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
-        echo "----------------------------------------"
-        
-        # Check if unreleased section has content
         if ! grep -A 5 "## \[Unreleased\]" CHANGELOG.md | grep -q "^- \|^### "; then
           task _output MESSAGE="❌ Error: [Unreleased] section is empty"
-          task _output MESSAGE="💡 Please add release notes to CHANGELOG.md before bumping version"
+          task _output MESSAGE="💡 Commit your changes first to auto-update CHANGELOG"
           exit 1
         fi
         
-        # Always ask user to confirm the changelog is complete
-        echo ""
-        printf "Is the CHANGELOG.md complete for this release? (y/N): "
-        read REPLY
-        case "$REPLY" in
-          [Yy]* ) task _output MESSAGE="✅ CHANGELOG.md confirmed ready for release";;
-          * ) task _output MESSAGE="❌ Aborted. Please update CHANGELOG.md and try again."; exit 1;;
-        esac
+        # Show what will be released
+        task _output MESSAGE="📋 Changes to be released:"
+        echo "----------------------------------------"
+        awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
+        echo "----------------------------------------"
       - task: _output
         vars:
-          MESSAGE: "📈 Bumping version..."
-      - uv run version_bumper bump patch
+          MESSAGE: "🧪 Running full test suite..."
+      - task: make
       - task: _output
         vars:
-          MESSAGE: "✅ Version bumped! New version:"
-      - task: version
+          MESSAGE: "✅ All tests passed!"
       - task: _output
         vars:
-          MESSAGE: "📝 Updating CHANGELOG.md..."
+          MESSAGE: "📝 Preparing CHANGELOG for release..."
       - |
         NEW_VERSION=$(task version:pyproject)
         TODAY=$(date +%Y-%m-%d)
         
-        # Replace [Unreleased] header with new version and add new [Unreleased] section
-        # This preserves all content under [Unreleased] and moves it to the new version
-        sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
+        # Move [Unreleased] content to new version section
+        # Add empty [Unreleased] section for future development
+        sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n### Added\n\n### Changed\n\n### Fixed\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
         
         rm CHANGELOG.md.bak
-        task _output MESSAGE="✅ Updated CHANGELOG.md with version $NEW_VERSION"
+        task _output MESSAGE="✅ CHANGELOG.md prepared for v$NEW_VERSION"
       - task: _output
         vars:
-          MESSAGE: "🏗️  Building package..."
-      - task: build
-      - task: _output
-        vars:
-          MESSAGE: "📝 Committing version bump and changelog..."
+          MESSAGE: "📝 Committing release preparation..."
       - |
         NEW_VERSION=$(task version:pyproject)
         git add pyproject.toml CHANGELOG.md
-        git commit -m "chore: bump version to v$NEW_VERSION"
-        task _output MESSAGE="✅ Committed version bump to v$NEW_VERSION"
+        git commit -m "chore: prepare release v$NEW_VERSION" --no-verify
+        task _output MESSAGE="✅ Committed release preparation for v$NEW_VERSION"
+      - task: _output
+        vars:
+          MESSAGE: "🏗️  Building release package..."
+      - task: build
+      - task: _output
+        vars:
+          MESSAGE: "✅ Release v$NEW_VERSION ready!"
+      - task: _output
+        vars:
+          MESSAGE: "📌 Next steps:"
+      - task: _output
+        vars:
+          MESSAGE: "   • Tag release: task release:tag"
+      - task: _output
+        vars:
+          MESSAGE: "   • Or continue development (changes will go to next release)"
     silent: true
 
   deploy:
@@ -528,10 +527,10 @@ tasks:
         vars:
           MESSAGE: "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
 
-  version:tag:
+  release:tag:
     desc: Create and push a git tag for the current version
     deps:
-      - version
+      - version:current
     cmds:
       - cmd:  VERSION=$(task version:pyproject)
         silent: true

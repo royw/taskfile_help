@@ -2,7 +2,8 @@
 
 ## Overview
 
-Add support for displaying task dependencies, showing which tasks depend on other tasks. Support multiple output formats and depth levels.
+Add support for displaying task dependencies, showing which tasks depend on other tasks. Support multiple
+output formats and depth levels.
 
 ## Requirements
 
@@ -50,7 +51,8 @@ Add support for displaying task dependencies, showing which tasks depend on othe
   - [ ] Indicate circular dependencies with `[CIRCULAR]`
 
 - [ ] Example output:
-  ```
+  
+  ```text
   deploy
   ├── build
   │   ├── lint
@@ -65,6 +67,7 @@ Add support for displaying task dependencies, showing which tasks depend on othe
 - [ ] Implement JSON formatter:
   - [ ] `format_json(task: str, graph: DependencyGraph, full: bool) -> dict`
   - [ ] Structure:
+
     ```json
     {
       "task": "deploy",
@@ -83,6 +86,7 @@ Add support for displaying task dependencies, showing which tasks depend on othe
       ]
     }
     ```
+
   - [ ] Include metadata: depth, circular flag
 
 ### Phase 5: Mermaid Output Format
@@ -95,6 +99,7 @@ Add support for displaying task dependencies, showing which tasks depend on othe
   - [ ] Support both LR (left-right) and TD (top-down) layouts
 
 - [ ] Example output:
+
   ```mermaid
   graph TD
     deploy --> build
@@ -181,7 +186,7 @@ Add support for displaying task dependencies, showing which tasks depend on othe
 
 ## Code Structure
 
-```
+```text
 src/taskfile_help/
 ├── dependencies.py       # NEW: Dependency graph logic
 ├── parser.py             # MODIFIED: Extract deps field
@@ -441,7 +446,7 @@ taskfile-help dev --dependencies test
 
 #### Text (Direct)
 
-```
+```text
 deploy
 ├── build
 ├── test
@@ -450,7 +455,7 @@ deploy
 
 #### Text (Full Graph)
 
-```
+```text
 deploy
 ├── build
 │   ├── lint

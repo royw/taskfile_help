@@ -1,0 +1,77 @@
+version: '3'
+
+tasks:
+
+  # === Internal Helpers ===
+
+  _output:
+    desc: Internal task to output messages silently
+    internal: true
+    cmds:
+      - cmd: echo "{{.MESSAGE}}"
+        silent: true
+
+  # === Version Management ===
+
+  default:
+    # desc: Display the current project version (default task)
+    cmds:
+      - task: current
+    silent: true
+
+  current:
+    desc: Display the current project version (default task)
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "v$(task version:pyproject)"
+
+  pyproject:
+    desc: Extract version from pyproject.toml (internal task)
+    cmds:
+      - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
+    silent: true
+
+  _bumper:
+    desc: Internal task to bump version (use version:bump, version:bump:minor, or version:bump:major)
+    internal: true
+    cmds:
+      - task: _output
+        vars:
+          MESSAGE: "📈 Bumping {{.LEVEL}} version..."
+      - uv run version_bumper bump {{.LEVEL}}
+      - task: _output
+        vars:
+          MESSAGE: "✅ Version bumped! New version:"
+      - task: version:current
+      - task: _output
+        vars:
+          MESSAGE: "💡 Run 'task release' to prepare and build the release"
+    silent: true
+
+  bump:
+    desc: Bump the patch version in pyproject.toml
+    cmds:
+      - task: version:_bumper
+        vars:
+          LEVEL: patch
+
+  bump:minor:
+    desc: Bump the minor version in pyproject.toml
+    cmds:
+      - task: version:_bumper
+        vars:
+          LEVEL: minor
+
+  bump:major:
+    desc: Bump the major version in pyproject.toml
+    cmds:
+      - task: version:_bumper
+        vars:
+          LEVEL: major
+
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help version
+    silent: true

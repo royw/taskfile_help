@@ -4,7 +4,7 @@ Comprehensive testing guide for taskfile-help.
 
 ## Test Structure
 
-```
+```text
 tests/
 ├── unit/                    # Unit tests
 │   ├── test_config.py

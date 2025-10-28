@@ -220,7 +220,7 @@ outputter.output_single(namespace, tasks)
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── unit/           # Unit tests
 │   ├── test_config.py

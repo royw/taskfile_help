@@ -2,7 +2,8 @@
 
 ## Overview
 
-Add YAML validation to ensure Taskfiles conform to Task version 3 specification. Validation runs automatically on every parse with warnings for issues but continues processing.
+Add YAML validation to ensure Taskfiles conform to Task version 3 specification. Validation runs automatically
+on every parse with warnings for issues but continues processing.
 
 ## Requirements
 
@@ -91,7 +92,7 @@ Add YAML validation to ensure Taskfiles conform to Task version 3 specification.
 
 ## Code Structure
 
-```
+```text
 src/taskfile_help/
 ├── validator.py          # NEW: Validation logic
 ├── parser.py             # MODIFIED: Integrate validation
@@ -209,6 +210,7 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
 ## Dependencies
 
 - Add to `pyproject.toml`:
+
   ```toml
   dependencies = [
       "pyyaml>=6.0",

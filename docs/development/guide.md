@@ -494,12 +494,78 @@ You can manually edit `CHANGELOG.md` when needed:
 
 ### Release Process
 
-When releasing a new version:
+The project uses a two-step release workflow:
 
-1. Move entries from `[Unreleased]` to a new version section
-2. Add the version number and date: `## [0.2.0] - 2025-10-28`
-3. Update version links at the bottom of the file
-4. Commit with: `chore: prepare release v0.2.0`
+#### Step 1: Bump Version
+
+```bash
+task version:bump
+```
+
+This increments the patch version in `pyproject.toml` and reminds you to run the release task.
+
+#### Step 2: Prepare Release
+
+```bash
+task release
+```
+
+This comprehensive task:
+
+1. **Verifies release readiness:**
+   - Checks for uncommitted changes
+   - Verifies version changed from last release
+   - Confirms CHANGELOG has unreleased content
+
+2. **Runs full test suite:**
+   - Executes `task make` (all checks, tests, build, docs)
+   - Ensures quality before release
+
+3. **Prepares release:**
+   - Moves `[Unreleased]` content to new version section
+   - Creates empty `[Unreleased]` section for next development
+   - Commits changes with `--no-verify`
+   - Builds release package
+
+4. **Shows next steps:**
+   - Tag release: `task release:tag`
+   - Or continue development
+
+#### Complete Release Workflow
+
+```bash
+# Development cycle - commits auto-update CHANGELOG
+git commit -m "feat: add new feature"
+git commit -m "fix: resolve bug"
+
+# Ready to release
+task version:bump    # 0.1.0 → 0.1.1
+task release         # Verify, test, prepare, build
+
+# Publish release (optional)
+task release:tag     # Create and push git tag
+
+# Or continue development for next release
+git commit -m "feat: next feature"  # Auto-updates CHANGELOG
+```
+
+#### Manual CHANGELOG Edits
+
+You can manually edit CHANGELOG.md before running `task release`:
+
+- Reorganize entries for clarity
+- Add breaking changes notes
+- Include migration guides
+- Polish descriptions
+
+#### Publishing to PyPI
+
+After running `task release:tag`, GitHub Actions will automatically:
+
+- Publish the package to PyPI
+- Create a GitHub release from the tag
+
+No manual publishing step required!
 
 ## Documentation
 
@@ -522,16 +588,6 @@ open http://127.0.0.1:8000
 - Include code examples
 - Add diagrams where helpful (Mermaid supported)
 - Keep language clear and concise
-
-## Release Process
-
-1. Run all tests: `task make`
-2. Update and commit CHANGELOG.md
-3. Update version in `task version:bump`
-4. Create git tag: `task tag`
-5. Push tag: `git push origin v0.2.0`
-6. Create GitHub release
-7. Publish to PyPI: `uv publish`
 
 ## Getting Help
 

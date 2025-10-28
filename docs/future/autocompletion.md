@@ -2,12 +2,13 @@
 
 ## Overview
 
-Add shell auto-completion support for taskfile-help, enabling tab completion for namespaces and task names across multiple shell environments.
+Add shell auto-completion support for taskfile-help, enabling tab completion for namespaces and task names
+across multiple shell environments.
 
 ## Requirements
 
 - **Shells supported**: bash, tcsh/csh, ksh, zsh, fish
-- **Completion targets**: 
+- **Completion targets**:
   - Namespaces (main, all, dev, test, etc.)
   - Task names within namespaces
   - Command-line flags (--no-color, --search-dirs, etc.)
@@ -136,7 +137,7 @@ Add shell auto-completion support for taskfile-help, enabling tab completion for
 
 ## Code Structure
 
-```
+```text
 src/taskfile_help/
 ├── completion.py         # NEW: Completion logic
 ├── taskfile_help.py      # MODIFIED: Add completion flags
@@ -372,7 +373,7 @@ def main(argv: list[str] | None = None) -> int:
 
 ## Installation Examples
 
-### Bash
+### Bash Example
 
 ```bash
 # Generate and install
@@ -383,7 +384,7 @@ taskfile-help --completion bash > ~/.bash_completion.d/taskfile-help
 echo 'source ~/.bash_completion.d/taskfile-help' >> ~/.bashrc
 ```
 
-### Zsh
+### Zsh Example
 
 ```bash
 # Generate and install
@@ -396,7 +397,7 @@ echo 'fpath=(~/.zsh/completion $fpath)' >> ~/.zshrc
 echo 'autoload -Uz compinit && compinit' >> ~/.zshrc
 ```
 
-### Fish
+### Fish Example
 
 ```bash
 # Generate and install
