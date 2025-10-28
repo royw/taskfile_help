@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add default tasks to all namespace Taskfiles (8af0407)
 
 ### Changed
+- add githooks.md to mkdocs navigation (bb1a7a3)
 - move metrics tasks to dedicated Taskfile-metrics.yml (7cc1d7d)
 - move documentation tasks to dedicated Taskfile-docs.yml (fbe3058)
 - remove _output helper task and use direct echo commands (225c7ee)
