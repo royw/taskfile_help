@@ -7,6 +7,9 @@ includes:
   version:
     taskfile: ./taskfiles/Taskfile-version.yml
     dir: .
+  docs:
+    taskfile: ./taskfiles/Taskfile-docs.yml
+    dir: .
 
 vars:
   APP_NAME: taskfile_help
@@ -349,23 +352,6 @@ tasks:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --cov=src/{{.APP_NAME}} --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
       - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
         silent: true
-
-  # === Documentation ===
-  docs:build:
-    desc: Build documentation with MkDocs
-    cmds:
-      - cmd: echo "📚 Building documentation..."
-        silent: true
-      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
-      - cmd: echo "✅ Documentation built successfully in site/"
-        silent: true
-
-  docs:serve:
-    desc: Serve documentation locally for development
-    cmds:
-      - cmd: echo "🌍 Starting documentation server..."
-        silent: true
-      - uv run mkdocs serve {{.CLI_ARGS}}
 
   # === Quality Checks ===
   check:
