@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [0.2.3] - 2025-10-29
+
+### Added
+
+### Changed
+
 - add summary fields to all public tasks in Taskfiles (3db875d)
 - improve Taskfile.yml vars configuration (5332a1c)
 - derive APP_NAME from pyproject.toml (d815a11)
