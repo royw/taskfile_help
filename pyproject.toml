@@ -14,7 +14,8 @@ dependencies = [
 authors = [
     { name = "Roy Wright", email = "roy@wright.org" }
 ]
-license = { text = "MIT" }
+license = "MIT"
+license-file = ["LICENSE"]
 keywords = ["taskfile", "task", "help", "cli", "yaml"]
 classifiers = [
     "Development Status :: 4 - Beta",
