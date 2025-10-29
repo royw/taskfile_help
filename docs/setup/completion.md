@@ -298,6 +298,6 @@ $ taskfile-help -<TAB>
 
 ## See Also
 
-- [Configuration](../setup/configuration.md) - Configure search directories
-- [Usage Guide](../usage/basic.md) - Learn how to use taskfile-help
+- [Configuration](configuration.md) - Configure search directories
+- [Quick Start](quickstart.md) - Learn how to use taskfile-help
 - [Development](../development/contributing.md) - Contribute to the project

@@ -15,7 +15,9 @@ tasks:
     cmds:
       - cmd: echo "📚 Building documentation..."
         silent: true
-      - uv run mkdocs build {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library" || true
+      - cmd: |
+          set -o pipefail
+          uv run mkdocs build --strict {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library"
       - cmd: echo "✅ Documentation built successfully in site/"
         silent: true
 

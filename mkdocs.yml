@@ -138,6 +138,7 @@ nav:
     - Installation: setup/installation.md
     - Quick Start: setup/quickstart.md
     - Configuration: setup/configuration.md
+    - Completion: setup/completion.md
   - Development:
     - Architecture: development/architecture.md
     - Development Guide: development/guide.md
