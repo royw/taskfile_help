@@ -111,7 +111,7 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
     with taskfile_lines(filepath, outputter) as lines:
         # Validate YAML structure
         validate_taskfile(lines, outputter)
-        
+
         for line in lines:
             # Check if we're in the tasks section
             if line.strip() == "tasks:":

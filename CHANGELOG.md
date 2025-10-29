@@ -8,22 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - add Taskfile validation with YAML structure checking (606a1fd)
+
 - add help tasks to all namespace Taskfiles (bd11cf3)
 
 - add default tasks to all namespace Taskfiles (8af0407)
 
 ### Changed
+
 - add comprehensive validation documentation (0977b87)
+
 - move environment tasks to dedicated Taskfile-env.yml (8f1dbad)
+
 - move release tasks to dedicated Taskfile-release.yml (59ced19)
+
 - move formatting tasks to dedicated Taskfile-format.yml (3401386)
 
 - move testing tasks to dedicated Taskfile-test.yml (21aef11)
+
 - move linting tasks to dedicated Taskfile-lint.yml (ecc2c61)
+
 - add githooks.md to mkdocs navigation (bb1a7a3)
+
 - move metrics tasks to dedicated Taskfile-metrics.yml (7cc1d7d)
+
 - move documentation tasks to dedicated Taskfile-docs.yml (fbe3058)
+
 - remove \_output helper task and use direct echo commands (225c7ee)
 
 ### Fixed
