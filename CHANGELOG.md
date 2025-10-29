@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [0.2.2] - 2025-10-29
+
+### Added
+
 - add shell autocompletion support (f0f898c)
 
 ### Changed
