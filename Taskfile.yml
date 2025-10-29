@@ -16,6 +16,9 @@ includes:
   lint:
     taskfile: ./taskfiles/Taskfile-lint.yml
     dir: .
+  test:
+    taskfile: ./taskfiles/Taskfile-test.yml
+    dir: .
 
 vars:
   APP_NAME: taskfile_help
@@ -106,53 +109,6 @@ tasks:
       - lint:fix:tests
     cmds:
       - uv run ruff format {{.CLI_ARGS | default .TESTS}}  # Format code
-
-  # === Testing ===
-  test:
-    desc: Run tests with pytest (sequential) with coverage
-    cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term-missing --cov-report=html {{.TEST_CORE}} {{.CLI_ARGS}}
-
-  test:unit:
-    desc: Run unit tests only with coverage
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-
-  test:functional:
-    desc: Run functional tests only with coverage
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-
-  test:integration:
-    desc: Run integration tests only with coverage
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-
-  test:e2e:
-    desc: Run end-to-end tests to validate core functionality (serially for test isolation) without coverage
-    cmds:
-      - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-
-  test:all:
-    desc: Run all tests against all Python versions without coverage
-    cmds:
-      - cmd: echo "🐍 Running tests against all Python versions..."
-        silent: true
-      - for:
-          var: PYTHON_VERSIONS
-          split: ' '
-        cmd: |
-          echo "📋 Testing with Python {{.ITEM}}"
-          bash -c 'set -o pipefail; uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
-      - cmd: echo "✅ All Python versions tested successfully!"
-        silent: true
-
-  test:coverage:
-    desc: Run all tests with detailed coverage reporting (XML, HTML, terminal)
-    cmds:
-      - uv run pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --cov=src/{{.APP_NAME}} --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
-      - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
-        silent: true
 
   # === Quality Checks ===
   check:
