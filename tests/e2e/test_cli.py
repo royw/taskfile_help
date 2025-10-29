@@ -429,3 +429,144 @@ tasks:
         captured = capsys.readouterr()
         assert "is not parseable" in captured.err
         assert "continuing..." in captured.err
+
+
+class TestCLICompletion:
+    """Test CLI completion functionality."""
+
+    def test_completion_bash(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --completion bash generates bash completion script."""
+        result = main(["taskfile-help", "--completion", "bash"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "_taskfile_help_completion()" in captured.out
+        assert "complete -F _taskfile_help_completion taskfile-help" in captured.out
+        assert "taskfile-help --complete" in captured.out
+
+    def test_completion_zsh(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --completion zsh generates zsh completion script."""
+        result = main(["taskfile-help", "--completion", "zsh"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "#compdef taskfile-help" in captured.out
+        assert "_taskfile_help()" in captured.out
+        assert "taskfile-help --complete" in captured.out
+
+    def test_completion_fish(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --completion fish generates fish completion script."""
+        result = main(["taskfile-help", "--completion", "fish"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "complete -c taskfile-help" in captured.out
+        assert "taskfile-help --complete" in captured.out
+
+    def test_completion_unknown_shell(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --completion with unknown shell returns error."""
+        result = main(["taskfile-help", "--completion", "powershell"])
+        
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Unknown shell" in captured.err
+
+    def test_complete_namespaces(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --complete returns available namespaces."""
+        # Create taskfiles
+        (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  build:\n    desc: Build\n")
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks:\n  serve:\n    desc: Serve\n")
+        (tmp_path / "Taskfile-test.yml").write_text("version: '3'\ntasks:\n  unit:\n    desc: Unit\n")
+        
+        monkeypatch.chdir(tmp_path)
+        
+        result = main(["taskfile-help", "--complete", ""])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "main" in captured.out
+        assert "all" in captured.out
+        assert "dev" in captured.out
+        assert "test" in captured.out
+
+    def test_complete_partial_namespace(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --complete with partial namespace."""
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\n")
+        (tmp_path / "Taskfile-deploy.yml").write_text("version: '3'\n")
+        (tmp_path / "Taskfile-test.yml").write_text("version: '3'\n")
+        
+        monkeypatch.chdir(tmp_path)
+        
+        result = main(["taskfile-help", "--complete", "de"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "dev" in captured.out
+        assert "deploy" in captured.out
+        assert "test" not in captured.out
+
+    def test_complete_task_names(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --complete with namespace:task format."""
+        (tmp_path / "Taskfile-dev.yml").write_text("""version: '3'
+tasks:
+  build:
+    desc: Build
+  test:
+    desc: Test
+  deploy:
+    desc: Deploy
+""")
+        
+        monkeypatch.chdir(tmp_path)
+        
+        result = main(["taskfile-help", "--complete", "dev:"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "dev:build" in captured.out
+        assert "dev:test" in captured.out
+        assert "dev:deploy" in captured.out
+
+    def test_complete_partial_task_name(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --complete with partial task name."""
+        (tmp_path / "Taskfile-dev.yml").write_text("""version: '3'
+tasks:
+  build:
+    desc: Build
+  build-all:
+    desc: Build all
+  test:
+    desc: Test
+""")
+        
+        monkeypatch.chdir(tmp_path)
+        
+        result = main(["taskfile-help", "--complete", "dev:build"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "dev:build" in captured.out
+        assert "dev:build-all" in captured.out
+        assert "dev:test" not in captured.out
+
+    def test_install_completion_bash(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --install-completion bash."""
+        with patch("pathlib.Path.home", return_value=tmp_path):
+            result = main(["taskfile-help", "--install-completion", "bash"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Completion script installed" in captured.out
+        assert ".bash_completion.d/taskfile-help" in captured.out
+        assert (tmp_path / ".bash_completion.d" / "taskfile-help").exists()
+
+    def test_install_completion_auto_detect(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --install-completion with auto-detection."""
+        with patch("pathlib.Path.home", return_value=tmp_path):
+            with patch.dict("os.environ", {"SHELL": "/bin/bash"}):
+                result = main(["taskfile-help", "--install-completion"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Completion script installed" in captured.out
+        assert (tmp_path / ".bash_completion.d" / "taskfile-help").exists()

@@ -38,6 +38,9 @@ class Args:
     search_dirs: list[Path] | None
     verbose: bool
     json_output: bool
+    completion: str | None
+    complete: str | None
+    install_completion: str | None
 
     @staticmethod
     def parse_args(argv: list[str]) -> "Args":
@@ -94,6 +97,32 @@ class Args:
             dest="json_output",
             help="Output tasks in JSON format",
         )
+        parser.add_argument(
+            "--completion",
+            type=str,
+            dest="completion",
+            default=None,
+            metavar="SHELL",
+            help="Generate completion script for specified shell (bash, zsh, fish, tcsh, ksh)",
+        )
+        parser.add_argument(
+            "--complete",
+            type=str,
+            dest="complete",
+            default=None,
+            metavar="WORD",
+            help=argparse.SUPPRESS,  # Hidden flag for shell completion callbacks
+        )
+        parser.add_argument(
+            "--install-completion",
+            type=str,
+            dest="install_completion",
+            default=None,
+            nargs="?",
+            const="auto",
+            metavar="SHELL",
+            help="Install completion script for specified shell (auto-detects if not specified)",
+        )
 
         parsed = parser.parse_args(argv[1:])
         return Args(
@@ -102,6 +131,9 @@ class Args:
             search_dirs=parsed.search_dirs,
             verbose=parsed.verbose,
             json_output=parsed.json_output,
+            completion=parsed.completion,
+            complete=parsed.complete,
+            install_completion=parsed.install_completion,
         )
 
 

@@ -165,7 +165,33 @@ taskfile_help.py rag --json
   relative to current working directory. (default: current working directory)
 - `-v, --verbose` - Show verbose output including search directories
 - `--json` - Output tasks in JSON format
+- `--completion SHELL` - Generate completion script for specified shell (bash, zsh, fish, tcsh, ksh)
+- `--install-completion [SHELL]` - Install completion script (auto-detects shell if not specified)
 - `-h, --help` - Show this help message and exit
+
+## Shell Completion
+
+`taskfile-help` supports tab completion for namespaces, task names, and command-line flags in multiple shells.
+
+### Quick Install
+
+```bash
+# Auto-detect shell and install
+taskfile-help --install-completion
+
+# Or specify shell explicitly
+taskfile-help --install-completion bash
+```
+
+### What Gets Completed
+
+- **Namespaces**: `taskfile-help <TAB>` shows all available namespaces
+- **Task names**: `taskfile-help test:<TAB>` shows tasks in the test namespace
+- **Flags**: `taskfile-help --<TAB>` shows all command-line options
+
+Completions are dynamic and automatically update when you add or remove Taskfiles.
+
+For detailed installation instructions and troubleshooting, see the [Shell Completion Documentation](https://royw.github.io/taskfile_help/setup/completion/).
 
 ## Configuration
 

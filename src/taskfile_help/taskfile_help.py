@@ -51,6 +51,15 @@ from __future__ import annotations
 
 import sys
 
+from .completion import (
+    generate_bash_completion,
+    generate_fish_completion,
+    generate_ksh_completion,
+    generate_tcsh_completion,
+    generate_zsh_completion,
+    get_completions,
+    install_completion,
+)
 from .config import Config
 from .output import Colors, JsonOutputter, Outputter, TextOutputter
 from .parser import parse_taskfile
@@ -129,6 +138,39 @@ def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv
     config = Config(argv)
+
+    # Handle completion script generation
+    if config.args.completion:
+        generators = {
+            "bash": generate_bash_completion,
+            "zsh": generate_zsh_completion,
+            "fish": generate_fish_completion,
+            "tcsh": generate_tcsh_completion,
+            "csh": generate_tcsh_completion,  # csh uses tcsh completion
+            "ksh": generate_ksh_completion,
+        }
+
+        shell = config.args.completion.lower()
+        if shell in generators:
+            print(generators[shell]())
+            return 0
+        else:
+            print(f"Error: Unknown shell '{config.args.completion}'", file=sys.stderr)
+            print("Supported shells: bash, zsh, fish, tcsh, csh, ksh", file=sys.stderr)
+            return 1
+
+    # Handle completion helper (for shell callbacks)
+    if config.args.complete is not None:
+        completions = get_completions(config.args.complete, config.discovery.search_dirs)
+        print("\n".join(completions))
+        return 0
+
+    # Handle completion installation
+    if config.args.install_completion is not None:
+        install_shell: str | None = None if config.args.install_completion == "auto" else config.args.install_completion
+        success, message = install_completion(install_shell)
+        print(message)
+        return 0 if success else 1
 
     # Select outputter based on format
     outputter: Outputter = JsonOutputter() if config.args.json_output else TextOutputter()
