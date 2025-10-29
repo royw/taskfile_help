@@ -30,7 +30,8 @@ includes:
     dir: .
 
 vars:
-  APP_NAME: taskfile_help
+  APP_NAME:
+    sh: python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['name'].replace('-', '_'))"
   SRC: src/
   TESTS: tests/
   # TESTS_CORE: tests/unit/ tests/functional/ tests/integration/ tests/e2e/
