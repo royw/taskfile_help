@@ -79,6 +79,14 @@ tasks:
       - cmd: echo "🏗️  Building release package..."
         silent: true
       - cmd: task build
+      - |
+        # Commit uv.lock if it was changed by the build
+        if [ -n "$(git status --porcelain uv.lock)" ]; then
+          NEW_VERSION=$(task version:pyproject)
+          git add uv.lock
+          git commit -m "chore: update uv.lock for v$NEW_VERSION" --no-verify
+          echo "✅ Committed updated uv.lock"
+        fi
       - cmd: echo "✅ Release v$NEW_VERSION ready!"
         silent: true
       - cmd: 'echo "📌 Next steps:"'
