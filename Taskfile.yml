@@ -25,6 +25,9 @@ includes:
   release:
     taskfile: ./taskfiles/Taskfile-release.yml
     dir: .
+  env:
+    taskfile: ./taskfiles/Taskfile-env.yml
+    dir: .
 
 vars:
   APP_NAME: taskfile_help
@@ -43,47 +46,6 @@ tasks:
     cmds:
      - task --list --sort none
     silent: true
-
-  # === Setup and Environment ===
-  
-  env:check:
-    desc: Verify development environment setup
-    cmds:
-      - cmd: echo "Checking Prerequisite versions..."
-        silent: true
-      - uv --version
-      - uv run python --version
-      - git --version
-      - pipx --version
-      - pymarkdownlnt version
-
-  install:
-    desc: Install project dependencies (first-time setup) into .venv/
-    deps:
-      - env:check
-      - sync
-
-  sync:
-    desc: Sync project dependencies with uv into .venv/
-    cmds:
-      - uv sync --group dev
-
-  resync:
-    desc: Resync project dependencies by first deleting .venv/ and then syncing with uv into .venv/
-    cmds:
-      - rm -rf .venv/
-      - task: sync
-
-  clean:
-    desc: Clean up generated files
-    cmds:
-      - find . -type d -name "__pycache__" -exec rm -rf {} +
-      - find . -type f -name "*.pyc" -delete
-      - rm -rf .mypy_cache/
-      - rm -rf .pytest_cache/
-      - rm -rf dist/
-      - rm -rf build/
-      - rm -rf site/
 
   # === Quality Checks ===
   check:

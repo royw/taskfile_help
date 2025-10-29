@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add default tasks to all namespace Taskfiles (8af0407)
 
 ### Changed
+- move environment tasks to dedicated Taskfile-env.yml (8f1dbad)
 - move release tasks to dedicated Taskfile-release.yml (59ced19)
 - move formatting tasks to dedicated Taskfile-format.yml (3401386)
 
