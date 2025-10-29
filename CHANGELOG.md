@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove \_output helper task and use direct echo commands (225c7ee)
 
 ### Fixed
+- call make task from root namespace in release:build (53b17ab)
 - update build task dependency to use env:clean namespace (723f68e)
 
 - remove incorrect cd .. from Taskfile-metrics.yml SRC variable (5c090fb)

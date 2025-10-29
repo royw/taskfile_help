@@ -54,7 +54,7 @@ tasks:
         echo "----------------------------------------"
       - cmd: echo "🧪 Running full test suite..."
         silent: true
-      - task: make
+      - cmd: task make
       - cmd: echo "✅ All tests passed!"
         silent: true
       - cmd: echo "📝 Preparing CHANGELOG for release..."
