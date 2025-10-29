@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- improve Taskfile.yml vars configuration (5332a1c)
 - derive APP_NAME from pyproject.toml (d815a11)
 
 ### Fixed

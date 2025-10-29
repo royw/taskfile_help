@@ -30,15 +30,40 @@ includes:
     dir: .
 
 vars:
+  # Application name derived from pyproject.toml (hyphens replaced with underscores for Python module name)
   APP_NAME:
     sh: python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['name'].replace('-', '_'))"
+  
+  # Source code directory
   SRC: src/
+  
+  # Root tests directory
   TESTS: tests/
-  # TESTS_CORE: tests/unit/ tests/functional/ tests/integration/ tests/e2e/
-  TESTS_CORE: tests/unit/ tests/e2e/
+  
+  # Test directories to include in normal test runs (excludes performance, benchmarks, etc.)
+  # Include directories here even if they don't exist yet (e.g., tests/integration/)
+  POSSIBLE_TEST_CORES: tests/unit/ tests/functional/ tests/integration/ tests/e2e/
+  
+  # Subset of POSSIBLE_TEST_CORES that actually exist on disk (auto-detected)
+  TESTS_CORE:
+    sh: |
+      possible="{{.POSSIBLE_TEST_CORES}}"
+      existing=""
+      for dir in $possible; do
+        if [ -d "$dir" ]; then
+          existing="$existing$dir "
+        fi
+      done
+      echo "$existing" | sed 's/[[:space:]]*$//'
+  
+  # Test timeout in seconds
   TEST_TIMEOUT: 30
+  
+  # All Python versions from .python-versions file (space-separated)
   PYTHON_VERSIONS:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
+  
+  # Current Python version from .python-version file
   PYTHON_VERSION:
     sh: cat .python-version | head -n1
 
