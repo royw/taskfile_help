@@ -60,7 +60,7 @@ tasks:
   build:
     desc: Build distribution packages
     deps:
-      - clean
+      - env:clean
     cmds:
       - cmd: echo "🏗️  Building distribution packages..."
         silent: true
