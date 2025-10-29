@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.2.1] - 2025-10-28
+
+### Added
+
 - add Taskfile validation with YAML structure checking (606a1fd)
 
 - add help tasks to all namespace Taskfiles (bd11cf3)
@@ -38,10 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove \_output helper task and use direct echo commands (225c7ee)
 
 ### Fixed
+
 - call make task from root namespace in release:build (53b17ab)
+
 - update build task dependency to use env:clean namespace (723f68e)
 
 - remove incorrect cd .. from Taskfile-metrics.yml SRC variable (5c090fb)
+
 - correct VERSION variable scope in release:tag task (7f191e4)
 
 ## [0.2.0] - 2025-10-28
