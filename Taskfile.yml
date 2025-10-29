@@ -76,6 +76,7 @@ tasks:
   # === Quality Checks ===
   check:
     desc: Run all code quality checks including end-to-end tests
+    summary: Runs formatting, linting, complexity checks, and all tests
     cmds:
       - task: format
       - task: lint
@@ -85,6 +86,7 @@ tasks:
   # === Build ===
   build:
     desc: Build distribution packages
+    summary: Creates wheel and source distribution packages in dist/
     deps:
       - env:clean
     cmds:
@@ -97,6 +99,7 @@ tasks:
 
   make:
     desc: Complete build pipeline - run all checks, build, docs, and show version
+    summary: Full CI/CD pipeline - quality checks, build packages, generate docs
     cmds:
       - cmd: echo "🚀 Starting build pipeline..."
         silent: true
@@ -110,12 +113,14 @@ tasks:
   # === CI/CD Pipeline ===
   ci:
     desc: Run GitHub CI build locally using scripts/ci-local.sh.  This is the same pipeline that runs on GitHub Actions.
+    summary: Simulates GitHub Actions CI pipeline locally for testing
     cmds:
       - bash scripts/ci-local.sh
 
     # === Deploy ===
   deploy:local:
     desc: Install the built package locally using pipx
+    summary: Builds and installs the package locally for testing
     deps:
       - build
     cmds:
@@ -128,6 +133,7 @@ tasks:
   # === Running ===
   run:
     desc: Run the application
+    summary: Executes the application with optional CLI arguments
     cmds:
       - uv run python -m {{.APP_NAME}} {{.CLI_ARGS}}
 
@@ -135,10 +141,12 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays tasks from the main Taskfile only
     cmd: taskfile-help
     silent: true  # Suppress task command echo
     
   help:all:
     desc: Show available tasks from all Taskfiles
+    summary: Displays tasks from all included Taskfiles (main, version, docs, etc.)
     cmd: taskfile-help all
     silent: true  # Suppress task command echo

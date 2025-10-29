@@ -11,18 +11,21 @@ tasks:
 
   all:
     desc: Format code with ruff (including import sorting) and format markdown files with mdformat (default format task)
+    summary: Formats both source code and markdown files
     deps:
       - task: src
       - task: markdown
 
   src:
     desc: Format source code with ruff (including import sorting)
+    summary: Fixes imports and formats Python code in src/
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}  # Fix import sorting
       - uv run ruff format {{.CLI_ARGS | default .SRC}}  # Format code
 
   markdown:
     desc: Format markdown files with mdformat
+    summary: Formats markdown files with consistent style
     cmds:
       - cmd: |
           if ! command -v mdformat &> /dev/null; then
@@ -34,6 +37,7 @@ tasks:
 
   tests:
     desc: Format tests with ruff (including import sorting)
+    summary: Fixes imports and formats Python code in tests/
     deps:
       - lint:fix:tests
     cmds:
@@ -42,5 +46,6 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays code formatting tasks
     cmd: taskfile-help format
     silent: true

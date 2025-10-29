@@ -11,6 +11,7 @@ tasks:
 
   build:
     desc: Prepare and build a release, run after version:bump (default release task)
+    summary: Validates readiness, runs tests, updates CHANGELOG, builds packages
     cmds:
       - cmd: echo "🔍 Verifying release readiness..."
         silent: true
@@ -99,6 +100,7 @@ tasks:
 
   tag:
     desc: Create and push a git tag for the current version
+    summary: Tags the current version and pushes to origin
     deps:
       - version:current
     cmds:
@@ -112,5 +114,6 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays release management tasks
     cmd: taskfile-help release
     silent: true

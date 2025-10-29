@@ -11,6 +11,7 @@ tasks:
 
   check:
     desc: Verify development environment setup (default env task)
+    summary: Checks versions of required tools (python3, uv, task)
     cmds:
       - cmd: echo "Checking Prerequisite versions..."
         silent: true
@@ -23,6 +24,7 @@ tasks:
 
   install:
     desc: Install project dependencies (first-time setup) into .venv/
+    summary: First-time setup - checks environment and syncs dependencies
     deps:
       - check
       - sync
@@ -30,12 +32,14 @@ tasks:
 
   sync:
     desc: Sync project dependencies with uv into .venv/
+    summary: Updates dependencies from pyproject.toml into .venv/
     cmds:
       - uv sync --group dev
     silent: true
 
   resync:
     desc: Resync project dependencies by first deleting .venv/ and then syncing with uv into .venv/
+    summary: Clean reinstall - removes .venv/ and syncs fresh
     cmds:
       - rm -rf .venv/
       - task: sync
@@ -43,6 +47,7 @@ tasks:
 
   clean:
     desc: Clean up generated files
+    summary: Removes __pycache__, .pyc, .pytest_cache, .ruff_cache, dist/
     cmds:
       - find . -type d -name "__pycache__" -exec rm -rf {} +
       - find . -type f -name "*.pyc" -delete
@@ -56,5 +61,6 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays environment setup and cleanup tasks
     cmd: taskfile-help env
     silent: true

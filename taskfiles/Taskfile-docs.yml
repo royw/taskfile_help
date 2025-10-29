@@ -11,6 +11,7 @@ tasks:
 
   build:
     desc: Build documentation with MkDocs
+    summary: Generates static documentation site in site/ directory
     cmds:
       - cmd: echo "📚 Building documentation..."
         silent: true
@@ -20,6 +21,7 @@ tasks:
 
   serve:
     desc: Serve documentation locally for development (default docs task)
+    summary: Starts local server with live reload at http://127.0.0.1:8000
     cmds:
       - cmd: echo "🌍 Starting documentation server..."
         silent: true
@@ -28,5 +30,6 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays documentation tasks
     cmd: taskfile-help docs
     silent: true

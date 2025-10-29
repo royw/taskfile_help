@@ -43,6 +43,7 @@ tasks:
 
   src:
     desc: Run all linting tasks on src/ (default lint task)
+    summary: Runs ruff, mypy, deadcode, and package checks on src/
     cmds:
       - task: fix
       - task: ruff
@@ -56,6 +57,7 @@ tasks:
 
   tests:
     desc: Run linting on core tests with ruff and check for hardcoded /tmp/ paths
+    summary: Runs ruff, mypy on tests/ and checks for /tmp/ usage
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS_CORE}}
       - uv run mypy {{.CLI_ARGS | default .TESTS_CORE}}
@@ -65,26 +67,31 @@ tasks:
 
   ruff:
     desc: Run linting with ruff
+    summary: Checks code style, imports, and common issues
     cmds:
       - uv run ruff check {{.CLI_ARGS | default .SRC}}
 
   mypy:
     desc: Run type checking with mypy
+    summary: Validates type hints and catches type errors
     cmds:
       - uv run mypy {{.CLI_ARGS | default .SRC}}
 
   fix:
     desc: Automatically fix linting issues in src/ with ruff
+    summary: Auto-fixes import sorting and safe issues in src/
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .SRC}}
 
   fix:tests:
     desc: Automatically fix linting issues in tests/ with ruff
+    summary: Auto-fixes import sorting and safe issues in tests/
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS}}
 
   markdown:
     desc: Lint markdown files with pymarkdownlnt
+    summary: Checks markdown formatting and style issues
     cmds:
       - cmd: |
           if ! command -v pymarkdownlnt &> /dev/null; then
@@ -95,6 +102,7 @@ tasks:
 
   deadcode:
     desc: Find dead (unreachable/unused) code with deadcode (config in pyproject.toml)
+    summary: Detects unused functions, classes, and imports
     cmds:
       - cmd: echo "Checking deadcode..."
         silent: true
@@ -103,6 +111,7 @@ tasks:
 
   packages:
     desc: Verify that __init__.py files only contain docstrings (no code)
+    summary: Ensures __init__.py files follow project conventions
     cmds:
       - cmd: |
           echo "Checking __init__.py files for code violations..."
@@ -161,6 +170,7 @@ tasks:
 
   duplication:
     desc: Check for duplicate code using pylint
+    summary: Finds similar code blocks that could be refactored
     cmds:
       - cmd: echo "Checking for code duplication..."
         silent: true
@@ -169,5 +179,6 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays linting and code quality tasks
     cmd: taskfile-help lint
     silent: true

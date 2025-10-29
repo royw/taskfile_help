@@ -11,31 +11,37 @@ tasks:
 
   sequential:
     desc: Run tests with pytest (sequential) with coverage (default test task)
+    summary: Runs all core tests (unit, functional, integration, e2e) with coverage reporting
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term-missing --cov-report=html {{.TEST_CORE}} {{.CLI_ARGS}}
 
   unit:
     desc: Run unit tests only with coverage
+    summary: Runs tests/unit/ with coverage, hiding 100% covered files
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/unit/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   functional:
     desc: Run functional tests only with coverage
+    summary: Runs tests/functional/ with coverage, hiding 100% covered files
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/functional/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   integration:
     desc: Run integration tests only with coverage
+    summary: Runs tests/integration/ with coverage, hiding 100% covered files
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} --cov=src/{{.APP_NAME}} --cov-report=term:skip-covered --cov-report=html tests/integration/ {{.CLI_ARGS}} 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   e2e:
     desc: Run end-to-end tests to validate core functionality (serially for test isolation) without coverage
+    summary: Runs tests/e2e/ with verbose output, no coverage
     cmds:
       - bash -c 'set -o pipefail; uv run pytest --timeout {{.TEST_TIMEOUT}} tests/e2e/ -v --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
 
   all:
     desc: Run all tests against all Python versions without coverage
+    summary: Tests against multiple Python versions using uv.  This rebuilds .venv for each Python version, restoring to the .python-version at the end.
     cmds:
       - cmd: echo "🐍 Running tests against all Python versions..."
         silent: true
@@ -45,11 +51,13 @@ tasks:
         cmd: |
           echo "📋 Testing with Python {{.ITEM}}"
           bash -c 'set -o pipefail; uv run --python {{.ITEM}} pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --tb=short --color=yes 2>&1 | grep -Pv "^src/\S+\s+\d+\s+\d+\s+\d+%$"'
+      - task: env:sync
       - cmd: echo "✅ All Python versions tested successfully!"
         silent: true
 
   coverage:
     desc: Run all tests with detailed coverage reporting (XML, HTML, terminal)
+    summary: Generates comprehensive coverage reports in multiple formats
     cmds:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --cov=src/{{.APP_NAME}} --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
       - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
@@ -58,5 +66,6 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays testing tasks
     cmd: taskfile-help test
     silent: true

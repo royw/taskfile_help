@@ -11,18 +11,21 @@ tasks:
 
   current:
     desc: Display the current project version (default version task)
+    summary: Shows the version from pyproject.toml with 'v' prefix
     cmds:
       - cmd: echo "v$(task version:pyproject)"
         silent: true
 
   pyproject:
     desc: Extract version from pyproject.toml (internal task)
+    summary: Returns raw version number without prefix
     cmds:
       - python3 -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); f.close(); print(data['project']['version'])"
     silent: true
 
   _bumper:
-    desc: Internal task to bump version (use version:bump, version:bump:minor, or version:bump:major)
+    desc: Internal task to bump version (used by version:bump, version:bump:minor, or version:bump:major)
+    summary: Validates clean git state, bumps version, commits changes
     internal: true
     cmds:
       - cmd: |
@@ -49,6 +52,7 @@ tasks:
 
   bump:
     desc: Bump the patch version in pyproject.toml
+    summary: Increments patch version (e.g., 1.2.3 → 1.2.4) and commits
     cmds:
       - task: _bumper
         vars:
@@ -56,6 +60,7 @@ tasks:
 
   bump:minor:
     desc: Bump the minor version in pyproject.toml
+    summary: Increments minor version (e.g., 1.2.3 → 1.3.0) and commits
     cmds:
       - task: _bumper
         vars:
@@ -63,6 +68,7 @@ tasks:
 
   bump:major:
     desc: Bump the major version in pyproject.toml
+    summary: Increments major version (e.g., 1.2.3 → 2.0.0) and commits
     cmds:
       - task: _bumper
         vars:
@@ -71,5 +77,6 @@ tasks:
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
+    summary: Displays version management tasks
     cmd: taskfile-help version
     silent: true
