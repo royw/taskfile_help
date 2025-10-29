@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [0.2.4] - 2025-10-29
+
+### Added
+
+### Changed
+
 - remove completed features from future plans (17c1d3e)
 - add completion documentation to navigation and enable strict mode (b50d574)
 
