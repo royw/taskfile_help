@@ -218,6 +218,99 @@ tasks:
       - echo "no description"
 ```
 
+## Validation
+
+taskfile-help automatically validates Taskfiles to ensure they conform to Task version 3 specification.
+
+### What is Validated
+
+Validation checks the following:
+
+1. **Version field**
+   - Must exist
+   - Must equal `'3'` (string, not number or other version)
+
+2. **Tasks section**
+   - Must exist
+   - Must be a dictionary
+
+3. **Task structure**
+   - Each task must be a dictionary
+   - Field type validation:
+     - `desc`: must be a string
+     - `internal`: must be a boolean (`true` or `false`)
+     - `cmds`: must be a list or string
+     - `deps`: must be a list
+
+### Validation Behavior
+
+- **Always enabled**: Validation runs automatically on every parse
+- **Non-fatal**: Warnings are displayed but processing continues
+- **Clear messages**: Explains what's wrong and where
+- **Fast**: Minimal performance impact (~1-2ms per file)
+
+### Example Warnings
+
+```bash
+$ taskfile-help
+Warning: Invalid version '2', expected '3'
+Warning: Task 'build': 'desc' must be a string, got int
+Warning: Task 'test': 'internal' must be a boolean, got str
+
+# Tasks are still shown despite warnings
+MAIN Task Commands:
+
+Build:
+  task build            - 123
+```
+
+### Common Issues
+
+#### Wrong Version
+
+```yaml
+# Wrong - number instead of string
+version: 3
+
+# Wrong - version 2
+version: '2'
+
+# Correct
+version: '3'
+```
+
+#### Invalid Task Fields
+
+```yaml
+tasks:
+  build:
+    # Wrong - desc must be a string
+    desc: 123
+    
+    # Wrong - internal must be boolean
+    internal: "yes"
+    
+    # Wrong - deps must be a list
+    deps: "clean"
+
+  # Correct
+  test:
+    desc: Run tests
+    internal: true
+    deps:
+      - build
+    cmds:
+      - pytest
+```
+
+### Stderr Output
+
+All validation warnings are written to stderr, so they won't interfere with:
+
+- JSON output (`--json`)
+- Piped commands (`taskfile-help | grep ...`)
+- Redirected output (`taskfile-help > file.txt`)
+
 ## Environment Variables
 
 taskfile-help respects standard terminal behavior:

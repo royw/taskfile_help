@@ -10,9 +10,11 @@ graph TD
     B --> C[Discovery]
     B --> D[Outputter]
     C --> E[Parser]
-    E --> F[Tasks]
-    F --> D
-    D --> G[Output]
+    E --> F[Validator]
+    F --> E
+    E --> G[Tasks]
+    G --> D
+    D --> H[Output]
 ```
 
 ## Components
@@ -66,10 +68,44 @@ Handles Taskfile discovery across search paths:
 - `get_all_namespace_taskfiles() -> list[tuple[str, Path]]`
 - `get_possible_paths(namespace: str) -> list[Path]`
 
-### 4. Parser (`parser.py`)
+### 4. Validator (`validator.py`)
+
+Validates Taskfile structure and content:
+
+- Parses YAML with `yaml.safe_load()`
+- Validates version field (must be '3')
+- Validates tasks section structure
+- Validates individual task fields
+- Reports warnings but allows processing to continue
+
+**Key Function**: `validate_taskfile(lines: list[str], outputter: Outputter) -> bool`
+
+**Returns**: `True` if valid, `False` if warnings were issued
+
+**Validation Checks**:
+
+- Root is a dictionary
+- Version field exists and equals `'3'` (string)
+- Tasks section exists and is a dictionary
+- Each task is a dictionary
+- Field type validation:
+  - `desc`: string
+  - `internal`: boolean
+  - `cmds`: list or string
+  - `deps`: list
+
+**Behavior**:
+
+- Always enabled (no opt-in required)
+- Non-fatal (warnings only)
+- Runs before line-by-line parsing
+- Minimal performance impact (~1-2ms per file)
+
+### 5. Parser (`parser.py`)
 
 Line-by-line Taskfile parser (not a full YAML parser):
 
+- Validates Taskfile structure first (calls validator)
 - Extracts task names and descriptions
 - Identifies group markers (`# === Group Name ===`)
 - Detects internal tasks (`internal: true`)
@@ -86,7 +122,7 @@ Line-by-line Taskfile parser (not a full YAML parser):
 - `_is_internal_task(line: str) -> bool`
 - `_save_task_if_valid(...) -> None`
 
-### 5. Output (`output.py`)
+### 6. Output (`output.py`)
 
 Handles output formatting with multiple strategies:
 

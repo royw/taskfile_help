@@ -233,6 +233,45 @@ The output preserves the order of groups and tasks as they appear in the file.
 - **Internal tasks**: Marked with 'internal: true' (excluded from help)
 - Tasks without descriptions are excluded from help output
 
+## Taskfile Validation
+
+taskfile-help automatically validates Taskfiles to ensure they conform to Task version 3 specification. Validation runs on every parse and produces helpful warnings for issues, but processing continues (non-fatal).
+
+### What is Validated
+
+- **Version field**: Must exist and equal `'3'` (string, not number)
+- **Tasks section**: Must exist and be a dictionary
+- **Task structure**: Each task must be a dictionary
+- **Field types**: Validates types for common fields:
+  - `desc`: must be a string
+  - `internal`: must be a boolean
+  - `cmds`: must be a list or string
+  - `deps`: must be a list
+
+### Example Warnings
+
+```bash
+$ taskfile-help
+Warning: Invalid version '2', expected '3'
+Warning: Task 'build': 'desc' must be a string, got int
+Warning: Task 'test': 'internal' must be a boolean, got str
+
+# Tasks are still shown despite warnings
+MAIN Task Commands:
+
+Build:
+  task build            - 123
+```
+
+### Validation Behavior
+
+- **Always enabled**: No opt-in flag required
+- **Non-fatal**: Warnings are displayed but processing continues
+- **Helpful**: Clear messages explain what's wrong and where
+- **Fast**: Minimal performance impact (~1-2ms per file)
+
+All warnings are written to stderr, so they won't interfere with JSON output or piped commands.
+
 ## Output Behavior
 
 - **Colors enabled**: When output is to a terminal (TTY) and --no-color is not specified

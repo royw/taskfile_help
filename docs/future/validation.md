@@ -72,17 +72,17 @@ on every parse with warnings for issues but continues processing.
 
 ### Phase 4: Documentation
 
-- [ ] Update `README.md`:
-  - [ ] Document validation behavior
-  - [ ] Show example warning messages
+- [x] Update `README.md`:
+  - [x] Document validation behavior
+  - [x] Show example warning messages
 
-- [ ] Update `docs/setup/configuration.md`:
-  - [ ] Add "Validation" section
-  - [ ] Explain version 3 requirement
+- [x] Update `docs/setup/configuration.md`:
+  - [x] Add "Validation" section
+  - [x] Explain version 3 requirement
 
-- [ ] Update `docs/development/architecture.md`:
-  - [ ] Document validator module
-  - [ ] Update validation section with implementation details
+- [x] Update `docs/development/architecture.md`:
+  - [x] Document validator module
+  - [x] Update validation section with implementation details
 
 ## Code Structure
 
