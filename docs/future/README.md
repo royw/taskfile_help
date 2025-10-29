@@ -4,34 +4,7 @@ This directory contains detailed implementation plans for future enhancements to
 
 ## Planned Features
 
-### 1. [Validation](validation.md)
-
-Validate Taskfile structure and ensure compliance with Task version 3 specification.
-
-- **Status**: Planned
-- **Priority**: High
-- **Effort**: Medium (1-2 weeks)
-- **Key Features**:
-  - Always-on YAML validation
-  - Version 3 requirement enforcement
-  - Non-fatal warnings with helpful messages
-  - Structure and type checking
-
-### 2. [Auto-completion](autocompletion.md)
-
-Shell auto-completion support for namespaces, task names, and flags.
-
-- **Status**: Planned
-- **Priority**: Medium
-- **Effort**: High (2-3 weeks)
-- **Key Features**:
-  - Support for bash, zsh, fish, tcsh/csh, ksh
-  - Dynamic namespace completion
-  - Task name completion
-  - Flag completion
-  - Easy installation
-
-### 3. [Dependencies](dependencies.md)
+### [Dependencies](dependencies.md)
 
 Display task dependency graphs with multiple output formats.
 
