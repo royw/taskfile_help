@@ -25,12 +25,24 @@ tasks:
     desc: Internal task to bump version (use version:bump, version:bump:minor, or version:bump:major)
     internal: true
     cmds:
+      - cmd: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "❌ Error: There are uncommitted changes. Please commit or stash them first."
+            exit 1
+          fi
+        silent: true
       - cmd: echo "📈 Bumping {{.LEVEL}} version..."
         silent: true
       - uv run version_bumper bump {{.LEVEL}}
       - cmd: echo "✅ Version bumped! New version:"
         silent: true
       - task: current
+      - cmd: |
+          NEW_VERSION=$(task version:pyproject)
+          git add pyproject.toml
+          git commit -m "chore: bump version to ${NEW_VERSION}"
+          echo "✅ Changes committed"
+        silent: true
       - cmd: echo "💡 Run 'task release' to prepare and build the release"
         silent: true
     silent: true
