@@ -17,66 +17,60 @@ on every parse with warnings for issues but continues processing.
 
 ### Phase 1: Core Validation
 
-- [ ] Add `pyyaml` dependency to `pyproject.toml`
-- [ ] Create `src/taskfile_help/validator.py` module
-- [ ] Implement `validate_taskfile(data: dict, filepath: Path, outputter: Outputter) -> bool`
-  - [ ] Check root is a dictionary
-  - [ ] Check `version` field exists
-  - [ ] Check `version` equals `'3'` (string comparison)
-  - [ ] Check `tasks` section exists
-  - [ ] Check `tasks` is a dictionary
-  - [ ] Return True if valid, False if warnings issued
+- [x] Add `pyyaml` dependency to `pyproject.toml` using `uv add pyyaml`
+- [x] Create `src/taskfile_help/validator.py` module
+- [x] Implement `validate_taskfile(lines: list[str], outputter: Outputter) -> bool`
+  - [x] Parse YAML with `yaml.safe_load()`
+  - [x] Check root is a dictionary
+  - [x] Check `version` field exists
+  - [x] Check `version` equals `'3'` (string comparison)
+  - [x] Check `tasks` section exists
+  - [x] Check `tasks` is a dictionary
+  - [x] Validate individual task structure:
+    - [ ] Task names are valid (alphanumeric, hyphens, underscores, colons)
+    - [x] Task values are dictionaries
+    - [x] `desc` field is a string (if present)
+    - [x] `internal` field is boolean (if present)
+    - [x] `cmds` field is list or string (if present)
+    - [x] `deps` field is list (if present)
+  - [x] Implement clear warning messages:
+    - [x] `Warning: {filepath} is not parseable: {reason}; continuing...`
+    - [x] `Warning: {filepath}: Missing 'version' field`
+    - [x] `Warning: {filepath}: Invalid version '{version}', expected '3'`
+    - [x] `Warning: {filepath}: Missing 'tasks' section`
+    - [x] `Warning: {filepath}: 'tasks' must be a dictionary, got {type}`
+    - [x] `Warning: {filepath}: Task '{task}' has invalid structure`
+  - [x] Handle `yaml.YAMLError` exceptions gracefully
+  - [x] Return True if valid, False if warnings issued
 
 ### Phase 2: Integration with Parser
 
-- [ ] Modify `parse_taskfile()` in `parser.py`:
-  - [ ] Read file content once
-  - [ ] Parse YAML with `yaml.safe_load()`
-  - [ ] Call `validate_taskfile()` before line-by-line parsing
-  - [ ] Continue with existing line-by-line logic regardless of validation result
-  - [ ] Handle `yaml.YAMLError` exceptions gracefully
+- [x] Modify `parse_taskfile()` in `parser.py`:
+  - [x] Read file content once into lines
+  - [x] Call `validate_taskfile(lines, outputter)` before line-by-line parsing
+  - [x] Continue with existing line-by-line logic regardless of validation result
 
-### Phase 3: Detailed Task Validation
+### Phase 3: Testing
 
-- [ ] Validate individual task structure:
-  - [ ] Task names are valid (alphanumeric, hyphens, underscores, colons)
-  - [ ] Task values are dictionaries
-  - [ ] `desc` field is a string (if present)
-  - [ ] `internal` field is boolean (if present)
-  - [ ] `cmds` field is list or string (if present)
-  - [ ] `deps` field is list (if present)
+- [x] Unit tests for `validator.py`:
+  - [x] Test valid Taskfile passes
+  - [x] Test missing version field
+  - [x] Test wrong version (e.g., '2', '3.0', 3)
+  - [x] Test missing tasks section
+  - [x] Test invalid tasks type (list, string, etc.)
+  - [x] Test invalid YAML syntax
+  - [x] Test malformed task definitions
 
-### Phase 4: Warning Messages
+- [x] Integration tests:
+  - [x] Test validation warnings appear in output
+  - [x] Test parsing continues after validation warnings
+  - [x] Test valid Taskfile produces no warnings
 
-- [ ] Implement clear warning messages:
-  - [ ] `Warning: {filepath} is not parseable: {reason}; continuing...`
-  - [ ] `Warning: {filepath}: Missing 'version' field`
-  - [ ] `Warning: {filepath}: Invalid version '{version}', expected '3'`
-  - [ ] `Warning: {filepath}: Missing 'tasks' section`
-  - [ ] `Warning: {filepath}: 'tasks' must be a dictionary, got {type}`
-  - [ ] `Warning: {filepath}: Task '{task}' has invalid structure`
+- [x] E2E tests:
+  - [x] Test CLI with invalid Taskfile shows warnings
+  - [x] Test CLI continues to show tasks despite warnings
 
-### Phase 5: Testing
-
-- [ ] Unit tests for `validator.py`:
-  - [ ] Test valid Taskfile passes
-  - [ ] Test missing version field
-  - [ ] Test wrong version (e.g., '2', '3.0', 3)
-  - [ ] Test missing tasks section
-  - [ ] Test invalid tasks type (list, string, etc.)
-  - [ ] Test invalid YAML syntax
-  - [ ] Test malformed task definitions
-
-- [ ] Integration tests:
-  - [ ] Test validation warnings appear in output
-  - [ ] Test parsing continues after validation warnings
-  - [ ] Test valid Taskfile produces no warnings
-
-- [ ] E2E tests:
-  - [ ] Test CLI with invalid Taskfile shows warnings
-  - [ ] Test CLI continues to show tasks despite warnings
-
-### Phase 6: Documentation
+### Phase 4: Documentation
 
 - [ ] Update `README.md`:
   - [ ] Document validation behavior
@@ -118,11 +112,11 @@ from typing import Any
 from .output import Outputter
 
 
-def validate_taskfile(data: Any, filepath: Path, outputter: Outputter) -> bool:
+def validate_taskfile(lines: list[str], filepath: Path, outputter: Outputter) -> bool:
     """Validate Taskfile structure.
     
     Args:
-        data: Parsed YAML data
+        lines: Lines from the Taskfile
         filepath: Path to Taskfile
         outputter: Output handler for warnings
         
@@ -130,6 +124,15 @@ def validate_taskfile(data: Any, filepath: Path, outputter: Outputter) -> bool:
         True if valid, False if warnings were issued
     """
     valid = True
+    
+    # Parse YAML
+    try:
+        data = yaml.safe_load(''.join(lines))
+    except yaml.YAMLError as e:
+        outputter.output_warning(
+            f"{filepath} is not parseable: {e}; continuing..."
+        )
+        return False
     
     # Check root is dictionary
     if not isinstance(data, dict):
@@ -182,22 +185,15 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
     # Read file
     try:
         with open(filepath, encoding="utf-8") as f:
-            content = f.read()
+            lines = f.readlines()
     except (OSError, UnicodeDecodeError) as e:
         outputter.output_error(f"Error reading {filepath}: {e}")
         return []
     
     # Validate YAML structure
-    try:
-        data = yaml.safe_load(content)
-        validate_taskfile(data, filepath, outputter)
-    except yaml.YAMLError as e:
-        outputter.output_warning(
-            f"{filepath} is not parseable: {e}; continuing..."
-        )
+    validate_taskfile(lines, filepath, outputter)
     
     # Continue with line-by-line parsing (existing logic)
-    lines = content.splitlines(keepends=True)
     # ... rest of existing implementation
 ```
 

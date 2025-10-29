@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- add Taskfile validation with YAML structure checking (606a1fd)
 - add help tasks to all namespace Taskfiles (bd11cf3)
 
 - add default tasks to all namespace Taskfiles (8af0407)

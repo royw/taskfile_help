@@ -56,7 +56,7 @@ tasks:
       - task: metrics:complexity
       - task: test
 
-  # === Build and Release ===
+  # === Build ===
   build:
     desc: Build distribution packages
     deps:
@@ -81,6 +81,13 @@ tasks:
       - cmd: echo "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
         silent: true
 
+  # === CI/CD Pipeline ===
+  ci:
+    desc: Run GitHub CI build locally using scripts/ci-local.sh.  This is the same pipeline that runs on GitHub Actions.
+    cmds:
+      - bash scripts/ci-local.sh
+
+    # === Deploy ===
   deploy:local:
     desc: Install the built package locally using pipx
     deps:
@@ -92,17 +99,12 @@ tasks:
       - cmd: echo "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
         silent: true
 
-  # === CI/CD Pipeline ===
-  ci:
-    desc: Run GitHub CI build locally using scripts/ci-local.sh.  This is the same pipeline that runs on GitHub Actions.
-    cmds:
-      - bash scripts/ci-local.sh
-
   # === Running ===
   run:
     desc: Run the application
     cmds:
       - uv run python -m {{.APP_NAME}} {{.CLI_ARGS}}
+
 
   # === Help ===
   help:

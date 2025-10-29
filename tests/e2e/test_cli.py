@@ -311,3 +311,121 @@ tasks:
             result = main(["taskfile-help"])
         
         assert result == 1
+
+
+class TestCLIValidation:
+    """Test CLI validation warnings."""
+
+    def test_invalid_version_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
+        """Test that invalid version shows warning but continues."""
+        taskfile = tmp_path / "Taskfile.yml"
+        taskfile.write_text("""version: '2'
+
+tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help"])
+        
+        assert result == 0  # Should still succeed
+        captured = capsys.readouterr()
+        assert "Invalid version '2', expected '3'" in captured.err
+        assert "build" in captured.out  # Task should still be shown
+
+    def test_missing_version_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
+        """Test that missing version shows warning but continues."""
+        taskfile = tmp_path / "Taskfile.yml"
+        taskfile.write_text("""tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help"])
+        
+        assert result == 0  # Should still succeed
+        captured = capsys.readouterr()
+        assert "Missing 'version' field" in captured.err
+        assert "build" in captured.out  # Task should still be shown
+
+    def test_invalid_task_structure_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
+        """Test that invalid task structure shows warning but continues."""
+        taskfile = tmp_path / "Taskfile.yml"
+        taskfile.write_text("""version: '3'
+
+tasks:
+  build:
+    desc: 123
+    internal: "not a boolean"
+    cmds:
+      - echo "Building..."
+  test: "should be a dict"
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help"])
+        
+        assert result == 0  # Should still succeed
+        captured = capsys.readouterr()
+        assert "Task 'build': 'desc' must be a string, got int" in captured.err
+        assert "Task 'build': 'internal' must be a boolean, got str" in captured.err
+        assert "Task 'test' must be a dictionary" in captured.err
+        assert "build" in captured.out  # Valid task should still be shown
+
+    def test_valid_taskfile_no_warnings(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
+        """Test that valid Taskfile produces no validation warnings."""
+        taskfile = tmp_path / "Taskfile.yml"
+        taskfile.write_text("""version: '3'
+
+tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+  test:
+    desc: Run tests
+    internal: true
+    deps:
+      - build
+    cmds:
+      - echo "Testing..."
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Warning:" not in captured.err
+        assert "build" in captured.out
+        assert "test" not in captured.out  # Internal task should not be shown
+
+    def test_invalid_yaml_syntax_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
+        """Test that invalid YAML syntax shows warning."""
+        taskfile = tmp_path / "Taskfile.yml"
+        taskfile.write_text("""version: '3'
+tasks:
+  build:
+    desc: Build
+  invalid indentation
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help"])
+        
+        # Should still succeed (non-fatal)
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "is not parseable" in captured.err
+        assert "continuing..." in captured.err

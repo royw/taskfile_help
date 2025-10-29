@@ -8,7 +8,9 @@ version = "0.2.0"
 description = "Dynamic Taskfile help generator with automatic grouping and namespace support"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0.3",
+]
 authors = [
     { name = "Roy Wright", email = "roy@wright.org" }
 ]

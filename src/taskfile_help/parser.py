@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 
 from taskfile_help.output import Outputter
+from taskfile_help.validator import validate_taskfile
 
 
 # Compiled regex patterns for better performance
@@ -108,6 +109,9 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
     in_tasks_section = False
 
     with taskfile_lines(filepath, outputter) as lines:
+        # Validate YAML structure
+        validate_taskfile(lines, outputter)
+        
         for line in lines:
             # Check if we're in the tasks section
             if line.strip() == "tasks:":
