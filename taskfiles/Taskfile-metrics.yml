@@ -61,3 +61,9 @@ tasks:
             fi
           fi
         silent: true
+
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help metrics
+    silent: true

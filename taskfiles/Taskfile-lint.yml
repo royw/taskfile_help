@@ -165,3 +165,9 @@ tasks:
       - cmd: echo "Checking for code duplication..."
         silent: true
       - uv run pylint --disable=all --enable=duplicate-code {{.CLI_ARGS | default .SRC}}
+
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help lint
+    silent: true

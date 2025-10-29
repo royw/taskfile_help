@@ -54,3 +54,9 @@ tasks:
       - uv run pytest --timeout {{.TEST_TIMEOUT}} {{.TEST_CORE}} --cov=src/{{.APP_NAME}} --cov-report=xml --cov-report=term-missing --cov-report=html:htmlcov
       - cmd: echo "📊 Coverage report saved to htmlcov/index.html"
         silent: true
+
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help test
+    silent: true

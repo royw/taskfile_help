@@ -24,3 +24,9 @@ tasks:
       - cmd: echo "🌍 Starting documentation server..."
         silent: true
       - uv run mkdocs serve {{.CLI_ARGS}}
+
+  # === Help ===
+  help:
+    desc: Show available tasks from this Taskfile
+    cmd: taskfile-help docs
+    silent: true
