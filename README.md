@@ -113,7 +113,7 @@ task dev:help   # Development tasks only
 
 ### Example Output
 
-![task help](docs/images/task_help.png)
+![task help](https://raw.githubusercontent.com/royw/taskfile_help/master/docs/images/task_help.png)
 
 ## Usage
 

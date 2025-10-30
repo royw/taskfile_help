@@ -41,16 +41,7 @@ taskfile-help all
 
 ## Example Output
 
-```text
-=== Build ===
-  build         Build the project
-  compile       Compile sources
-
-=== Testing ===
-  test          Run tests
-  test:unit     Run unit tests only
-  test:e2e      Run end-to-end tests
-```
+![task help](images/task_help.png)
 
 ## Why Taskfile Help?
 
