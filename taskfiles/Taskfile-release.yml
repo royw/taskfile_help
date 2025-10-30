@@ -111,6 +111,26 @@ tasks:
         git push origin "v$VERSION"
         echo "✅ Tag v$VERSION created and pushed to origin!"
 
+  pypi-test:
+    desc: Test PyPI upload
+    summary: Uploads the package to PyPI for testing
+    cmds:
+      - cmd: echo "Uploading package to PyPI for testing..."
+        silent: true
+      - cmd: twine upload --repository testpypi dist/*
+      - cmd: echo "✅ Package uploaded to PyPI for testing!"
+        silent: true
+
+  pypi:
+    desc: PyPI upload
+    summary: Uploads the package to PyPI
+    cmds:
+      - cmd: echo "Uploading package to PyPI..."
+        silent: true
+      - cmd: twine upload dist/*
+      - cmd: echo "✅ Package uploaded to PyPI!"
+        silent: true
+
   # === Help ===
   help:
     desc: Show available tasks from this Taskfile
