@@ -8,9 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [0.2.5] - 2025-10-30
+
+### Added
+
 - add release:pypi and release:pypi-test tasks (3ba9b39)
 
 ### Changed
+
 - use absolute image URLs for PyPI compatibility (34ceea0)
 
 ### Fixed
