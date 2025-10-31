@@ -284,6 +284,22 @@ tasks:
         
         assert result == 0
 
+    def test_question_mark_lists_namespaces(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test '?' namespace lists available namespaces."""
+        monkeypatch.chdir(taskfiles_dir)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help", "?"])
+        
+        assert result == 0
+        
+        captured = capsys.readouterr()
+        output = captured.out + captured.err
+        # Should list available namespaces
+        assert "Available namespaces:" in output
+        assert "dev" in output
+        assert "test" in output
+
     def test_nonexistent_namespace(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test error when requesting nonexistent namespace."""
         monkeypatch.chdir(taskfiles_dir)
