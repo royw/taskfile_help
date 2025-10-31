@@ -24,10 +24,3 @@ tasks:
     summary: Runs post-commit hook to verify CHANGELOG updates
     cmds:
       - .githooks/post-commit
-
-  # === Help ===
-  help:
-    desc: Show available tasks from this Taskfile
-    summary: Displays git hook management tasks
-    cmd: taskfile-help git
-    silent: true  # Suppress task command echo

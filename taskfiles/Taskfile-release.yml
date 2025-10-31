@@ -130,10 +130,3 @@ tasks:
       - cmd: twine upload dist/*
       - cmd: echo "✅ Package uploaded to PyPI!"
         silent: true
-
-  # === Help ===
-  help:
-    desc: Show available tasks from this Taskfile
-    summary: Displays release management tasks
-    cmd: taskfile-help release
-    silent: true

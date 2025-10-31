@@ -42,10 +42,3 @@ tasks:
       - lint:fix:tests
     cmds:
       - uv run ruff format {{.CLI_ARGS | default .TESTS}}  # Format code
-
-  # === Help ===
-  help:
-    desc: Show available tasks from this Taskfile
-    summary: Displays code formatting tasks
-    cmd: taskfile-help format
-    silent: true

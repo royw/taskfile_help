@@ -57,10 +57,3 @@ tasks:
       - rm -rf build/
       - rm -rf site/
     silent: true
-
-  # === Help ===
-  help:
-    desc: Show available tasks from this Taskfile
-    summary: Displays environment setup and cleanup tasks
-    cmd: taskfile-help env
-    silent: true

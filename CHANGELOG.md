@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- implement wildcard help task pattern to simplify multi-Taskfile setup (549f317)
 
 ### Changed
 - update documentation to reflect wildcard help task pattern (ace6be7)

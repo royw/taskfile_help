@@ -73,10 +73,3 @@ tasks:
       - task: _bumper
         vars:
           LEVEL: major
-
-  # === Help ===
-  help:
-    desc: Show available tasks from this Taskfile
-    summary: Displays version management tasks
-    cmd: taskfile-help version
-    silent: true

@@ -140,13 +140,19 @@ tasks:
 
   # === Help ===
   help:
-    desc: Show available tasks from this Taskfile
-    summary: Displays tasks from the main Taskfile only
-    cmd: taskfile-help
-    silent: true  # Suppress task command echo
-    
-  help:all:
     desc: Show available tasks from all Taskfiles
     summary: Displays tasks from all included Taskfiles (main, version, docs, etc.)
-    cmd: taskfile-help all
+    cmd: taskfile-help main
+    silent: true  # Suppress task command echo
+
+  help:*:
+    desc: Show available tasks for the given namespace
+    summary: |
+      Displays tasks from for the given namespace or all Taskfiles if "all" is specified or list available namespaces if "?" is specified
+      help:<namespace>    - Displays tasks from the given namespace
+      help:all            - Displays tasks from all Taskfiles
+      help:?              - Lists available namespaces
+    vars:
+      NAMESPACE: '{{index .MATCH 0}}'
+    cmd: taskfile-help {{.NAMESPACE}}
     silent: true  # Suppress task command echo

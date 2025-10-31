@@ -104,6 +104,14 @@ def _show_all_tasks(config: Config, outputter: Outputter) -> None:
     outputter.output_all(taskfiles)
 
 
+def _show_available_namespaces(config: Config, outputter: Outputter) -> None:
+    # Suggest available namespaces
+    available_namespaces = config.discovery.get_all_namespace_taskfiles()
+    if available_namespaces:
+        namespace_names = [ns for ns, _ in available_namespaces]
+        outputter.output_message(f"\nAvailable namespaces: {', '.join(namespace_names)}")
+
+
 def _show_namespace_not_found(config: Config, outputter: Outputter, namespace: str) -> None:
     """Display error message when taskfile not found and suggest alternatives.
 
@@ -119,11 +127,7 @@ def _show_namespace_not_found(config: Config, outputter: Outputter, namespace: s
     outputter.output_error(f"No Taskfile found for namespace '{namespace}'")
     outputter.output_warning(f"Tried: {', '.join(str(p) for p in possible_paths)}")
 
-    # Suggest available namespaces
-    available_namespaces = config.discovery.get_all_namespace_taskfiles()
-    if available_namespaces:
-        namespace_names = [ns for ns, _ in available_namespaces]
-        outputter.output_message(f"\nAvailable namespaces: {', '.join(namespace_names)}")
+    _show_available_namespaces(config, outputter)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -197,8 +201,12 @@ def main(argv: list[str] | None = None) -> int:
         taskfile = config.discovery.find_namespace_taskfile(namespace)
 
     if not taskfile:
-        _show_namespace_not_found(config, outputter, namespace)
-        return 1
+        if namespace == "?":
+            _show_available_namespaces(config, outputter)
+            return 0
+        else:
+            _show_namespace_not_found(config, outputter, namespace)
+            return 1
 
     # Parse and display tasks
     tasks = parse_taskfile(taskfile, namespace, outputter)
