@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import argparse
-import sys
-import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+import sys
+import tomllib
 from typing import Any
 
 from .discovery import TaskfileDiscovery
@@ -115,7 +115,7 @@ class Args:
         )
 
     @staticmethod
-    def parse_args(argv: list[str]) -> "Args":
+    def parse_args(argv: list[str]) -> Args:
         """Parse command line arguments using argparse.
 
         Args:
