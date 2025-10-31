@@ -67,7 +67,7 @@ task help       # Show available tasks from your main Taskfile nicely grouped an
 
 The real advantage comes when you have multiple Taskfiles with namespaces.
 
-Start by adding a wildcard help task (help:*): to your main Taskfile:
+Start by adding a wildcard help task (help:\*): to your main Taskfile:
 
 ```yaml
 version: '3'
