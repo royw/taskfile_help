@@ -121,6 +121,8 @@ tasks:
   deploy:local:
     desc: Install the built package locally using pipx
     summary: Builds and installs the package locally for testing
+    aliases:
+      - deploy
     deps:
       - build
     cmds:
@@ -140,19 +142,26 @@ tasks:
 
   # === Help ===
   help:
-    desc: Show available tasks from all Taskfiles
-    summary: Displays tasks from all included Taskfiles (main, version, docs, etc.)
-    cmd: taskfile-help main
+    desc: Show available tasks from main Taskfile
+    summary: Displays tasks from main Taskfile
+    cmd: taskfile-help namespace main
     silent: true  # Suppress task command echo
 
   help:*:
-    desc: Show available tasks for the given namespace
+    desc: Show available tasks for "all" or the given namespace or for "?" list available namespaces
     summary: |
-      Displays tasks from for the given namespace or all Taskfiles if "all" is specified or list available namespaces if "?" is specified
+      Displays tasks for "all" or the given namespace or list available namespaces if "?" is specified
       help:<namespace>    - Displays tasks from the given namespace
       help:all            - Displays tasks from all Taskfiles
       help:?              - Lists available namespaces
     vars:
       NAMESPACE: '{{index .MATCH 0}}'
-    cmd: taskfile-help {{.NAMESPACE}}
+    cmd: taskfile-help namespace {{.NAMESPACE}}
     silent: true  # Suppress task command echo
+
+  search:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    cmd: taskfile-help search {{.CLI_ARGS}}
+    silent: true  # Suppress task command echo
+    

@@ -102,7 +102,7 @@ tasks:
     desc: Create and push a git tag for the current version
     summary: Tags the current version and pushes to origin
     deps:
-      - version:current
+      - task: :version:current
     cmds:
       - |
         VERSION=$(task version:pyproject)
