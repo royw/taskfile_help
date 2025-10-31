@@ -118,6 +118,25 @@ tasks:
     desc: Build the application
     cmds:
       - go build
+
+  # === Help ===
+  help:
+    desc: Show available tasks from this main Taskfile
+    summary: Displays tasks from this main Taskfile, nicely grouped and formatted
+    cmd: taskfile-help main
+    silent: true
+
+  help:*:
+    desc: Show available tasks for the given namespace(s)
+    summary: |
+      Displays tasks from for the given namespace or all Taskfiles if "all" is specified or list available namespaces if "?" is specified
+      help:<namespace>    - Displays tasks from the given namespace
+      help:all            - Displays tasks from all Taskfiles
+      help:?              - Lists available namespaces
+    vars:
+      NAMESPACE: '{{index .MATCH 0}}'
+    cmd: taskfile-help {{.NAMESPACE}}
+    silent: true
 ```
 
 ### Development Taskfile (Taskfile-dev.yml)
@@ -156,14 +175,17 @@ tasks:
       - go test ./... -run Integration
 ```
 
-Now you can access each namespace:
+Now you can access each namespace using the wildcard help task:
 
 ```bash
-taskfile-help          # Main tasks
-taskfile-help dev      # Development tasks
-taskfile-help test     # Testing tasks
-taskfile-help all      # All tasks from all namespaces
+task help              # Main tasks only
+task help:dev          # Development tasks
+task help:test         # Testing tasks
+task help:all          # All tasks from all namespaces
+task help:?            # List all available namespaces
 ```
+
+The wildcard task (`help:*`) in the main Taskfile eliminates the need to add help tasks to each namespace Taskfile.
 
 ## Common Options
 
