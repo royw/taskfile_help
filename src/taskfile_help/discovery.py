@@ -12,7 +12,16 @@ class TaskfileDiscovery:
     NAMESPACE_PATTERNS = ["Taskfile-{}", "Taskfile_{}"]
 
     # Main taskfile names (order matters - first match wins)
-    MAIN_NAMES = ["Taskfile.yml", "Taskfile.yaml", "taskfile.yml", "taskfile.yaml", "Taskfile.dist.yml", "Taskfile.dist.yaml", "taskfile.dist.yml", "taskfile.dist.yaml"]
+    MAIN_NAMES = [
+        "Taskfile.yml",
+        "Taskfile.yaml",
+        "taskfile.yml",
+        "taskfile.yaml",
+        "Taskfile.dist.yml",
+        "Taskfile.dist.yaml",
+        "taskfile.dist.yml",
+        "taskfile.dist.yaml",
+    ]
 
     # Regex pattern to match main taskfiles (for reference): ^[Tt]askfile(\.dist)?\.ya?ml$
 
