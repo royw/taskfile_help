@@ -9,9 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.3.0] - 2025-10-31
+
+### Added
+
 - add search command with pattern and regex filters (2a5e707)
 
 ### Changed
+
 - reduce cyclomatic complexity across all modules (0caedd9)
 
 ### Fixed
