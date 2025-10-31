@@ -130,19 +130,18 @@ def _show_namespace_not_found(config: Config, outputter: Outputter, namespace: s
     _show_available_namespaces(config, outputter)
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Main entry point.
+def _handle_completion(config: Config) -> int | None:
+    """Handle completion-related operations.
+
+    Processes completion script generation, completion helper callbacks,
+    and completion installation requests.
 
     Args:
-        argv: List of command line arguments (defaults to sys.argv if None)
+        config: Configuration object containing args and settings
 
     Returns:
-        int: Exit code
+        int: Exit code if completion was handled, None otherwise
     """
-    if argv is None:
-        argv = sys.argv
-    config = Config(argv)
-
     # Handle completion script generation
     if config.args.completion:
         generators = {
@@ -158,10 +157,9 @@ def main(argv: list[str] | None = None) -> int:
         if shell in generators:
             print(generators[shell]())
             return 0
-        else:
-            print(f"Error: Unknown shell '{config.args.completion}'", file=sys.stderr)
-            print("Supported shells: bash, zsh, fish, tcsh, csh, ksh", file=sys.stderr)
-            return 1
+        print(f"Error: Unknown shell '{config.args.completion}'", file=sys.stderr)
+        print("Supported shells: bash, zsh, fish, tcsh, csh, ksh", file=sys.stderr)
+        return 1
 
     # Handle completion helper (for shell callbacks)
     if config.args.complete is not None:
@@ -175,6 +173,27 @@ def main(argv: list[str] | None = None) -> int:
         success, message = install_completion(install_shell)
         print(message)
         return 0 if success else 1
+
+    return None
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Main entry point.
+
+    Args:
+        argv: List of command line arguments (defaults to sys.argv if None)
+
+    Returns:
+        int: Exit code
+    """
+    if argv is None:
+        argv = sys.argv
+    config = Config(argv)
+
+    # Handle completion-related operations
+    completion_result = _handle_completion(config)
+    if completion_result is not None:
+        return completion_result
 
     # Select outputter based on format
     outputter: Outputter = JsonOutputter() if config.args.json_output else TextOutputter()
