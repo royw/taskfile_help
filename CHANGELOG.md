@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.2.6] - 2025-10-31
+
+### Added
+
 - implement wildcard help task pattern to simplify multi-Taskfile setup (549f317)
 
 ### Changed
