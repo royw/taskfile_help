@@ -77,7 +77,8 @@ tasks:
   help:*:
     desc: Show available tasks for the given namespace(s)
     summary: |
-      Displays tasks from for the given namespace or all Taskfiles if "all" is specified or list available namespaces if "?" is specified
+      Displays tasks from for the given namespace or all Taskfiles if "all" is specified
+      or list available namespaces if "?" is specified
       help:<namespace>    - Displays tasks from the given namespace
       help:all            - Displays tasks from all Taskfiles
       help:?              - Lists available namespaces

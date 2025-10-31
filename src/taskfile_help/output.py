@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 import json
 import sys
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+
+if TYPE_CHECKING:
+    from .config import Config
 
 
 # Task column width for formatting
@@ -90,6 +96,20 @@ class Outputter(Protocol):
         ...
 
 
+def create_outputter(config: Config) -> Outputter:
+    """Factory function to create an Outputter instance.
+
+    Args:
+        config: Configuration object
+
+    Returns:
+        Outputter instance (JsonOutputter or TextOutputter)
+    """
+    if config.args.json_output:
+        return JsonOutputter()
+    return TextOutputter()
+
+
 class TextOutputter:
     """Text-based outputter with color support."""
 
@@ -116,23 +136,10 @@ class TextOutputter:
         output_fn("")
 
         # Group tasks by their group name
-        grouped: dict[str, list[tuple[str, str]]] = {}
-        for group, task_name, desc in tasks:
-            if group not in grouped:
-                grouped[group] = []
-            grouped[group].append((task_name, desc))
+        grouped = self._group_tasks_by_group(tasks)
 
         # Print each group
-        for group, group_tasks in grouped.items():
-            # Print group header
-            output_fn(f"{Colors.BOLD}{Colors.GREEN}{group}:{Colors.RESET}")
-
-            # Print tasks in this group
-            for task_name, desc in group_tasks:
-                full_task = f"{namespace}:{task_name}" if namespace else task_name
-                output_fn(f"  {Colors.CYAN}task {full_task:<{TASK_COLUMN_WIDTH}}{Colors.RESET} - {desc}")
-
-            output_fn("")
+        self._print_task_groups(grouped, namespace, output_fn)
 
     def output_all(
         self,
@@ -169,6 +176,88 @@ class TextOutputter:
         """Output a warning message."""
         output_fn(f"{Colors.YELLOW}Warning: {message}{Colors.RESET}", file=sys.stderr)
 
+    def _group_results_by_namespace(
+        self,
+        results: list[tuple[str, str, str, str, str]],
+    ) -> dict[str, list[tuple[str, str, str, str]]]:
+        """Group search results by namespace."""
+        grouped: dict[str, list[tuple[str, str, str, str]]] = {}
+        for namespace, group, task_name, description, match_type in results:
+            if namespace not in grouped:
+                grouped[namespace] = []
+            grouped[namespace].append((group, task_name, description, match_type))
+        return grouped
+
+    def _group_results_by_group(
+        self,
+        namespace_tasks: list[tuple[str, str, str, str]],
+    ) -> dict[str, list[tuple[str, str, str]]]:
+        """Group results by group name."""
+        by_group: dict[str, list[tuple[str, str, str]]] = {}
+        for group, task_name, description, match_type in namespace_tasks:
+            if group not in by_group:
+                by_group[group] = []
+            by_group[group].append((task_name, description, match_type))
+        return by_group
+
+    def _group_tasks_by_group(
+        self,
+        tasks: list[tuple[str, str, str]],
+    ) -> dict[str, list[tuple[str, str]]]:
+        """Group tasks by group name.
+
+        Args:
+            tasks: List of (group, task_name, description) tuples
+
+        Returns:
+            Dictionary mapping group names to lists of (task_name, description) tuples
+        """
+        grouped: dict[str, list[tuple[str, str]]] = {}
+        for group, task_name, desc in tasks:
+            if group not in grouped:
+                grouped[group] = []
+            grouped[group].append((task_name, desc))
+        return grouped
+
+    def _print_task_groups(
+        self,
+        grouped: dict[str, list[tuple[str, str]]],
+        namespace: str,
+        output_fn: Callable[..., Any] = print,
+    ) -> None:
+        """Print grouped tasks in text format.
+
+        Args:
+            grouped: Dictionary mapping group names to lists of (task_name, description) tuples
+            namespace: The namespace for the tasks
+            output_fn: Function to use for output
+        """
+        for group, group_tasks in grouped.items():
+            output_fn(f"{Colors.BOLD}{Colors.GREEN}{group}:{Colors.RESET}")
+            for task_name, desc in group_tasks:
+                full_task = f"{namespace}:{task_name}" if namespace else task_name
+                output_fn(f"  {Colors.CYAN}task {full_task:<{TASK_COLUMN_WIDTH}}{Colors.RESET} - {desc}")
+            output_fn("")
+
+    def _print_search_result_groups(
+        self,
+        by_group: dict[str, list[tuple[str, str, str]]],
+        namespace: str,
+        output_fn: Callable[..., Any] = print,
+    ) -> None:
+        """Print search result groups in text format.
+
+        Args:
+            by_group: Dictionary mapping group names to lists of (task_name, description, match_type) tuples
+            namespace: The namespace for the tasks
+            output_fn: Function to use for output
+        """
+        for group, group_tasks in by_group.items():
+            output_fn(f"  {Colors.BOLD}{group}:{Colors.RESET}")
+            for task_name, description, _match_type in group_tasks:
+                full_task = f"{namespace}:{task_name}" if namespace else task_name
+                output_fn(f"    {Colors.CYAN}task {full_task:<{TASK_COLUMN_WIDTH}}{Colors.RESET} - {description}")
+
     def output_search_results(
         self,
         results: list[tuple[str, str, str, str, str]],
@@ -189,11 +278,7 @@ class TextOutputter:
         output_fn("")
 
         # Group results by namespace
-        grouped: dict[str, list[tuple[str, str, str, str]]] = {}
-        for namespace, group, task_name, description, match_type in results:
-            if namespace not in grouped:
-                grouped[namespace] = []
-            grouped[namespace].append((group, task_name, description, match_type))
+        grouped = self._group_results_by_namespace(results)
 
         # Print each namespace
         for namespace, namespace_tasks in grouped.items():
@@ -202,19 +287,10 @@ class TextOutputter:
             output_fn(f"{Colors.BOLD}{Colors.GREEN}{namespace_title}:{Colors.RESET}")
 
             # Group by group name within namespace
-            by_group: dict[str, list[tuple[str, str, str]]] = {}
-            for group, task_name, description, match_type in namespace_tasks:
-                if group not in by_group:
-                    by_group[group] = []
-                by_group[group].append((task_name, description, match_type))
+            by_group = self._group_results_by_group(namespace_tasks)
 
             # Print each group
-            for group, group_tasks in by_group.items():
-                output_fn(f"  {Colors.BOLD}{group}:{Colors.RESET}")
-                for task_name, description, _match_type in group_tasks:
-                    full_task = f"{namespace}:{task_name}" if namespace else task_name
-                    output_fn(f"    {Colors.CYAN}task {full_task:<{TASK_COLUMN_WIDTH}}{Colors.RESET} - {description}")
-
+            self._print_search_result_groups(by_group, namespace, output_fn)
             output_fn("")
 
 

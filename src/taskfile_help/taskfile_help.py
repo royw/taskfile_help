@@ -49,6 +49,7 @@ Output Behavior:
 
 from __future__ import annotations
 
+from pathlib import Path
 import sys
 
 from .completion import (
@@ -61,7 +62,7 @@ from .completion import (
     install_completion,
 )
 from .config import Config
-from .output import Colors, JsonOutputter, Outputter, TextOutputter
+from .output import Colors, Outputter, create_outputter
 from .parser import parse_taskfile
 from .search import search_taskfiles
 
@@ -80,15 +81,18 @@ def _show_verbose_output(config: Config, outputter: Outputter) -> None:
         outputter.output_message("", output_fn=lambda msg: print(msg, file=sys.stderr))
 
 
-def _show_all_tasks(config: Config, outputter: Outputter) -> None:
+def _show_all_tasks(config: Config, outputter: Outputter) -> int:
     """Display tasks from all taskfiles (main and all namespaces).
 
     Collects tasks from the main taskfile and all namespace taskfiles,
-    then outputs them in a consolidated format.
+    then outputs them together.
 
     Args:
         config: Configuration object containing discovery settings
         outputter: Outputter instance for formatted output
+
+    Returns:
+        int: Exit code (always 0)
     """
     # Collect all tasks
     taskfiles: list[tuple[str, list[tuple[str, str, str]]]] = []
@@ -103,14 +107,25 @@ def _show_all_tasks(config: Config, outputter: Outputter) -> None:
         taskfiles.append((ns, tasks))
 
     outputter.output_all(taskfiles)
+    return 0
 
 
-def _show_available_namespaces(config: Config, outputter: Outputter) -> None:
+def _show_available_namespaces(config: Config, outputter: Outputter) -> int:
+    """Show available namespaces.
+
+    Args:
+        config: Configuration object containing discovery settings
+        outputter: Outputter instance for formatted output
+
+    Returns:
+        int: Exit code (always 0)
+    """
     # Suggest available namespaces
     available_namespaces = config.discovery.get_all_namespace_taskfiles()
     if available_namespaces:
-        namespace_names = [ns for ns, _ in available_namespaces]
-        outputter.output_message(f"\nAvailable namespaces: {', '.join(namespace_names)}")
+        namespace_list = ", ".join(ns for ns, _ in available_namespaces)
+        outputter.output_message(f"\nAvailable namespaces: {namespace_list}")
+    return 0
 
 
 def _show_namespace_not_found(config: Config, outputter: Outputter, namespace: str) -> None:
@@ -131,11 +146,69 @@ def _show_namespace_not_found(config: Config, outputter: Outputter, namespace: s
     _show_available_namespaces(config, outputter)
 
 
+def _handle_completion_script_generation(shell: str) -> int:
+    """Generate completion script for the specified shell.
+
+    Args:
+        shell: Shell name (bash, zsh, fish, tcsh, csh, ksh)
+
+    Returns:
+        Exit code (0 for success, 1 for unknown shell)
+    """
+    generators = {
+        "bash": generate_bash_completion,
+        "zsh": generate_zsh_completion,
+        "fish": generate_fish_completion,
+        "tcsh": generate_tcsh_completion,
+        "csh": generate_tcsh_completion,  # csh uses tcsh completion
+        "ksh": generate_ksh_completion,
+    }
+
+    shell_lower = shell.lower()
+    if shell_lower in generators:
+        print(generators[shell_lower]())
+        return 0
+
+    print(f"Error: Unknown shell '{shell}'", file=sys.stderr)
+    print("Supported shells: bash, zsh, fish, tcsh, csh, ksh", file=sys.stderr)
+    return 1
+
+
+def _handle_completion_helper(word: str, search_dirs: list[Path]) -> int:
+    """Handle completion helper for shell callbacks.
+
+    Args:
+        word: Partial word to complete
+        search_dirs: Directories to search for Taskfiles
+
+    Returns:
+        Exit code (always 0)
+    """
+    completions = get_completions(word, search_dirs)
+    print("\n".join(completions))
+    return 0
+
+
+def _handle_completion_installation(install_arg: str) -> int:
+    """Handle completion installation.
+
+    Args:
+        install_arg: Shell name or "auto" for auto-detection
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    install_shell: str | None = None if install_arg == "auto" else install_arg
+    success, message = install_completion(install_shell)
+    print(message)
+    return 0 if success else 1
+
+
 def _handle_completion(config: Config) -> int | None:
     """Handle completion-related operations.
 
-    Processes completion script generation, completion helper callbacks,
-    and completion installation requests.
+    Dispatches to specific handlers for completion script generation,
+    completion helper callbacks, and completion installation.
 
     Args:
         config: Configuration object containing args and settings
@@ -143,39 +216,44 @@ def _handle_completion(config: Config) -> int | None:
     Returns:
         int: Exit code if completion was handled, None otherwise
     """
-    # Handle completion script generation
     if config.args.completion:
-        generators = {
-            "bash": generate_bash_completion,
-            "zsh": generate_zsh_completion,
-            "fish": generate_fish_completion,
-            "tcsh": generate_tcsh_completion,
-            "csh": generate_tcsh_completion,  # csh uses tcsh completion
-            "ksh": generate_ksh_completion,
-        }
+        return _handle_completion_script_generation(config.args.completion)
 
-        shell = config.args.completion.lower()
-        if shell in generators:
-            print(generators[shell]())
-            return 0
-        print(f"Error: Unknown shell '{config.args.completion}'", file=sys.stderr)
-        print("Supported shells: bash, zsh, fish, tcsh, csh, ksh", file=sys.stderr)
-        return 1
-
-    # Handle completion helper (for shell callbacks)
     if config.args.complete is not None:
-        completions = get_completions(config.args.complete, config.discovery.search_dirs)
-        print("\n".join(completions))
-        return 0
+        return _handle_completion_helper(config.args.complete, config.discovery.search_dirs)
 
-    # Handle completion installation
     if config.args.install_completion is not None:
-        install_shell: str | None = None if config.args.install_completion == "auto" else config.args.install_completion
-        success, message = install_completion(install_shell)
-        print(message)
-        return 0 if success else 1
+        return _handle_completion_installation(config.args.install_completion)
 
     return None
+
+
+def _show_main_or_namespace(config: Config, outputter: Outputter, namespace: str) -> int:
+    """Show tasks for main taskfile or a specific namespace.
+
+    Args:
+        config: Configuration object containing discovery settings
+        outputter: Outputter instance for formatted output
+        namespace: The namespace to show tasks for ("main", "", or actual namespace)
+
+    Returns:
+        int: Exit code
+    """
+    # Find the appropriate Taskfile
+    if not namespace or namespace == "main":
+        taskfile = config.discovery.find_main_taskfile()
+        display_namespace = ""  # Use empty namespace for display
+    else:
+        taskfile = config.discovery.find_namespace_taskfile(namespace)
+        display_namespace = namespace
+
+    if not taskfile:
+        _show_namespace_not_found(config, outputter, namespace)
+        return 1
+
+    tasks = parse_taskfile(taskfile, display_namespace, outputter)
+    outputter.output_single(display_namespace, tasks)
+    return 0
 
 
 def _handle_namespace_command(config: Config, outputter: Outputter) -> int:
@@ -190,30 +268,15 @@ def _handle_namespace_command(config: Config, outputter: Outputter) -> int:
     """
     namespace = config.namespace
 
-    # Special case: 'all' namespace shows all Taskfiles
+    # Handle special namespaces
     if namespace == "all":
-        _show_all_tasks(config, outputter)
-        return 0
+        return _show_all_tasks(config, outputter)
 
-    # Find the appropriate Taskfile
-    if not namespace or namespace == "main":
-        taskfile = config.discovery.find_main_taskfile()
-        namespace = ""  # Use empty namespace for display
-    else:
-        taskfile = config.discovery.find_namespace_taskfile(namespace)
+    if namespace == "?":
+        return _show_available_namespaces(config, outputter)
 
-    if not taskfile:
-        if namespace == "?":
-            _show_available_namespaces(config, outputter)
-            return 0
-        else:
-            _show_namespace_not_found(config, outputter, namespace)
-            return 1
-
-    # Parse and display tasks
-    tasks = parse_taskfile(taskfile, namespace, outputter)
-    outputter.output_single(namespace, tasks)
-    return 0
+    # Handle main, empty, or specific namespace
+    return _show_main_or_namespace(config, outputter, namespace)
 
 
 def _handle_search_command(config: Config, outputter: Outputter) -> int:
@@ -255,6 +318,17 @@ def _handle_search_command(config: Config, outputter: Outputter) -> int:
     return 0
 
 
+def _handle_command(config: Config, outputter: Outputter) -> int:
+    command_handler = {
+        "namespace": _handle_namespace_command,
+        "search": _handle_search_command,
+    }
+    if config.args.command not in command_handler:
+        outputter.output_error(f"Invalid command '{config.args.command}'")
+        return 1
+    return command_handler[config.args.command](config, outputter)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Main entry point.
 
@@ -264,9 +338,7 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         int: Exit code
     """
-    if argv is None:
-        argv = sys.argv
-    config = Config(argv)
+    config = Config(argv or sys.argv)
 
     # Handle completion-related operations
     completion_result = _handle_completion(config)
@@ -274,7 +346,7 @@ def main(argv: list[str] | None = None) -> int:
         return completion_result
 
     # Select outputter based on format
-    outputter: Outputter = JsonOutputter() if config.args.json_output else TextOutputter()
+    outputter: Outputter = create_outputter(config)
 
     # Disable colors if output is not a TTY (piped, redirected, etc.) or JSON output
     if not config.colorize or config.args.json_output:
@@ -284,11 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     _show_verbose_output(config, outputter)
 
     # Route to appropriate command handler
-    if config.args.command == "search":
-        return _handle_search_command(config, outputter)
-    else:
-        # Default to namespace command (includes backward compatibility)
-        return _handle_namespace_command(config, outputter)
+    return _handle_command(config, outputter)
 
 
 if __name__ == "__main__":

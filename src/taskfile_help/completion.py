@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from textwrap import dedent
 
 from .discovery import TaskfileDiscovery
 from .output import TextOutputter
@@ -57,6 +58,30 @@ def _complete_namespace(partial: str, search_dirs: list[Path]) -> list[str]:
     return [ns for ns in namespaces if ns.startswith(partial)]
 
 
+def _filter_and_format_task_names(
+    task_names: list[str],
+    namespace: str,
+    partial: str,
+) -> list[str]:
+    """Filter task names by partial match and format with namespace.
+
+    Args:
+        task_names: List of task names to filter
+        namespace: Namespace to prefix (empty string for main)
+        partial: Partial task name to match
+
+    Returns:
+        List of matching task names, formatted with namespace if applicable
+    """
+    # Filter matching task names
+    matching_names = [name for name in task_names if name.startswith(partial)]
+
+    # Format with namespace if applicable
+    if namespace:
+        return [f"{namespace}:{name}" for name in matching_names]
+    return matching_names
+
+
 def _complete_task_name(namespace: str, partial: str, search_dirs: list[Path]) -> list[str]:
     """Complete task names within a namespace.
 
@@ -90,12 +115,7 @@ def _complete_task_name(namespace: str, partial: str, search_dirs: list[Path]) -
 
     # Extract task names and filter
     task_names = [task_name for _, task_name, _ in tasks]
-    if namespace:
-        matches = [f"{namespace}:{name}" for name in task_names if name.startswith(partial)]
-    else:
-        matches = [name for name in task_names if name.startswith(partial)]
-
-    return matches
+    return _filter_and_format_task_names(task_names, namespace, partial)
 
 
 def _complete_flags(partial: str) -> list[str]:
@@ -249,32 +269,7 @@ set -A complete_taskfile_help _taskfile_help_complete
 """
 
 
-def install_completion(shell: str | None = None) -> tuple[bool, str]:
-    """Install completion script for the specified shell.
-
-    Args:
-        shell: Shell name (bash, zsh, fish, tcsh, ksh). If None, auto-detect from $SHELL
-
-    Returns:
-        Tuple of (success: bool, message: str)
-    """
-    # Auto-detect shell if not specified
-    if shell is None:
-        shell_path = os.environ.get("SHELL", "")
-        shell = Path(shell_path).name if shell_path else None
-
-    if not shell:
-        return False, "Could not detect shell. Please specify shell explicitly: --install-completion <shell>"
-
-    # Normalize shell name
-    shell = shell.lower()
-    if shell not in ("bash", "zsh", "fish", "tcsh", "csh", "ksh"):
-        return False, f"Unsupported shell: {shell}. Supported shells: bash, zsh, fish, tcsh, ksh"
-
-    # Handle csh as tcsh
-    if shell == "csh":
-        shell = "tcsh"
-
+def _write_completion_script(shell: str) -> Path:
     # Generate completion script
     generators = {
         "bash": generate_bash_completion,
@@ -302,15 +297,79 @@ def install_completion(shell: str | None = None) -> tuple[bool, str]:
     install_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write completion script
+    install_path.write_text(script)
+    return install_path
+
+
+def _detect_shell(shell: str | None) -> str:
+    """Detect or validate shell name.
+
+    Args:
+        shell: Shell name or None for auto-detection
+
+    Returns:
+        Shell name
+
+    Raises:
+        ValueError: If shell cannot be detected
+    """
+    # Auto-detect shell if not specified
+    if shell is None:
+        shell_path = os.environ.get("SHELL", "")
+        shell = Path(shell_path).name if shell_path else None
+
+    if not shell:
+        raise ValueError("Could not detect shell. Please specify shell explicitly: --install-completion <shell>")
+
+    return shell
+
+
+def _validate_and_normalize_shell(shell: str) -> str:
+    """Validate and normalize shell name.
+
+    Args:
+        shell: Shell name to validate
+
+    Returns:
+        Normalized shell name
+
+    Raises:
+        ValueError: If shell is not supported
+    """
+    # Normalize shell name
+    shell = shell.lower()
+    if shell not in ("bash", "zsh", "fish", "tcsh", "csh", "ksh"):
+        raise ValueError(f"Unsupported shell: {shell}. Supported shells: bash, zsh, fish, tcsh, ksh")
+
+    # Handle csh as tcsh
+    if shell == "csh":
+        shell = "tcsh"
+
+    return shell
+
+
+def install_completion(shell: str | None = None) -> tuple[bool, str]:
+    """Install completion script for the specified shell.
+
+    Args:
+        shell: Shell name (bash, zsh, fish, tcsh, ksh). If None, auto-detect from $SHELL
+
+    Returns:
+        Tuple of (success: bool, message: str)
+    """
     try:
-        install_path.write_text(script)
-    except Exception as e:
+        # Detect, validate, and install
+        detected_shell = _detect_shell(shell)
+        normalized_shell = _validate_and_normalize_shell(detected_shell)
+        install_path = _write_completion_script(normalized_shell)
+        instructions = _get_sourcing_instructions(normalized_shell, install_path)
+        return True, f"Completion script installed to: {install_path}\n\n{instructions}"
+    except ValueError as e:
+        # Validation errors (shell detection, unsupported shell)
+        return False, str(e)
+    except OSError as e:
+        # File system errors (permission denied, disk full, etc.)
         return False, f"Failed to write completion script: {e}"
-
-    # Generate instructions for sourcing
-    instructions = _get_sourcing_instructions(shell, install_path)
-
-    return True, f"Completion script installed to: {install_path}\n\n{instructions}"
 
 
 def _get_sourcing_instructions(shell: str, install_path: Path) -> str:
@@ -323,45 +382,53 @@ def _get_sourcing_instructions(shell: str, install_path: Path) -> str:
     Returns:
         Instructions as a string
     """
-    if shell == "bash":
-        rc_file = "~/.bashrc"
-        return f"""To enable completions, add this line to your {rc_file}:
 
-    source {install_path}
+    def _get_bash_instruction(install_path: Path, rc_file: str) -> str:
+        return dedent(f"""To enable completions, add this line to your {rc_file}:
 
-Then reload your shell or run: source {rc_file}"""
+            source {install_path}
 
-    elif shell == "zsh":
-        rc_file = "~/.zshrc"
+        Then reload your shell or run: source {rc_file}""")
+
+    def _get_zsh_instruction(install_path: Path, rc_file: str) -> str:
         completion_dir = install_path.parent
-        return f"""To enable completions, add these lines to your {rc_file}:
+        return dedent(f"""To enable completions, add these lines to your {rc_file}:
 
-    fpath=({completion_dir} $fpath)
-    autoload -Uz compinit && compinit
+            fpath=({completion_dir} $fpath)
+            autoload -Uz compinit && compinit
 
-Then reload your shell or run: source {rc_file}"""
+        Then reload your shell or run: source {rc_file}""")
 
-    elif shell == "fish":
-        return """Fish will automatically load completions from ~/.config/fish/completions/
+    def _get_fish_instruction(install_path: Path, rc_file: str) -> str:
+        return dedent("""Fish will automatically load completions from ~/.config/fish/completions/
 
-Reload your shell or run: source ~/.config/fish/config.fish"""
+        Then reload your shell or run: source ~/.config/fish/config.fish""")
 
-    elif shell == "tcsh":
-        rc_file = "~/.tcshrc"
-        return f"""To enable completions, add this line to your {rc_file}:
+    def _get_tcsh_instruction(install_path: Path, rc_file: str) -> str:
+        return dedent(f"""To enable completions, add this line to your {rc_file}:
 
-    source {install_path}
+            source {install_path}
 
-Then reload your shell or run: source {rc_file}"""
+        Then reload your shell or run: source {rc_file}""")
 
-    elif shell == "ksh":
-        rc_file = "~/.kshrc"
-        return f"""To enable completions, add this line to your {rc_file}:
+    def _get_ksh_instruction(install_path: Path, rc_file: str) -> str:
+        return dedent(f"""To enable completions, add this line to your {rc_file}:
 
-    . {install_path}
+            . {install_path}
 
-Then reload your shell or run: . {rc_file}"""
+        Then reload your shell or run: . {rc_file}""")
 
+    shell_rc_files = {
+        "bash": ("~/.bashrc", _get_bash_instruction),
+        "zsh": ("~/.zshrc", _get_zsh_instruction),
+        "fish": ("~/.config/fish/config.fish", _get_fish_instruction),
+        "tcsh": ("~/.tcshrc", _get_tcsh_instruction),
+        "ksh": ("~/.kshrc", _get_ksh_instruction),
+    }
+
+    if shell in shell_rc_files:
+        rc_file, instruction = shell_rc_files[shell]
+        return instruction(install_path, rc_file)
     else:
         # This should never happen due to validation in install_completion()
         return f"Unsupported shell: {shell}"

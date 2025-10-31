@@ -85,7 +85,8 @@ tasks:
   help:*:
     desc: Show available tasks for the given namespace(s)
     summary: |
-      Displays tasks from for the given namespace or all Taskfiles if "all" is specified or list available namespaces if "?" is specified
+      Displays tasks from for the given namespace or all Taskfiles if "all" is specified
+      or list available namespaces if "?" is specified
       help:<namespace>    - Displays tasks from the given namespace
       help:all            - Displays tasks from all Taskfiles
       help:?              - Lists available namespaces
@@ -268,7 +269,8 @@ The output preserves the order of groups and tasks as they appear in the file.
 
 ## Taskfile Validation
 
-taskfile-help automatically validates Taskfiles to ensure they conform to Task version 3 specification. Validation runs on every parse and produces helpful warnings for issues, but processing continues (non-fatal).
+taskfile-help automatically validates Taskfiles to ensure they conform to Task version 3 specification.
+Validation runs on every parse and produces helpful warnings for issues, but processing continues (non-fatal).
 
 ### What is Validated
 

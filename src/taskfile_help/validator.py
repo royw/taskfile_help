@@ -7,6 +7,85 @@ import yaml
 from .output import Outputter
 
 
+def _validate_task_field(
+    task_name: str,
+    field_name: str,
+    expected_type: type | tuple[type, ...],
+    task_def: dict[str, Any],
+    outputter: Outputter,
+) -> bool:
+    """Validate a single task field type.
+
+    Args:
+        task_name: Name of the task being validated
+        field_name: Name of the field to validate
+        expected_type: Expected type(s) for the field
+        task_def: Task definition dictionary
+        outputter: Output handler for warnings
+
+    Returns:
+        True if field is valid or not present, False if invalid
+    """
+    if field_name not in task_def:
+        return True
+
+    if not isinstance(task_def[field_name], expected_type):
+        # Format expected type name(s) with user-friendly names
+        type_map = {
+            "str": "string",
+            "bool": "boolean",
+            "int": "integer",
+            "float": "float",
+            "list": "list",
+            "dict": "dictionary",
+        }
+
+        if isinstance(expected_type, tuple):
+            type_names = " or ".join(type_map.get(t.__name__, t.__name__) for t in expected_type)
+        else:
+            type_names = type_map.get(expected_type.__name__, expected_type.__name__)
+
+        actual_type_name = type(task_def[field_name]).__name__
+        actual_type = type_map.get(actual_type_name, actual_type_name)
+
+        outputter.output_warning(f"Task '{task_name}': '{field_name}' must be a {type_names}, got {actual_type}")
+        return False
+
+    return True
+
+
+def _validate_task_fields(task_name: str, task_def: dict[str, Any], outputter: Outputter) -> bool:
+    # Validate task fields
+    valid = True
+    valid &= _validate_task_field(task_name, "desc", str, task_def, outputter)
+    valid &= _validate_task_field(task_name, "internal", bool, task_def, outputter)
+    valid &= _validate_task_field(task_name, "cmds", (list, str), task_def, outputter)
+    valid &= _validate_task_field(task_name, "deps", list, task_def, outputter)
+    return valid
+
+
+def _validate_version(data: dict[str, Any], outputter: Outputter) -> bool:
+    """Validate version field."""
+    if "version" not in data:
+        outputter.output_warning("Missing 'version' field")
+        return False
+    if data["version"] != "3":
+        outputter.output_warning(f"Invalid version '{data['version']}', expected '3'")
+        return False
+    return True
+
+
+def _validate_tasks_section_exists(data: dict[str, Any], outputter: Outputter) -> bool:
+    """Validate tasks section exists and is a dictionary."""
+    if "tasks" not in data:
+        outputter.output_warning("Missing 'tasks' section")
+        return False
+    if not isinstance(data["tasks"], dict):
+        outputter.output_warning(f"'tasks' must be a dictionary, got {type(data['tasks']).__name__}")
+        return False
+    return True
+
+
 def _validate_individual_tasks(tasks: dict[str, Any], outputter: Outputter) -> bool:
     valid = True
     for task_name, task_def in tasks.items():
@@ -15,30 +94,7 @@ def _validate_individual_tasks(tasks: dict[str, Any], outputter: Outputter) -> b
             valid = False
             continue
 
-        # Validate task fields
-        if "desc" in task_def and not isinstance(task_def["desc"], str):
-            outputter.output_warning(
-                f"Task '{task_name}': 'desc' must be a string, got {type(task_def['desc']).__name__}"
-            )
-            valid = False
-
-        if "internal" in task_def and not isinstance(task_def["internal"], bool):
-            outputter.output_warning(
-                f"Task '{task_name}': 'internal' must be a boolean, got {type(task_def['internal']).__name__}"
-            )
-            valid = False
-
-        if "cmds" in task_def and not isinstance(task_def["cmds"], (list, str)):
-            outputter.output_warning(
-                f"Task '{task_name}': 'cmds' must be a list or string, got {type(task_def['cmds']).__name__}"
-            )
-            valid = False
-
-        if "deps" in task_def and not isinstance(task_def["deps"], list):
-            outputter.output_warning(
-                f"Task '{task_name}': 'deps' must be a list, got {type(task_def['deps']).__name__}"
-            )
-            valid = False
+        valid &= _validate_task_fields(task_name, task_def, outputter)
 
     return valid
 
@@ -65,27 +121,14 @@ def validate_taskfile(lines: list[str], outputter: Outputter) -> bool:
         outputter.output_warning(f"Root must be a dictionary, got {type(data).__name__}")
         return False
 
-    valid = True
+    # Validate version (non-fatal)
+    valid = _validate_version(data, outputter)
 
-    # Check version field
-    if "version" not in data:
-        outputter.output_warning("Missing 'version' field")
-        valid = False
-    elif data["version"] != "3":
-        outputter.output_warning(f"Invalid version '{data['version']}', expected '3'")
-        valid = False
-
-    # Check tasks section
-    if "tasks" not in data:
-        outputter.output_warning("Missing 'tasks' section")
+    # Validate tasks section exists (fatal if missing)
+    if not _validate_tasks_section_exists(data, outputter):
         return False
 
-    if not isinstance(data["tasks"], dict):
-        outputter.output_warning(f"'tasks' must be a dictionary, got {type(data['tasks']).__name__}")
-        return False
-
-    # Validate individual tasks
-    if not _validate_individual_tasks(data["tasks"], outputter):
-        valid = False
+    # Validate individual tasks (non-fatal)
+    valid &= _validate_individual_tasks(data["tasks"], outputter)
 
     return valid

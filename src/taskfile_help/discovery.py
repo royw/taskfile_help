@@ -67,6 +67,25 @@ class TaskfileDiscovery:
                         return path
         return None
 
+    def _find_namespace_taskfiles_in_dir(self, search_dir: Path, taskfiles: dict[str, Path]) -> None:
+        """Find namespace taskfiles in a single directory.
+
+        Args:
+            search_dir: Directory to search in
+            taskfiles: Dictionary to update with found taskfiles (namespace -> path)
+        """
+        for path in search_dir.iterdir():
+            if not path.is_file():
+                continue
+
+            # Try to match the filename against the namespace pattern
+            match = self.NAMESPACE_REGEX.match(path.name)
+            if match:
+                namespace = match.group("namespace")
+                # Only add if not already found (first match wins)
+                if namespace not in taskfiles:
+                    taskfiles[namespace] = path
+
     def get_all_namespace_taskfiles(self) -> list[tuple[str, Path]]:
         """Find all namespace Taskfiles in the search directories.
 
@@ -77,23 +96,28 @@ class TaskfileDiscovery:
 
         # Search for all taskfiles matching the namespace pattern
         for search_dir in self.search_dirs:
-            if not search_dir.exists():
-                continue
-
-            for path in search_dir.iterdir():
-                if not path.is_file():
-                    continue
-
-                # Try to match the filename against the namespace pattern
-                match = self.NAMESPACE_REGEX.match(path.name)
-                if match:
-                    namespace = match.group("namespace")
-                    # Only add if not already found (first match wins)
-                    if namespace not in taskfiles:
-                        taskfiles[namespace] = path
+            if search_dir.exists():
+                self._find_namespace_taskfiles_in_dir(search_dir, taskfiles)
 
         # Return sorted by namespace
         return sorted(taskfiles.items(), key=lambda x: x[0])
+
+    def _get_namespace_possible_paths(self, search_dir: Path, namespace: str) -> list[Path]:
+        """Get all possible paths for a namespace in a directory.
+
+        Args:
+            search_dir: Directory to search in
+            namespace: The namespace to get paths for
+
+        Returns:
+            List of possible paths for the namespace
+        """
+        paths = []
+        for pattern in self.NAMESPACE_PATTERNS:
+            for ext in self.EXTENSIONS:
+                filename = pattern.format(namespace) + ext
+                paths.append(search_dir / filename)
+        return paths
 
     def get_possible_paths(self, namespace: str) -> list[Path]:
         """Get all possible paths for a namespace (for error messages).
@@ -109,8 +133,5 @@ class TaskfileDiscovery:
             if not namespace or namespace == "main":
                 paths.extend([search_dir / name for name in self.MAIN_NAMES])
             else:
-                for pattern in self.NAMESPACE_PATTERNS:
-                    for ext in self.EXTENSIONS:
-                        filename = pattern.format(namespace) + ext
-                        paths.append(search_dir / filename)
+                paths.extend(self._get_namespace_possible_paths(search_dir, namespace))
         return paths

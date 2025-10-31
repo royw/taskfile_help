@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 import re
 
@@ -12,6 +13,52 @@ _GROUP_PATTERN = re.compile(r"\s*#\s*===\s*(.+?)\s*===")
 _TASK_PATTERN = re.compile(r"^  ([a-zA-Z0-9_:-]+):\s*$")
 _DESC_PATTERN = re.compile(r"^    desc:\s*(.+)$")
 _INTERNAL_PATTERN = re.compile(r"^    internal:\s*true")
+
+
+@dataclass
+class _ParserState:
+    """State for parsing a Taskfile."""
+
+    current_group: str = "Other"
+    current_task: str | None = None
+    current_desc: str | None = None
+    is_internal: bool = False
+    in_tasks_section: bool = False
+
+    def reset_task(self) -> None:
+        """Reset task-specific state."""
+        self.current_task = None
+        self.current_desc = None
+        self.is_internal = False
+
+    def start_new_group(self, group_name: str) -> None:
+        """Start tracking a new group."""
+        self.current_group = group_name
+        self.reset_task()
+
+    def start_new_task(self, task_name: str) -> None:
+        """Start tracking a new task."""
+        self.current_task = task_name
+        self.current_desc = None
+        self.is_internal = False
+
+    def handle_group_marker(self, group_name: str, tasks: list[tuple[str, str, str]]) -> None:
+        """Handle a group marker line."""
+        _save_task_if_valid(tasks, self.current_group, self.current_task, self.current_desc, self.is_internal)
+        self.start_new_group(group_name)
+
+    def handle_task_definition(self, task_name: str, tasks: list[tuple[str, str, str]]) -> None:
+        """Handle a task definition line."""
+        _save_task_if_valid(tasks, self.current_group, self.current_task, self.current_desc, self.is_internal)
+        self.start_new_task(task_name)
+
+    def handle_description(self, desc: str) -> None:
+        """Handle a description line."""
+        self.current_desc = desc
+
+    def handle_internal_flag(self) -> None:
+        """Handle an internal flag line."""
+        self.is_internal = True
 
 
 def _extract_group_name(line: str) -> str | None:
@@ -65,6 +112,77 @@ def _save_task_if_valid(
         tasks.append((group, task_name, description))
 
 
+def _try_handle_tasks_section_start(line: str, state: _ParserState) -> bool:
+    """Check if line starts the tasks section."""
+    if line.strip() == "tasks:":
+        state.in_tasks_section = True
+        return True
+    return False
+
+
+def _try_handle_group_marker(line: str, state: _ParserState, tasks: list[tuple[str, str, str]]) -> bool:
+    """Check if line is a group marker and handle it."""
+    group_name = _extract_group_name(line)
+    if group_name:
+        state.handle_group_marker(group_name, tasks)
+        return True
+    return False
+
+
+def _try_handle_task_definition(line: str, state: _ParserState, tasks: list[tuple[str, str, str]]) -> bool:
+    """Check if line is a task definition and handle it."""
+    task_name = _extract_task_name(line)
+    if task_name:
+        state.handle_task_definition(task_name, tasks)
+        return True
+    return False
+
+
+def _try_handle_task_properties(line: str, state: _ParserState) -> bool:
+    """Check if line is a task property (desc or internal) and handle it."""
+    if not state.current_task:
+        return False
+
+    desc = _extract_description(line)
+    if desc:
+        state.handle_description(desc)
+        return True
+
+    if _is_internal_task(line):
+        state.handle_internal_flag()
+        return True
+
+    return False
+
+
+def _process_line(
+    line: str,
+    state: _ParserState,
+    tasks: list[tuple[str, str, str]],
+) -> None:
+    """Process a single line of the Taskfile.
+
+    Args:
+        line: Line to process
+        state: Current parser state
+        tasks: List to append completed tasks to
+    """
+    # Try each handler in order until one succeeds
+    if _try_handle_tasks_section_start(line, state):
+        return
+
+    if not state.in_tasks_section:
+        return
+
+    if _try_handle_group_marker(line, state, tasks):
+        return
+
+    if _try_handle_task_definition(line, state, tasks):
+        return
+
+    _try_handle_task_properties(line, state)
+
+
 @contextmanager
 def taskfile_lines(filepath: Path, outputter: Outputter) -> Generator[list[str], None, None]:
     """Context manager to read lines from a taskfile.
@@ -102,56 +220,17 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
         List of (group, task_name, description) tuples
     """
     tasks: list[tuple[str, str, str]] = []
-    current_group = "Other"
-    current_task = None
-    current_desc = None
-    is_internal = False
-    in_tasks_section = False
+    state = _ParserState()
 
     with taskfile_lines(filepath, outputter) as lines:
         # Validate YAML structure
         validate_taskfile(lines, outputter)
 
+        # Process each line
         for line in lines:
-            # Check if we're in the tasks section
-            if line.strip() == "tasks:":
-                in_tasks_section = True
-                continue
-
-            if not in_tasks_section:
-                continue
-
-            # Check for group marker
-            group_name = _extract_group_name(line)
-            if group_name:
-                _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
-                current_group = group_name
-                current_task = None
-                current_desc = None
-                is_internal = False
-                continue
-
-            # Check for task definition
-            task_name = _extract_task_name(line)
-            if task_name:
-                _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
-                current_task = task_name
-                current_desc = None
-                is_internal = False
-                continue
-
-            # If tracking a task, look for desc and internal flags
-            if current_task:
-                desc = _extract_description(line)
-                if desc:
-                    current_desc = desc
-                    continue
-
-                if _is_internal_task(line):
-                    is_internal = True
-                    continue
+            _process_line(line, state, tasks)
 
     # Save the last task
-    _save_task_if_valid(tasks, current_group, current_task, current_desc, is_internal)
+    _save_task_if_valid(tasks, state.current_group, state.current_task, state.current_desc, state.is_internal)
 
     return tasks

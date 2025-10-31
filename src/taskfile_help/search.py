@@ -46,6 +46,22 @@ def matches_regex(text: str, regex_pattern: str) -> bool:
         return False
 
 
+def matches_filters(text: str, pattern: str | None, regex: str | None) -> bool:
+    """Check if text matches both pattern and regex filters.
+
+    Args:
+        text: Text to check against filters
+        pattern: Optional pattern for substring matching
+        regex: Optional regex pattern for matching
+
+    Returns:
+        True if text matches all provided filters, False otherwise
+    """
+    if pattern and not matches_pattern(text, pattern):
+        return False
+    return not (regex and not matches_regex(text, regex))
+
+
 def filter_by_namespace(
     taskfiles: list[Taskfile],
     pattern: str | None = None,
@@ -64,15 +80,8 @@ def filter_by_namespace(
     results: list[SearchResult] = []
 
     for namespace, tasks in taskfiles:
-        # Check if namespace matches filters
-        namespace_matches = True
-        if pattern and not matches_pattern(namespace, pattern):
-            namespace_matches = False
-        if regex and not matches_regex(namespace, regex):
-            namespace_matches = False
-
         # If namespace matches, include all tasks from that namespace
-        if namespace_matches:
+        if matches_filters(namespace, pattern, regex):
             for group, task_name, description in tasks:
                 results.append((namespace, group, task_name, description, "namespace"))
 
@@ -98,14 +107,7 @@ def filter_by_group(
 
     for namespace, tasks in taskfiles:
         for group, task_name, description in tasks:
-            # Check if group matches filters
-            group_matches = True
-            if pattern and not matches_pattern(group, pattern):
-                group_matches = False
-            if regex and not matches_regex(group, regex):
-                group_matches = False
-
-            if group_matches:
+            if matches_filters(group, pattern, regex):
                 results.append((namespace, group, task_name, description, "group"))
 
     return results
@@ -130,14 +132,7 @@ def filter_by_task(
 
     for namespace, tasks in taskfiles:
         for group, task_name, description in tasks:
-            # Check if task name matches filters
-            task_matches = True
-            if pattern and not matches_pattern(task_name, pattern):
-                task_matches = False
-            if regex and not matches_regex(task_name, regex):
-                task_matches = False
-
-            if task_matches:
+            if matches_filters(task_name, pattern, regex):
                 results.append((namespace, group, task_name, description, "task"))
 
     return results

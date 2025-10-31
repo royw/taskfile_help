@@ -234,6 +234,55 @@ Examples:
 class Config:
     """Application configuration with derived values."""
 
+    @staticmethod
+    def _get_search_dirs_from_pyproject(config: dict[str, Any]) -> list[Path]:
+        """Extract and resolve search directories from pyproject.toml config.
+
+        Args:
+            config: Configuration dictionary from pyproject.toml
+
+        Returns:
+            List of resolved Path objects from config
+        """
+        config_dirs = config["search-dirs"]
+        if isinstance(config_dirs, list):
+            return [Path(d).resolve() for d in config_dirs if d]
+        else:
+            return [Path(config_dirs).resolve()] if config_dirs else []
+
+    @staticmethod
+    def _resolve_search_dirs(
+        args_search_dirs: list[Path] | None,
+        pyproject_config: dict[str, Any],
+    ) -> list[Path]:
+        """Resolve search directories from arguments and config.
+
+        Args:
+            args_search_dirs: Search directories from command-line arguments
+            pyproject_config: Configuration from pyproject.toml
+
+        Returns:
+            List of resolved search directory paths (deduplicated, preserving order)
+        """
+        search_dirs: list[Path]
+
+        if args_search_dirs is not None:
+            # Command-line argument takes precedence
+            search_dirs = args_search_dirs[:]
+        elif "search-dirs" in pyproject_config:
+            # Use config from pyproject.toml
+            search_dirs = Config._get_search_dirs_from_pyproject(pyproject_config)
+        else:
+            # Default to current working directory
+            search_dirs = [Path.cwd()]
+
+        # Handle edge case of all-empty paths
+        if not search_dirs:
+            search_dirs = [Path.cwd()]
+
+        # Remove duplicates while preserving order (dict preserves insertion order in Python 3.7+)
+        return list(dict.fromkeys(search_dirs))
+
     def __init__(self, argv: list[str]) -> None:
         """Initialize configuration from command-line arguments.
 
@@ -248,28 +297,8 @@ class Config:
         # Colorize if output is a TTY and --no-color is not specified
         self.colorize = sys.stdout.isatty() and not self.args.no_color
 
-        # Parse taskfile search directories
-        if self.args.search_dirs is not None:
-            # Command-line argument takes precedence
-            # Split colon-separated paths and convert to absolute Path objects
-            search_dirs = self.args.search_dirs[:]
-        elif "search-dirs" in pyproject_config:
-            # Use config from pyproject.toml
-            config_dirs = pyproject_config["search-dirs"]
-            if isinstance(config_dirs, list):
-                search_dirs = [Path(d).resolve() for d in config_dirs if d]
-            else:
-                search_dirs = [Path(config_dirs).resolve()] if config_dirs else []
-        else:
-            # Default to current working directory
-            search_dirs = [Path.cwd()]
-
-        # Handle edge case of all-empty paths
-        if not search_dirs:
-            search_dirs = [Path.cwd()]
-
-        # Remove duplicates while preserving order (dict preserves insertion order in Python 3.7+)
-        search_dirs = list(dict.fromkeys(search_dirs))
+        # Resolve taskfile search directories
+        search_dirs = self._resolve_search_dirs(self.args.search_dirs, pyproject_config)
 
         self.discovery = TaskfileDiscovery(search_dirs)
 
