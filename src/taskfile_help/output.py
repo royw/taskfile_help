@@ -60,6 +60,19 @@ class Outputter(Protocol):
         """
         ...
 
+    def output_search_results(
+        self,
+        results: list[tuple[str, str, str, str, str]],
+        output_fn: Callable[..., Any] = print,
+    ) -> None:
+        """Output search results.
+
+        Args:
+            results: List of (namespace, group, task_name, description, match_type) tuples
+            output_fn: Function to use for output (default: print)
+        """
+        ...
+
     def output_heading(self, message: str, output_fn: Callable[..., Any] = print) -> None:
         """Output a heading."""
         ...
@@ -156,6 +169,54 @@ class TextOutputter:
         """Output a warning message."""
         output_fn(f"{Colors.YELLOW}Warning: {message}{Colors.RESET}", file=sys.stderr)
 
+    def output_search_results(
+        self,
+        results: list[tuple[str, str, str, str, str]],
+        output_fn: Callable[..., Any] = print,
+    ) -> None:
+        """Output search results in text format.
+
+        Args:
+            results: List of (namespace, group, task_name, description, match_type) tuples
+            output_fn: Function to use for output (default: print)
+        """
+        if not results:
+            output_fn(f"{Colors.YELLOW}No tasks found matching search criteria{Colors.RESET}")
+            return
+
+        # Print header
+        output_fn(f"{Colors.BOLD}{Colors.CYAN}Search Results:{Colors.RESET}")
+        output_fn("")
+
+        # Group results by namespace
+        grouped: dict[str, list[tuple[str, str, str, str]]] = {}
+        for namespace, group, task_name, description, match_type in results:
+            if namespace not in grouped:
+                grouped[namespace] = []
+            grouped[namespace].append((group, task_name, description, match_type))
+
+        # Print each namespace
+        for namespace, namespace_tasks in grouped.items():
+            # Print namespace header
+            namespace_title = f"{namespace.upper()} Namespace" if namespace else "Main Namespace"
+            output_fn(f"{Colors.BOLD}{Colors.GREEN}{namespace_title}:{Colors.RESET}")
+
+            # Group by group name within namespace
+            by_group: dict[str, list[tuple[str, str, str]]] = {}
+            for group, task_name, description, match_type in namespace_tasks:
+                if group not in by_group:
+                    by_group[group] = []
+                by_group[group].append((task_name, description, match_type))
+
+            # Print each group
+            for group, group_tasks in by_group.items():
+                output_fn(f"  {Colors.BOLD}{group}:{Colors.RESET}")
+                for task_name, description, _match_type in group_tasks:
+                    full_task = f"{namespace}:{task_name}" if namespace else task_name
+                    output_fn(f"    {Colors.CYAN}task {full_task:<{TASK_COLUMN_WIDTH}}{Colors.RESET} - {description}")
+
+            output_fn("")
+
 
 class JsonOutputter:
     """JSON-based outputter."""
@@ -234,3 +295,29 @@ class JsonOutputter:
         """Output a warning message."""
         output = {"warning": message}
         output_fn(json.dumps(output), file=sys.stderr)
+
+    def output_search_results(
+        self,
+        results: list[tuple[str, str, str, str, str]],
+        output_fn: Callable[..., Any] = print,
+    ) -> None:
+        """Output search results in JSON format.
+
+        Args:
+            results: List of (namespace, group, task_name, description, match_type) tuples
+            output_fn: Function to use for output (default: print)
+        """
+        output = {
+            "results": [
+                {
+                    "namespace": namespace,
+                    "group": group,
+                    "name": task_name,
+                    "full_name": f"{namespace}:{task_name}" if namespace else task_name,
+                    "description": description,
+                    "match_type": match_type,
+                }
+                for namespace, group, task_name, description, match_type in results
+            ]
+        }
+        output_fn(json.dumps(output, indent=2))

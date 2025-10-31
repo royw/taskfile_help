@@ -63,6 +63,7 @@ from .completion import (
 from .config import Config
 from .output import Colors, JsonOutputter, Outputter, TextOutputter
 from .parser import parse_taskfile
+from .search import search_taskfiles
 
 
 def _show_verbose_output(config: Config, outputter: Outputter) -> None:
@@ -177,6 +178,83 @@ def _handle_completion(config: Config) -> int | None:
     return None
 
 
+def _handle_namespace_command(config: Config, outputter: Outputter) -> int:
+    """Handle the namespace command (current behavior).
+
+    Args:
+        config: Configuration object containing discovery settings
+        outputter: Outputter instance for formatted output
+
+    Returns:
+        int: Exit code
+    """
+    namespace = config.namespace
+
+    # Special case: 'all' namespace shows all Taskfiles
+    if namespace == "all":
+        _show_all_tasks(config, outputter)
+        return 0
+
+    # Find the appropriate Taskfile
+    if not namespace or namespace == "main":
+        taskfile = config.discovery.find_main_taskfile()
+        namespace = ""  # Use empty namespace for display
+    else:
+        taskfile = config.discovery.find_namespace_taskfile(namespace)
+
+    if not taskfile:
+        if namespace == "?":
+            _show_available_namespaces(config, outputter)
+            return 0
+        else:
+            _show_namespace_not_found(config, outputter, namespace)
+            return 1
+
+    # Parse and display tasks
+    tasks = parse_taskfile(taskfile, namespace, outputter)
+    outputter.output_single(namespace, tasks)
+    return 0
+
+
+def _handle_search_command(config: Config, outputter: Outputter) -> int:
+    """Handle the search command.
+
+    Args:
+        config: Configuration object containing search filters
+        outputter: Outputter instance for formatted output
+
+    Returns:
+        int: Exit code
+    """
+    # Validate that at least one filter is provided
+    if not config.args.pattern and not config.args.regex:
+        outputter.output_error("At least one search filter (--pattern or --regex) is required")
+        return 1
+
+    # Collect all taskfiles (main + all namespaces)
+    taskfiles: list[tuple[str, list[tuple[str, str, str]]]] = []
+
+    main_taskfile = config.discovery.find_main_taskfile()
+    if main_taskfile:
+        tasks = parse_taskfile(main_taskfile, "", outputter)
+        taskfiles.append(("", tasks))
+
+    for ns, taskfile_path in config.discovery.get_all_namespace_taskfiles():
+        tasks = parse_taskfile(taskfile_path, ns, outputter)
+        taskfiles.append((ns, tasks))
+
+    # Search across all taskfiles
+    results = search_taskfiles(
+        taskfiles,
+        pattern=config.args.pattern,
+        regex=config.args.regex,
+    )
+
+    # Output results
+    outputter.output_search_results(results)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Main entry point.
 
@@ -205,32 +283,12 @@ def main(argv: list[str] | None = None) -> int:
     # Show verbose output if requested
     _show_verbose_output(config, outputter)
 
-    namespace = config.namespace
-
-    # Special case: 'all' namespace shows all Taskfiles
-    if namespace == "all":
-        _show_all_tasks(config, outputter)
-        return 0
-
-    # Find the appropriate Taskfile
-    if not namespace or namespace == "main":
-        taskfile = config.discovery.find_main_taskfile()
-        namespace = ""  # Use empty namespace for display
+    # Route to appropriate command handler
+    if config.args.command == "search":
+        return _handle_search_command(config, outputter)
     else:
-        taskfile = config.discovery.find_namespace_taskfile(namespace)
-
-    if not taskfile:
-        if namespace == "?":
-            _show_available_namespaces(config, outputter)
-            return 0
-        else:
-            _show_namespace_not_found(config, outputter, namespace)
-            return 1
-
-    # Parse and display tasks
-    tasks = parse_taskfile(taskfile, namespace, outputter)
-    outputter.output_single(namespace, tasks)
-    return 0
+        # Default to namespace command (includes backward compatibility)
+        return _handle_namespace_command(config, outputter)
 
 
 if __name__ == "__main__":

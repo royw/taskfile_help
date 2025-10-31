@@ -177,6 +177,86 @@ class TestTextOutputter:
         assert "Warning:" in output_lines[0]
         assert "Test warning" in output_lines[0]
 
+    def test_output_search_results_with_results(self) -> None:
+        """Test outputting search results with matching tasks."""
+        outputter = TextOutputter()
+        results = [
+            ("test", "Testing", "unit", "Run unit tests", "task"),
+            ("test", "Testing", "integration", "Run integration tests", "task"),
+            ("dev", "Development", "serve", "Start dev server", "task"),
+        ]
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        output = "\n".join(output_lines)
+        assert "Search Results:" in output
+        assert "TEST Namespace:" in output
+        assert "DEV Namespace:" in output
+        assert "Testing:" in output
+        assert "Development:" in output
+        assert "unit" in output
+        assert "integration" in output
+        assert "serve" in output
+
+    def test_output_search_results_no_results(self) -> None:
+        """Test outputting search results when no tasks match."""
+        outputter = TextOutputter()
+        results: list[tuple[str, str, str, str, str]] = []
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        output = "\n".join(output_lines)
+        assert "No tasks found matching search criteria" in output
+
+    def test_output_search_results_main_namespace(self) -> None:
+        """Test outputting search results for main namespace."""
+        outputter = TextOutputter()
+        results = [
+            ("", "Build", "compile", "Compile the project", "task"),
+            ("", "Build", "package", "Package the project", "task"),
+        ]
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        output = "\n".join(output_lines)
+        assert "Main Namespace:" in output
+        assert "Build:" in output
+        assert "compile" in output
+        assert "package" in output
+
+    def test_output_search_results_multiple_groups(self) -> None:
+        """Test outputting search results with multiple groups in same namespace."""
+        outputter = TextOutputter()
+        results = [
+            ("dev", "Testing", "test", "Run tests", "task"),
+            ("dev", "Linting", "lint", "Run linter", "task"),
+            ("dev", "Formatting", "format", "Format code", "task"),
+        ]
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        output = "\n".join(output_lines)
+        assert "DEV Namespace:" in output
+        assert "Testing:" in output
+        assert "Linting:" in output
+        assert "Formatting:" in output
+
 
 class TestJsonOutputter:
     """Tests for JsonOutputter class."""
@@ -311,3 +391,94 @@ class TestJsonOutputter:
         
         assert output["namespace"] == "dev"
         assert output["tasks"] == []
+
+    def test_output_search_results_with_results(self) -> None:
+        """Test outputting search results in JSON format."""
+        outputter = JsonOutputter()
+        results = [
+            ("test", "Testing", "unit", "Run unit tests", "task"),
+            ("test", "Testing", "integration", "Run integration tests", "task"),
+            ("dev", "Development", "serve", "Start dev server", "task"),
+        ]
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        import json
+        output = json.loads("\n".join(output_lines))
+        
+        assert "results" in output
+        assert len(output["results"]) == 3
+        
+        # Check first result
+        assert output["results"][0]["namespace"] == "test"
+        assert output["results"][0]["group"] == "Testing"
+        assert output["results"][0]["name"] == "unit"
+        assert output["results"][0]["full_name"] == "test:unit"
+        assert output["results"][0]["description"] == "Run unit tests"
+        assert output["results"][0]["match_type"] == "task"
+        
+        # Check third result
+        assert output["results"][2]["namespace"] == "dev"
+        assert output["results"][2]["full_name"] == "dev:serve"
+
+    def test_output_search_results_main_namespace(self) -> None:
+        """Test outputting search results for main namespace in JSON."""
+        outputter = JsonOutputter()
+        results = [
+            ("", "Build", "compile", "Compile the project", "task"),
+        ]
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        import json
+        output = json.loads("\n".join(output_lines))
+        
+        assert output["results"][0]["namespace"] == ""
+        assert output["results"][0]["full_name"] == "compile"
+
+    def test_output_search_results_empty(self) -> None:
+        """Test outputting empty search results in JSON."""
+        outputter = JsonOutputter()
+        results: list[tuple[str, str, str, str, str]] = []
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        import json
+        output = json.loads("\n".join(output_lines))
+        
+        assert "results" in output
+        assert output["results"] == []
+
+    def test_output_search_results_match_types(self) -> None:
+        """Test outputting search results with different match types."""
+        outputter = JsonOutputter()
+        results = [
+            ("test", "Testing", "unit", "Run unit tests", "task"),
+            ("test", "Testing", "integration", "Run integration tests", "group"),
+            ("dev", "Development", "serve", "Start dev server", "namespace"),
+        ]
+        
+        output_lines: list[str] = []
+        def capture_output(text: str) -> None:
+            output_lines.append(text)
+        
+        outputter.output_search_results(results, capture_output)
+        
+        import json
+        output = json.loads("\n".join(output_lines))
+        
+        assert output["results"][0]["match_type"] == "task"
+        assert output["results"][1]["match_type"] == "group"
+        assert output["results"][2]["match_type"] == "namespace"

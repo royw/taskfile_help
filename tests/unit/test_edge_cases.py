@@ -129,7 +129,7 @@ class TestConfigEdgeCases:
         nonexistent = tmp_path / "does_not_exist"
         
         # Should not crash, just use the path
-        config = Config(["script.py", "-s", str(nonexistent)])
+        config = Config(["script.py", "namespace", "-s", str(nonexistent)])
         
         assert nonexistent in config.discovery.search_dirs
 
@@ -138,7 +138,7 @@ class TestConfigEdgeCases:
         dir_with_spaces = tmp_path / "dir with spaces"
         dir_with_spaces.mkdir()
         
-        config = Config(["script.py", "-s", str(dir_with_spaces)])
+        config = Config(["script.py", "namespace", "-s", str(dir_with_spaces)])
         
         assert dir_with_spaces in config.discovery.search_dirs
 
@@ -202,7 +202,7 @@ tasks:
         
         with patch("sys.stdout.isatty", return_value=False):
             # 'all' namespace shows all taskfiles
-            result = main(["script.py", "all"])
+            result = main(["script.py", "namespace", "all"])
         
         assert result == 0
 
@@ -219,7 +219,7 @@ tasks:
 """)
         monkeypatch.chdir(tmp_path)
         
-        result = main(["script.py", "--verbose", "--json"])
+        result = main(["script.py", "namespace", "--verbose", "--json"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -239,7 +239,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "all"])
+            result = main(["script.py", "namespace", "all"])
         
         assert result == 0
         # Should not crash, just show no tasks
@@ -258,7 +258,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=True):
-            result = main(["script.py", "--json"])
+            result = main(["script.py", "namespace", "--json"])
         
         assert result == 0
         captured = capsys.readouterr()

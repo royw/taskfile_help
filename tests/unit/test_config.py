@@ -62,8 +62,9 @@ class TestArgs:
 
     def test_parse_args_default(self) -> None:
         """Test parsing args with defaults."""
-        args = Args.parse_args(["script.py"])
+        args = Args.parse_args(["script.py", "namespace"])
         
+        assert args.command == "namespace"
         assert args.namespace == ""
         assert args.no_color is False
         assert args.search_dirs is None
@@ -72,8 +73,9 @@ class TestArgs:
 
     def test_parse_args_namespace(self) -> None:
         """Test parsing args with namespace."""
-        args = Args.parse_args(["script.py", "dev"])
+        args = Args.parse_args(["script.py", "namespace", "dev"])
         
+        assert args.command == "namespace"
         assert args.namespace == "dev"
         assert args.no_color is False
         assert args.search_dirs is None
@@ -82,8 +84,9 @@ class TestArgs:
 
     def test_parse_args_all_namespace(self) -> None:
         """Test parsing args with 'all' namespace."""
-        args = Args.parse_args(["script.py", "all"])
+        args = Args.parse_args(["script.py", "namespace", "all"])
         
+        assert args.command == "namespace"
         assert args.namespace == "all"
         assert args.no_color is False
         assert args.search_dirs is None
@@ -92,8 +95,9 @@ class TestArgs:
 
     def test_parse_args_no_color(self) -> None:
         """Test parsing args with --no-color flag."""
-        args = Args.parse_args(["script.py", "--no-color"])
+        args = Args.parse_args(["script.py", "namespace", "--no-color"])
         
+        assert args.command == "namespace"
         assert args.no_color is True
         assert args.namespace == ""
         assert args.search_dirs is None
@@ -102,8 +106,9 @@ class TestArgs:
 
     def test_parse_args_search_dirs(self) -> None:
         """Test parsing args with --search-dirs."""
-        args = Args.parse_args(["script.py", "--search-dirs", "/path1:/path2"])
+        args = Args.parse_args(["script.py", "namespace", "--search-dirs", "/path1:/path2"])
         
+        assert args.command == "namespace"
         assert args.search_dirs == [Path("/path1"), Path("/path2")]
         assert args.namespace == ""
         assert args.no_color is False
@@ -112,8 +117,9 @@ class TestArgs:
 
     def test_parse_args_search_dirs_short(self) -> None:
         """Test parsing args with -s short option."""
-        args = Args.parse_args(["script.py", "-s", "/path"])
+        args = Args.parse_args(["script.py", "namespace", "-s", "/path"])
         
+        assert args.command == "namespace"
         assert args.search_dirs == [Path("/path")]
         assert args.namespace == ""
         assert args.no_color is False
@@ -122,8 +128,9 @@ class TestArgs:
 
     def test_parse_args_verbose(self) -> None:
         """Test parsing args with --verbose flag."""
-        args = Args.parse_args(["script.py", "--verbose"])
+        args = Args.parse_args(["script.py", "namespace", "--verbose"])
         
+        assert args.command == "namespace"
         assert args.verbose is True
         assert args.namespace == ""
         assert args.no_color is False
@@ -132,8 +139,9 @@ class TestArgs:
 
     def test_parse_args_verbose_short(self) -> None:
         """Test parsing args with -v short option."""
-        args = Args.parse_args(["script.py", "-v"])
+        args = Args.parse_args(["script.py", "namespace", "-v"])
         
+        assert args.command == "namespace"
         assert args.verbose is True
         assert args.namespace == ""
         assert args.no_color is False
@@ -142,8 +150,9 @@ class TestArgs:
 
     def test_parse_args_json(self) -> None:
         """Test parsing args with --json flag."""
-        args = Args.parse_args(["script.py", "--json"])
+        args = Args.parse_args(["script.py", "namespace", "--json"])
         
+        assert args.command == "namespace"
         assert args.json_output is True
         assert args.namespace == ""
         assert args.no_color is False
@@ -154,6 +163,7 @@ class TestArgs:
         """Test parsing args with multiple flags."""
         args = Args.parse_args([
             "script.py",
+            "namespace",
             "dev",
             "--no-color",
             "--verbose",
@@ -161,6 +171,7 @@ class TestArgs:
             "/path",
         ])
         
+        assert args.command == "namespace"
         assert args.namespace == "dev"
         assert args.no_color is True
         assert args.verbose is True
@@ -175,7 +186,7 @@ class TestConfig:
         """Test config with default search directory."""
         monkeypatch.chdir(tmp_path)
         
-        config = Config(["script.py"])
+        config = Config(["script.py", "namespace"])
         
         assert len(config.discovery.search_dirs) == 1
         assert config.discovery.search_dirs[0] == tmp_path
@@ -187,7 +198,7 @@ class TestConfig:
         dir1.mkdir()
         dir2.mkdir()
         
-        config = Config(["script.py", "-s", f"{dir1}:{dir2}"])
+        config = Config(["script.py", "namespace", "-s", f"{dir1}:{dir2}"])
         
         assert len(config.discovery.search_dirs) == 2
         assert dir1 in config.discovery.search_dirs
@@ -204,7 +215,7 @@ search-dirs = [".", "../other"]
 """)
         monkeypatch.chdir(tmp_path)
         
-        config = Config(["script.py"])
+        config = Config(["script.py", "namespace"])
         
         # Should have at least current directory
         assert len(config.discovery.search_dirs) >= 1
@@ -221,7 +232,7 @@ search-dirs = "."
 """)
         monkeypatch.chdir(tmp_path)
         
-        config = Config(["script.py"])
+        config = Config(["script.py", "namespace"])
         
         assert len(config.discovery.search_dirs) == 1
         assert config.discovery.search_dirs[0] == tmp_path
@@ -237,7 +248,7 @@ search-dirs = ""
 """)
         monkeypatch.chdir(tmp_path)
         
-        config = Config(["script.py"])
+        config = Config(["script.py", "namespace"])
         
         # Empty string should default to current directory
         assert len(config.discovery.search_dirs) == 1
@@ -254,7 +265,7 @@ search-dirs = [".", "", "../other"]
 """)
         monkeypatch.chdir(tmp_path)
         
-        config = Config(["script.py"])
+        config = Config(["script.py", "namespace"])
         
         # Empty strings should be filtered out
         assert len(config.discovery.search_dirs) >= 1
@@ -274,7 +285,7 @@ search-dirs = [".", "../other"]
         dir1 = tmp_path / "dir1"
         dir1.mkdir()
         
-        config = Config(["script.py", "-s", str(dir1)])
+        config = Config(["script.py", "namespace", "-s", str(dir1)])
         
         assert len(config.discovery.search_dirs) == 1
         assert config.discovery.search_dirs[0] == dir1
@@ -284,7 +295,7 @@ search-dirs = [".", "../other"]
         """Test colorize enabled when output is TTY."""
         mock_isatty.return_value = True
         
-        config = Config(["script.py"])
+        config = Config(["script.py", "namespace"])
         
         assert config.colorize is True
 
@@ -293,7 +304,7 @@ search-dirs = [".", "../other"]
         """Test colorize disabled when output is not TTY."""
         mock_isatty.return_value = False
         
-        config = Config(["script.py"])
+        config = Config(["script.py", "namespace"])
         
         assert config.colorize is False
 
@@ -302,19 +313,19 @@ search-dirs = [".", "../other"]
         """Test colorize disabled with --no-color flag."""
         mock_isatty.return_value = True
         
-        config = Config(["script.py", "--no-color"])
+        config = Config(["script.py", "namespace", "--no-color"])
         
         assert config.colorize is False
 
     def test_config_all_namespace(self, tmp_path: Path) -> None:
         """Test 'all' namespace."""
-        config = Config(["script.py", "all"])
+        config = Config(["script.py", "namespace", "all"])
         
         assert config.namespace == "all"
 
     def test_config_namespace_property(self, tmp_path: Path) -> None:
         """Test namespace property."""
-        config = Config(["script.py", "dev"])
+        config = Config(["script.py", "namespace", "dev"])
         
         assert config.namespace == "dev"
 
@@ -323,7 +334,7 @@ search-dirs = [".", "../other"]
         dir1 = tmp_path / "dir1"
         dir1.mkdir()
         
-        config = Config(["script.py", "-s", f"{dir1}:{dir1}:{dir1}"])
+        config = Config(["script.py", "namespace", "-s", f"{dir1}:{dir1}:{dir1}"])
         
         assert len(config.discovery.search_dirs) == 1
         assert config.discovery.search_dirs[0] == dir1
@@ -335,7 +346,7 @@ search-dirs = [".", "../other"]
         dir2 = tmp_path / "dir2"
         dir2.mkdir()
         
-        config = Config(["script.py", "-s", f"{dir1}:{dir2}:{dir1}"])
+        config = Config(["script.py", "namespace", "-s", f"{dir1}:{dir2}:{dir1}"])
         
         assert len(config.discovery.search_dirs) == 2
         assert config.discovery.search_dirs[0] == dir1
@@ -347,7 +358,7 @@ search-dirs = [".", "../other"]
         subdir = tmp_path / "subdir"
         subdir.mkdir()
         
-        config = Config(["script.py", "-s", "./subdir"])
+        config = Config(["script.py", "namespace", "-s", "./subdir"])
         
         assert len(config.discovery.search_dirs) == 1
         assert config.discovery.search_dirs[0] == subdir
@@ -358,7 +369,7 @@ search-dirs = [".", "../other"]
         """Test that empty search dirs defaults to current directory."""
         monkeypatch.chdir(tmp_path)
         
-        config = Config(["script.py", "-s", ""])
+        config = Config(["script.py", "namespace", "-s", ""])
         
         assert len(config.discovery.search_dirs) == 1
         assert config.discovery.search_dirs[0] == tmp_path

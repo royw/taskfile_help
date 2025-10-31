@@ -110,57 +110,71 @@ task help:?     # List all namespaces (Dev, Test, ...)
 
 ## Usage
 
+### Namespace Command
+
+Display tasks from a specific namespace or all namespaces:
+
 ```bash
-# Show help for main Taskfile in current directory
-taskfile_help.py
-taskfile_help.py main
+# Show help for main Taskfile
+taskfile-help namespace
+taskfile-help namespace main
 
 # Show help for a specific namespace
-taskfile_help.py <namespace>
-taskfile_help.py rag
-taskfile_help.py dev
+taskfile-help namespace dev
+taskfile-help namespace rag
 
 # Show help for all Taskfiles
-taskfile_help.py all
+taskfile-help namespace all
 
-# Disable colored output
-taskfile_help.py --no-color
-taskfile_help.py rag --no-color
+# List available namespaces
+taskfile-help namespace ?
 
-# Search in a specific directory (absolute path)
-taskfile_help.py --search-dirs /path/to/project
-taskfile_help.py rag -s /path/to/project
-
-# Search in a specific directory (relative path)
-taskfile_help.py --search-dirs ../other-project
-taskfile_help.py -s ./subdir
-
-# Search multiple directories for taskfiles
-taskfile_help.py --search-dirs /path1:/path2:/path3
-taskfile_help.py -s ~/projects/main:~/projects/shared
-taskfile_help.py --search-dirs ../project1:./local:~/shared
-
-# Show verbose output (search directories)
-taskfile_help.py --verbose
-taskfile_help.py -v rag
-
-# Output in JSON format
-taskfile_help.py --json
-taskfile_help.py rag --json
+# With global options (can appear after subcommand)
+taskfile-help namespace dev --no-color --verbose
+taskfile-help namespace all --json
+taskfile-help namespace --search-dirs /path/to/project
 ```
 
-## Options
+### Search Command
 
-- `namespace` - Optional namespace to show help for (e.g., 'rag', 'dev', 'main', 'all')
-  - Use 'all' to show help for all taskfiles
+Search for tasks across namespaces, groups, and task names:
+
+```bash
+# Search by pattern (case-insensitive substring)
+taskfile-help search --pattern "test"
+taskfile-help search --pattern "build"
+
+# Search by regex
+taskfile-help search --regex "^lint"
+taskfile-help search --regex ".*fix$"
+
+# Combine multiple filters (AND logic)
+taskfile-help search --pattern "test" --regex "unit"
+
+# With global options
+taskfile-help search --pattern "build" --no-color
+taskfile-help search --regex "^deploy" --json --verbose
+```
+
+### Search Behavior
+
+- **Pattern matching**: Case-insensitive substring search
+- **Regex matching**: Full regular expression support
+- **Multiple filters**: All filters must match (AND logic)
+- **Search scope**: Searches namespace names, group names, and task names
+- **Results**: Shows all tasks in matching namespaces/groups, or individual matching tasks
+
+### Global Options
+
+Global options can be placed after any subcommand:
+
 - `--no-color` - Disable colored output
-- `-s, --search-dirs DIRS` - Colon-separated list of directories to search for taskfiles. Paths may be absolute or
-  relative to current working directory. (default: current working directory)
+- `-s, --search-dirs DIRS` - Colon-separated list of directories to search for taskfiles
 - `-v, --verbose` - Show verbose output including search directories
 - `--json` - Output tasks in JSON format
 - `--completion SHELL` - Generate completion script for specified shell (bash, zsh, fish, tcsh, ksh)
 - `--install-completion [SHELL]` - Install completion script (auto-detects shell if not specified)
-- `-h, --help` - Show this help message and exit
+- `-h, --help` - Show help message
 
 ## Shell Completion
 
@@ -217,7 +231,7 @@ Supported patterns (matches regex `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`):
 
 Examples: `Taskfile-dev.yml`, `Taskfile_test.yaml`, `taskfile-rag.yml`
 
-## Search Behavior
+## Taskfile Discovery
 
 - By default, searches for taskfiles in the current working directory
 - Use --search-dirs (or -s) to search in one or more directories (first match wins)

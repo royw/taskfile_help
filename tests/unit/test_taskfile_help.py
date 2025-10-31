@@ -25,7 +25,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py"])
+            result = main(["script.py", "namespace"])
         
         assert result == 0
 
@@ -43,7 +43,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "dev"])
+            result = main(["script.py", "namespace", "dev"])
         
         assert result == 0
 
@@ -68,7 +68,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "all"])
+            result = main(["script.py", "namespace", "all"])
         
         assert result == 0
 
@@ -77,7 +77,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py"])
+            result = main(["script.py", "namespace"])
         
         assert result == 1
 
@@ -86,7 +86,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "nonexistent"])
+            result = main(["script.py", "namespace", "nonexistent"])
         
         assert result == 1
 
@@ -102,7 +102,7 @@ tasks:
 """)
         monkeypatch.chdir(tmp_path)
         
-        result = main(["script.py", "--json"])
+        result = main(["script.py", "namespace", "--json"])
         
         assert result == 0
 
@@ -119,7 +119,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=True):
-            result = main(["script.py", "--no-color"])
+            result = main(["script.py", "namespace", "--no-color"])
         
         assert result == 0
 
@@ -137,7 +137,7 @@ tasks:
 """)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "-s", str(project_dir)])
+            result = main(["script.py", "namespace", "-s", str(project_dir)])
         
         assert result == 0
 
@@ -154,7 +154,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "--verbose"])
+            result = main(["script.py", "namespace", "--verbose"])
         
         assert result == 0
 
@@ -171,7 +171,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "main"])
+            result = main(["script.py", "namespace", "main"])
         
         assert result == 0
 
@@ -182,7 +182,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py"])
+            result = main(["script.py", "namespace"])
         
         assert result == 0
 
@@ -200,7 +200,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py"])
+            result = main(["script.py", "namespace"])
         
         assert result == 0
 
@@ -209,7 +209,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "all"])
+            result = main(["script.py", "namespace", "all"])
         
         assert result == 0
 
@@ -236,7 +236,7 @@ tasks:
         monkeypatch.chdir(tmp_path)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["script.py", "all"])
+            result = main(["script.py", "namespace", "all"])
         
         assert result == 0
 
@@ -258,7 +258,7 @@ tasks:
         original_reset = Colors.RESET
         
         with patch("sys.stdout.isatty", return_value=True):
-            result = main(["script.py", "--json"])
+            result = main(["script.py", "namespace", "--json"])
         
         # Colors should be disabled for JSON
         assert result == 0

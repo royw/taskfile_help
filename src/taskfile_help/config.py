@@ -1,8 +1,13 @@
+"""Configuration management for taskfile-help."""
+
+from __future__ import annotations
+
 import argparse
-from dataclasses import dataclass
-from pathlib import Path
 import sys
 import tomllib
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from .discovery import TaskfileDiscovery
@@ -33,7 +38,10 @@ def _load_pyproject_config() -> dict[str, Any]:
 class Args:
     """Parsed command-line arguments."""
 
+    command: str
     namespace: str
+    pattern: str | None
+    regex: str | None
     no_color: bool
     search_dirs: list[Path] | None
     verbose: bool
@@ -43,31 +51,13 @@ class Args:
     install_completion: str | None
 
     @staticmethod
-    def parse_args(argv: list[str]) -> "Args":
-        """Parse command line arguments using argparse.
+    def _add_global_arguments(parser: argparse.ArgumentParser, list_of_paths: Callable[[str], list[Path]]) -> None:
+        """Add global arguments to a parser.
 
         Args:
-            argv: List of command line arguments
-
-        Returns:
-            Args: Parsed arguments
+            parser: ArgumentParser to add arguments to
+            list_of_paths: Function to parse colon-separated paths
         """
-
-        def list_of_paths(arg: str) -> list[Path]:
-            # Use dict.fromkeys() to remove duplicates while preserving order (keeps first occurrence)
-            return list(dict.fromkeys(Path(p).resolve() for p in arg.split(":")))
-
-        parser = argparse.ArgumentParser(
-            description="Dynamic Taskfile help generator",
-            add_help=True,
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-        )
-        parser.add_argument(
-            "namespace",
-            nargs="?",
-            default="",
-            help="Namespace to show help for (e.g., 'rag', 'dev', 'main', 'all')",
-        )
         parser.add_argument(
             "--no-color",
             action="store_true",
@@ -124,9 +114,113 @@ class Args:
             help="Install completion script for specified shell (auto-detects if not specified)",
         )
 
+    @staticmethod
+    def parse_args(argv: list[str]) -> "Args":
+        """Parse command line arguments using argparse.
+
+        Args:
+            argv: List of command line arguments
+
+        Returns:
+            Args: Parsed arguments
+        """
+
+        def list_of_paths(arg: str) -> list[Path]:
+            # Use dict.fromkeys() to remove duplicates while preserving order (keeps first occurrence)
+            return list(dict.fromkeys(Path(p).resolve() for p in arg.split(":")))
+
+        parser = argparse.ArgumentParser(
+            description="Dynamic Taskfile help generator",
+            add_help=True,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+
+        # Create subparsers for commands
+        subparsers = parser.add_subparsers(
+            dest="command",
+            help="Command to execute",
+            required=True,
+        )
+
+        # Namespace command (current behavior)
+        namespace_parser = subparsers.add_parser(
+            "namespace",
+            help="Show tasks for a specific namespace",
+            description="Display tasks from a specific namespace or all namespaces",
+            epilog="""
+Meta-namespaces:
+  main    Show tasks from the main Taskfile (default if no namespace specified)
+  all     Show tasks from all Taskfiles (main + all namespaces)
+  ?       List all available namespaces
+
+Examples:
+  taskfile-help namespace              # Show main Taskfile
+  taskfile-help namespace main         # Show main Taskfile (explicit)
+  taskfile-help namespace dev          # Show dev namespace
+  taskfile-help namespace all          # Show all namespaces
+  taskfile-help namespace ?            # List available namespaces
+            """,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        namespace_parser.add_argument(
+            "namespace",
+            nargs="?",
+            default="",
+            help="Namespace to show (or 'main', 'all', '?' for meta-namespaces)",
+        )
+        Args._add_global_arguments(namespace_parser, list_of_paths)
+
+        # Search command (new feature)
+        search_parser = subparsers.add_parser(
+            "search",
+            help="Search for tasks by pattern or regex",
+            description="Search across namespaces, groups, and task names",
+            epilog="""
+Search filters:
+  At least one filter (--pattern or --regex) is required.
+  Multiple filters use AND logic (all must match).
+
+Search scope:
+  Searches across namespace names, group names, and task names.
+  Results show all tasks in matching namespaces/groups, or individual matching tasks.
+
+Examples:
+  taskfile-help search --pattern "test"           # Find tasks containing "test"
+  taskfile-help search --regex "^build"           # Find tasks starting with "build"
+  taskfile-help search --pattern "lint" --regex "fix$"  # Combine filters
+  taskfile-help search --pattern "format" --json  # JSON output
+            """,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        search_parser.add_argument(
+            "--pattern",
+            type=str,
+            default=None,
+            metavar="STR",
+            help="Search using case-insensitive substring match",
+        )
+        search_parser.add_argument(
+            "--regex",
+            type=str,
+            default=None,
+            metavar="STR",
+            help="Search using regular expression pattern",
+        )
+        Args._add_global_arguments(search_parser, list_of_paths)
+
         parsed = parser.parse_args(argv[1:])
+
+        # Extract command and command-specific arguments
+        command = parsed.command if parsed.command else "namespace"
+        namespace = getattr(parsed, "namespace", "")
+        pattern = getattr(parsed, "pattern", None)
+        regex = getattr(parsed, "regex", None)
+
         return Args(
-            namespace=parsed.namespace,
+            command=command,
+            namespace=namespace,
+            pattern=pattern,
+            regex=regex,
             no_color=parsed.no_color,
             search_dirs=parsed.search_dirs,
             verbose=parsed.verbose,
