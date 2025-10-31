@@ -195,22 +195,30 @@ class TestTaskfileDiscovery:
         discovery = TaskfileDiscovery([tmp_path])
         result = discovery.get_possible_paths("main")
         
-        assert len(result) == 4
+        assert len(result) == 8
         assert tmp_path / "Taskfile.yml" in result
         assert tmp_path / "Taskfile.yaml" in result
         assert tmp_path / "taskfile.yml" in result
         assert tmp_path / "taskfile.yaml" in result
+        assert tmp_path / "Taskfile.dist.yml" in result
+        assert tmp_path / "Taskfile.dist.yaml" in result
+        assert tmp_path / "taskfile.dist.yml" in result
+        assert tmp_path / "taskfile.dist.yaml" in result
 
     def test_get_possible_paths_empty_namespace(self, tmp_path: Path) -> None:
         """Test getting possible paths for empty namespace."""
         discovery = TaskfileDiscovery([tmp_path])
         result = discovery.get_possible_paths("")
         
-        assert len(result) == 4
+        assert len(result) == 8
         assert tmp_path / "Taskfile.yml" in result
         assert tmp_path / "Taskfile.yaml" in result
         assert tmp_path / "taskfile.yml" in result
         assert tmp_path / "taskfile.yaml" in result
+        assert tmp_path / "Taskfile.dist.yml" in result
+        assert tmp_path / "Taskfile.dist.yaml" in result
+        assert tmp_path / "taskfile.dist.yml" in result
+        assert tmp_path / "taskfile.dist.yaml" in result
 
     def test_get_possible_paths_namespace(self, tmp_path: Path) -> None:
         """Test getting possible paths for a namespace."""
