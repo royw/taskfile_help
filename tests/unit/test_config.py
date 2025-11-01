@@ -159,22 +159,36 @@ class TestArgs:
         assert args.search_dirs is None
         assert args.verbose is False
 
-    def test_parse_args_combined(self) -> None:
-        """Test parsing args with multiple flags."""
-        args = Args.parse_args([
-            "script.py",
-            "namespace",
-            "dev",
-            "--no-color",
-            "--verbose",
-            "--search-dirs",
-            "/path",
-        ])
+    def test_parse_args_namespace_with_no_color(self) -> None:
+        """Test parsing namespace with --no-color flag."""
+        args = Args.parse_args(["script.py", "namespace", "dev", "--no-color"])
         
         assert args.command == "namespace"
         assert args.namespace == "dev"
         assert args.no_color is True
+        assert args.verbose is False
+        assert args.search_dirs is None
+        assert args.json_output is False
+
+    def test_parse_args_namespace_with_verbose(self) -> None:
+        """Test parsing namespace with --verbose flag."""
+        args = Args.parse_args(["script.py", "namespace", "dev", "--verbose"])
+        
+        assert args.command == "namespace"
+        assert args.namespace == "dev"
+        assert args.no_color is False
         assert args.verbose is True
+        assert args.search_dirs is None
+        assert args.json_output is False
+
+    def test_parse_args_namespace_with_search_dirs(self) -> None:
+        """Test parsing namespace with --search-dirs."""
+        args = Args.parse_args(["script.py", "namespace", "dev", "--search-dirs", "/path"])
+        
+        assert args.command == "namespace"
+        assert args.namespace == "dev"
+        assert args.no_color is False
+        assert args.verbose is False
         assert args.search_dirs == [Path("/path")]
         assert args.json_output is False
 
@@ -274,7 +288,7 @@ search-dirs = [".", "", "../other"]
     def test_config_args_override_pyproject(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test that command line args override pyproject.toml."""
+        """Test command line args override pyproject.toml."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("""
 [tool.taskfile-help]
@@ -330,7 +344,7 @@ search-dirs = [".", "../other"]
         assert config.namespace == "dev"
 
     def test_config_removes_duplicate_search_dirs(self, tmp_path: Path) -> None:
-        """Test that duplicate search directories are removed."""
+        """Test duplicate search directories are removed."""
         dir1 = tmp_path / "dir1"
         dir1.mkdir()
         
@@ -340,7 +354,7 @@ search-dirs = [".", "../other"]
         assert config.discovery.search_dirs[0] == dir1
 
     def test_config_removes_duplicate_search_dirs_order(self, tmp_path: Path) -> None:
-        """Test that duplicate search directories are removed."""
+        """Test duplicate search directories preserve first occurrence order."""
         dir1 = tmp_path / "dir1"
         dir1.mkdir()
         dir2 = tmp_path / "dir2"
@@ -353,7 +367,7 @@ search-dirs = [".", "../other"]
         assert config.discovery.search_dirs[1] == dir2
 
     def test_config_resolves_relative_paths(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that relative paths are resolved."""
+        """Test relative paths are resolved to absolute paths."""
         monkeypatch.chdir(tmp_path)
         subdir = tmp_path / "subdir"
         subdir.mkdir()
@@ -366,7 +380,7 @@ search-dirs = [".", "../other"]
     def test_config_empty_search_dirs_defaults_to_cwd(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test that empty search dirs defaults to current directory."""
+        """Test empty search dirs defaults to current directory."""
         monkeypatch.chdir(tmp_path)
         
         config = Config(["script.py", "namespace", "-s", ""])

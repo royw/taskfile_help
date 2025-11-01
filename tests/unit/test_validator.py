@@ -10,7 +10,7 @@ class TestValidateTaskfile:
     """Tests for validate_taskfile function."""
 
     def test_valid_taskfile_passes(self, capsys):
-        """Test that a valid Taskfile passes validation."""
+        """Test valid Taskfile passes validation."""
         lines = [
             "version: '3'\n",
             "\n",
@@ -249,7 +249,7 @@ class TestValidateTaskfile:
         assert "Task 'build': 'deps' must be a list, got str" in captured.err
 
     def test_multiple_validation_errors(self, capsys):
-        """Test that multiple validation errors are all reported."""
+        """Test multiple validation errors are reported."""
         lines = [
             "version: '2'\n",
             "\n",
@@ -285,7 +285,7 @@ class TestValidateTaskfile:
         assert "Root must be a dictionary, got list" in captured.err
 
     def test_valid_taskfile_with_optional_fields(self, capsys):
-        """Test that valid optional fields don't trigger warnings."""
+        """Test valid optional fields produce no warnings."""
         lines = [
             "version: '3'\n",
             "\n",

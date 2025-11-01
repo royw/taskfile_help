@@ -159,7 +159,7 @@ tasks:
         assert result == 0
 
     def test_main_namespace_main_alias(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that 'main' namespace is treated as main taskfile."""
+        """Test 'main' namespace is treated as main taskfile."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
 
@@ -241,7 +241,7 @@ tasks:
         assert result == 0
 
     def test_main_colors_disabled_for_json(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that colors are disabled for JSON output."""
+        """Test colors are disabled for JSON output."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
 

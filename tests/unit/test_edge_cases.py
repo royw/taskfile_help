@@ -209,7 +209,7 @@ tasks:
     def test_main_verbose_with_json_suppressed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """Test that verbose output is suppressed with JSON."""
+        """Test verbose output is suppressed with JSON."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
 tasks:
@@ -247,7 +247,7 @@ tasks:
     def test_main_colors_disabled_for_json(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """Test that colors are disabled for JSON output even with TTY."""
+        """Test colors are disabled for JSON output even with TTY."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
 tasks:

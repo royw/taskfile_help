@@ -31,7 +31,7 @@ class TestTaskfileDiscovery:
         assert result == taskfile
 
     def test_find_main_taskfile_prefers_yml(self, tmp_path: Path) -> None:
-        """Test that .yml is preferred over .yaml."""
+        """Test .yml extension is preferred over .yaml."""
         yml_file = tmp_path / "Taskfile.yml"
         yaml_file = tmp_path / "Taskfile.yaml"
         yml_file.write_text("version: '3'\ntasks: {}")
@@ -85,7 +85,7 @@ class TestTaskfileDiscovery:
         assert result == taskfile
 
     def test_find_main_taskfile_prefers_uppercase(self, tmp_path: Path) -> None:
-        """Test that uppercase Taskfile is preferred over lowercase."""
+        """Test uppercase Taskfile is preferred over lowercase."""
         uppercase = tmp_path / "Taskfile.yml"
         lowercase = tmp_path / "taskfile.yml"
         uppercase.write_text("version: '3'\ntasks: {}")
@@ -149,7 +149,7 @@ class TestTaskfileDiscovery:
         assert "test" in namespaces
 
     def test_get_all_namespace_taskfiles_sorted(self, tmp_path: Path) -> None:
-        """Test that namespace taskfiles are sorted."""
+        """Test namespace taskfiles are sorted alphabetically."""
         (tmp_path / "Taskfile-zebra.yml").write_text("version: '3'\ntasks: {}")
         (tmp_path / "Taskfile-alpha.yml").write_text("version: '3'\ntasks: {}")
         (tmp_path / "Taskfile-beta.yml").write_text("version: '3'\ntasks: {}")
@@ -168,7 +168,7 @@ class TestTaskfileDiscovery:
         assert len(result) == 0
 
     def test_get_all_namespace_taskfiles_ignores_main(self, tmp_path: Path) -> None:
-        """Test that main taskfile is not included in namespace list."""
+        """Test main taskfile is excluded from namespace list."""
         (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
         
@@ -179,7 +179,7 @@ class TestTaskfileDiscovery:
         assert result[0][0] == "dev"
 
     def test_get_all_namespace_taskfiles_removes_duplicates(self, tmp_path: Path) -> None:
-        """Test that duplicate namespaces are removed."""
+        """Test duplicate namespaces are removed."""
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
         (tmp_path / "Taskfile_dev.yaml").write_text("version: '3'\ntasks: {}")
         
@@ -246,7 +246,7 @@ class TestTaskfileDiscovery:
         assert dir2 / "Taskfile-dev.yml" in result
 
     def test_search_dirs_order_matters(self, tmp_path: Path) -> None:
-        """Test that search directory order matters (first match wins)."""
+        """Test search directory order determines precedence (first match wins)."""
         dir1 = tmp_path / "dir1"
         dir2 = tmp_path / "dir2"
         dir1.mkdir()
@@ -308,7 +308,7 @@ class TestTaskfileDiscovery:
         assert result[0][0] == "dev"
 
     def test_ignores_wrong_extension(self, tmp_path: Path) -> None:
-        """Test that files with wrong extensions are ignored."""
+        """Test files with wrong extensions are ignored."""
         (tmp_path / "Taskfile-dev.txt").write_text("version: '3'\ntasks: {}")
         (tmp_path / "Taskfile-dev.json").write_text("{}")
         (tmp_path / "Taskfile-dev.py").write_text("# python file")
@@ -319,7 +319,7 @@ class TestTaskfileDiscovery:
         assert len(result) == 0
 
     def test_ignores_wrong_prefix(self, tmp_path: Path) -> None:
-        """Test that files with wrong prefix are ignored."""
+        """Test files with wrong prefix are ignored."""
         (tmp_path / "MyTaskfile-dev.yml").write_text("version: '3'\ntasks: {}")
         (tmp_path / "Task-dev.yml").write_text("version: '3'\ntasks: {}")
         (tmp_path / "taskfile-dev.yml").write_text("version: '3'\ntasks: {}")  # Valid one
@@ -332,7 +332,7 @@ class TestTaskfileDiscovery:
         assert result[0][0] == "dev"
 
     def test_ignores_empty_namespace(self, tmp_path: Path) -> None:
-        """Test that files with empty namespace are ignored."""
+        """Test files with empty namespace are ignored."""
         (tmp_path / "Taskfile-.yml").write_text("version: '3'\ntasks: {}")
         (tmp_path / "Taskfile_.yml").write_text("version: '3'\ntasks: {}")
         
@@ -342,7 +342,7 @@ class TestTaskfileDiscovery:
         assert len(result) == 0
 
     def test_ignores_directories(self, tmp_path: Path) -> None:
-        """Test that directories matching the pattern are ignored."""
+        """Test directories matching the pattern are ignored."""
         # Create a directory that matches the pattern
         dir_with_pattern = tmp_path / "Taskfile-dev.yml"
         dir_with_pattern.mkdir()
@@ -353,7 +353,7 @@ class TestTaskfileDiscovery:
         assert len(result) == 0
 
     def test_handles_nonexistent_search_dir(self, tmp_path: Path) -> None:
-        """Test that nonexistent search directories are handled gracefully."""
+        """Test nonexistent search directories are handled gracefully."""
         nonexistent = tmp_path / "nonexistent"
         
         discovery = TaskfileDiscovery([nonexistent])

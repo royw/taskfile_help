@@ -12,7 +12,7 @@ class TestColors:
     """Tests for Colors class."""
 
     def test_colors_enabled_by_default(self) -> None:
-        """Test that colors are enabled by default."""
+        """Test colors are enabled by default."""
         # Ensure colors are enabled for this test
         Colors.RESET = "\033[0m"
         Colors.BOLD = "\033[1m"

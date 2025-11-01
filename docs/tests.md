@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-01 12:19:46  
-> **Total Tests**: 283
+> **Auto-generated** on 2025-11-01 12:38:02  
+> **Total Tests**: 285
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -65,16 +65,18 @@ This page provides a comprehensive overview of all tests in the project, automat
 | Test Class | Test Name | Description |
 |------------|-----------|-------------|
 | TestArgs | `test_parse_args_all_namespace` | Test parsing args with 'all' namespace. |
-| TestArgs | `test_parse_args_combined` | Test parsing args with multiple flags. |
 | TestArgs | `test_parse_args_default` | Test parsing args with defaults. |
 | TestArgs | `test_parse_args_json` | Test parsing args with --json flag. |
 | TestArgs | `test_parse_args_namespace` | Test parsing args with namespace. |
+| TestArgs | `test_parse_args_namespace_with_no_color` | Test parsing namespace with --no-color flag. |
+| TestArgs | `test_parse_args_namespace_with_search_dirs` | Test parsing namespace with --search-dirs. |
+| TestArgs | `test_parse_args_namespace_with_verbose` | Test parsing namespace with --verbose flag. |
 | TestArgs | `test_parse_args_no_color` | Test parsing args with --no-color flag. |
 | TestArgs | `test_parse_args_search_dirs` | Test parsing args with --search-dirs. |
 | TestArgs | `test_parse_args_search_dirs_short` | Test parsing args with -s short option. |
 | TestArgs | `test_parse_args_verbose` | Test parsing args with --verbose flag. |
 | TestArgs | `test_parse_args_verbose_short` | Test parsing args with -v short option. |
-| TestColors | `test_colors_enabled_by_default` | Test that colors are enabled by default. |
+| TestColors | `test_colors_enabled_by_default` | Test colors are enabled by default. |
 | TestColors | `test_disable_colors` | Test disabling colors. |
 | TestCompleteFlags | `test_completes_long_flags` | Test completing long flags. |
 | TestCompleteFlags | `test_completes_short_flags` | Test completing short flags. |
@@ -89,16 +91,16 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestCompleteTaskName | `test_handles_parsing_errors_gracefully` | Test that parsing errors are handled gracefully. |
 | TestCompleteTaskName | `test_returns_empty_for_nonexistent_namespace` | Test that empty list is returned for nonexistent namespace. |
 | TestConfig | `test_config_all_namespace` | Test 'all' namespace. |
-| TestConfig | `test_config_args_override_pyproject` | Test that command line args override pyproject.toml. |
+| TestConfig | `test_config_args_override_pyproject` | Test command line args override pyproject.toml. |
 | TestConfig | `test_config_colorize_no_color_flag` | Test colorize disabled with --no-color flag. |
 | TestConfig | `test_config_colorize_no_tty` | Test colorize disabled when output is not TTY. |
 | TestConfig | `test_config_colorize_tty` | Test colorize enabled when output is TTY. |
 | TestConfig | `test_config_default_search_dir` | Test config with default search directory. |
-| TestConfig | `test_config_empty_search_dirs_defaults_to_cwd` | Test that empty search dirs defaults to current directory. |
+| TestConfig | `test_config_empty_search_dirs_defaults_to_cwd` | Test empty search dirs defaults to current directory. |
 | TestConfig | `test_config_namespace_property` | Test namespace property. |
-| TestConfig | `test_config_removes_duplicate_search_dirs` | Test that duplicate search directories are removed. |
-| TestConfig | `test_config_removes_duplicate_search_dirs_order` | Test that duplicate search directories are removed. |
-| TestConfig | `test_config_resolves_relative_paths` | Test that relative paths are resolved. |
+| TestConfig | `test_config_removes_duplicate_search_dirs` | Test duplicate search directories are removed. |
+| TestConfig | `test_config_removes_duplicate_search_dirs_order` | Test duplicate search directories preserve first occurrence order. |
+| TestConfig | `test_config_resolves_relative_paths` | Test relative paths are resolved to absolute paths. |
 | TestConfig | `test_config_search_dirs_from_args` | Test config with search dirs from command line. |
 | TestConfig | `test_config_search_dirs_from_pyproject` | Test config with search dirs from pyproject.toml as list. |
 | TestConfig | `test_config_search_dirs_from_pyproject_empty_string` | Test config with search dirs from pyproject.toml as empty string. |
@@ -169,8 +171,8 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestLoadPyprojectConfig | `test_load_config_no_tool_section` | Test loading config when tool section doesn't exist. |
 | TestLoadPyprojectConfig | `test_load_config_with_search_dirs` | Test loading config with search-dirs. |
 | TestMain | `test_main_all_with_no_taskfiles` | Test main 'all' namespace when no taskfiles exist. |
-| TestMain | `test_main_colors_disabled_for_json` | Test that colors are disabled for JSON output. |
-| TestMain | `test_main_namespace_main_alias` | Test that 'main' namespace is treated as main taskfile. |
+| TestMain | `test_main_colors_disabled_for_json` | Test colors are disabled for JSON output. |
+| TestMain | `test_main_namespace_main_alias` | Test 'main' namespace is treated as main taskfile. |
 | TestMain | `test_main_namespace_not_found` | Test main when namespace taskfile is not found. |
 | TestMain | `test_main_taskfile_not_found` | Test main when taskfile is not found. |
 | TestMain | `test_main_with_all_namespace` | Test main with 'all' namespace. |
@@ -184,9 +186,9 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestMain | `test_main_with_search_dirs` | Test main with custom search directories. |
 | TestMain | `test_main_with_verbose` | Test main with verbose output. |
 | TestMainEdgeCases | `test_main_all_namespace_shows_everything` | Test 'all' namespace shows all taskfiles. |
-| TestMainEdgeCases | `test_main_colors_disabled_for_json` | Test that colors are disabled for JSON output even with TTY. |
+| TestMainEdgeCases | `test_main_colors_disabled_for_json` | Test colors are disabled for JSON output even with TTY. |
 | TestMainEdgeCases | `test_main_empty_taskfile_with_all` | Test 'all' namespace with empty taskfile. |
-| TestMainEdgeCases | `test_main_verbose_with_json_suppressed` | Test that verbose output is suppressed with JSON. |
+| TestMainEdgeCases | `test_main_verbose_with_json_suppressed` | Test verbose output is suppressed with JSON. |
 | TestMatchingFunctions | `test_matches_all_patterns_case_insensitive` | Test case-insensitive matching with multiple patterns. |
 | TestMatchingFunctions | `test_matches_all_patterns_multiple` | Test matching with multiple patterns (AND logic). |
 | TestMatchingFunctions | `test_matches_all_patterns_no_match` | Test when not all patterns match. |
@@ -239,8 +241,8 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestTaskfileDiscovery | `test_find_main_taskfile_lowercase_yml` | Test finding lowercase taskfile.yml. |
 | TestTaskfileDiscovery | `test_find_main_taskfile_multiple_dirs` | Test finding main taskfile in multiple directories. |
 | TestTaskfileDiscovery | `test_find_main_taskfile_not_found` | Test when main taskfile is not found. |
-| TestTaskfileDiscovery | `test_find_main_taskfile_prefers_uppercase` | Test that uppercase Taskfile is preferred over lowercase. |
-| TestTaskfileDiscovery | `test_find_main_taskfile_prefers_yml` | Test that .yml is preferred over .yaml. |
+| TestTaskfileDiscovery | `test_find_main_taskfile_prefers_uppercase` | Test uppercase Taskfile is preferred over lowercase. |
+| TestTaskfileDiscovery | `test_find_main_taskfile_prefers_yml` | Test .yml extension is preferred over .yaml. |
 | TestTaskfileDiscovery | `test_find_main_taskfile_yaml` | Test finding main Taskfile.yaml. |
 | TestTaskfileDiscovery | `test_find_main_taskfile_yml` | Test finding main Taskfile.yml. |
 | TestTaskfileDiscovery | `test_find_namespace_taskfile_hyphen` | Test finding namespace taskfile with hyphen separator. |
@@ -249,24 +251,24 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestTaskfileDiscovery | `test_find_namespace_taskfile_yaml_extension` | Test finding namespace taskfile with .yaml extension. |
 | TestTaskfileDiscovery | `test_get_all_namespace_taskfiles` | Test getting all namespace taskfiles. |
 | TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_empty` | Test getting namespace taskfiles when none exist. |
-| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_ignores_main` | Test that main taskfile is not included in namespace list. |
-| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_removes_duplicates` | Test that duplicate namespaces are removed. |
-| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_sorted` | Test that namespace taskfiles are sorted. |
+| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_ignores_main` | Test main taskfile is excluded from namespace list. |
+| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_removes_duplicates` | Test duplicate namespaces are removed. |
+| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_sorted` | Test namespace taskfiles are sorted alphabetically. |
 | TestTaskfileDiscovery | `test_get_possible_paths_empty_namespace` | Test getting possible paths for empty namespace. |
 | TestTaskfileDiscovery | `test_get_possible_paths_main` | Test getting possible paths for main taskfile. |
 | TestTaskfileDiscovery | `test_get_possible_paths_multiple_dirs` | Test getting possible paths across multiple directories. |
 | TestTaskfileDiscovery | `test_get_possible_paths_namespace` | Test getting possible paths for a namespace. |
-| TestTaskfileDiscovery | `test_handles_nonexistent_search_dir` | Test that nonexistent search directories are handled gracefully. |
-| TestTaskfileDiscovery | `test_ignores_directories` | Test that directories matching the pattern are ignored. |
-| TestTaskfileDiscovery | `test_ignores_empty_namespace` | Test that files with empty namespace are ignored. |
-| TestTaskfileDiscovery | `test_ignores_wrong_extension` | Test that files with wrong extensions are ignored. |
-| TestTaskfileDiscovery | `test_ignores_wrong_prefix` | Test that files with wrong prefix are ignored. |
+| TestTaskfileDiscovery | `test_handles_nonexistent_search_dir` | Test nonexistent search directories are handled gracefully. |
+| TestTaskfileDiscovery | `test_ignores_directories` | Test directories matching the pattern are ignored. |
+| TestTaskfileDiscovery | `test_ignores_empty_namespace` | Test files with empty namespace are ignored. |
+| TestTaskfileDiscovery | `test_ignores_wrong_extension` | Test files with wrong extensions are ignored. |
+| TestTaskfileDiscovery | `test_ignores_wrong_prefix` | Test files with wrong prefix are ignored. |
 | TestTaskfileDiscovery | `test_lowercase_taskfile_prefix` | Test lowercase 'taskfile' prefix is recognized. |
 | TestTaskfileDiscovery | `test_mixed_case_taskfile_prefix` | Test mixed case 'Taskfile' prefix is recognized. |
 | TestTaskfileDiscovery | `test_multiple_namespaces_mixed_separators` | Test multiple namespaces with mixed separators and extensions. |
 | TestTaskfileDiscovery | `test_namespace_with_numbers` | Test namespace with numbers in the name. |
 | TestTaskfileDiscovery | `test_namespace_with_underscores` | Test namespace with underscores in the name. |
-| TestTaskfileDiscovery | `test_search_dirs_order_matters` | Test that search directory order matters (first match wins). |
+| TestTaskfileDiscovery | `test_search_dirs_order_matters` | Test search directory order determines precedence (first match wins). |
 | TestTextOutputter | `test_output_all` | Test outputting all taskfiles. |
 | TestTextOutputter | `test_output_error` | Test outputting an error message. |
 | TestTextOutputter | `test_output_heading` | Test outputting a heading. |
@@ -283,7 +285,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestValidateTaskfile | `test_invalid_yaml_syntax` | Test warning when YAML has syntax errors. |
 | TestValidateTaskfile | `test_missing_tasks_section` | Test warning when tasks section is missing. |
 | TestValidateTaskfile | `test_missing_version_field` | Test warning when version field is missing. |
-| TestValidateTaskfile | `test_multiple_validation_errors` | Test that multiple validation errors are all reported. |
+| TestValidateTaskfile | `test_multiple_validation_errors` | Test multiple validation errors are reported. |
 | TestValidateTaskfile | `test_root_is_list` | Test warning when root is a list instead of dictionary. |
 | TestValidateTaskfile | `test_task_cmds_is_dict` | Test warning when task cmds is a dict instead of list or string. |
 | TestValidateTaskfile | `test_task_deps_is_string` | Test warning when task deps is a string instead of list. |
@@ -292,8 +294,8 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestValidateTaskfile | `test_task_is_string` | Test warning when task definition is a string instead of dict. |
 | TestValidateTaskfile | `test_tasks_is_list` | Test warning when tasks is a list instead of dictionary. |
 | TestValidateTaskfile | `test_tasks_is_string` | Test warning when tasks is a string instead of dictionary. |
-| TestValidateTaskfile | `test_valid_taskfile_passes` | Test that a valid Taskfile passes validation. |
-| TestValidateTaskfile | `test_valid_taskfile_with_optional_fields` | Test that valid optional fields don't trigger warnings. |
+| TestValidateTaskfile | `test_valid_taskfile_passes` | Test valid Taskfile passes validation. |
+| TestValidateTaskfile | `test_valid_taskfile_with_optional_fields` | Test valid optional fields produce no warnings. |
 | TestValidateTaskfile | `test_wrong_version_float` | Test warning when version is '3.0' instead of '3'. |
 | TestValidateTaskfile | `test_wrong_version_number` | Test warning when version is a number instead of string. |
 | TestValidateTaskfile | `test_wrong_version_string` | Test warning when version is '2' instead of '3'. |
