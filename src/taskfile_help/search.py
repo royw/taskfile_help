@@ -17,17 +17,17 @@ Taskfile = tuple[str, list[Task]]
 SearchResult = tuple[str, str, str, str, str]  # (namespace, group, task_name, description, match_type)
 
 
-def matches_pattern(text: str, pattern: str) -> bool:
-    """Check if text matches pattern using case-insensitive substring match.
+def matches_all_patterns(text: str, patterns: list[str]) -> bool:
+    """Check if text matches all patterns using case-insensitive substring match.
 
     Args:
         text: Text to search in
-        pattern: Pattern to search for
+        patterns: List of patterns to search for (all must match)
 
     Returns:
-        True if pattern is found in text (case-insensitive), False otherwise
+        True if all patterns are found in text (case-insensitive), False otherwise
     """
-    return pattern.lower() in text.lower()
+    return all(pattern.lower() in text.lower() for pattern in patterns)
 
 
 def matches_regex(text: str, regex_pattern: str) -> bool:
@@ -46,139 +46,81 @@ def matches_regex(text: str, regex_pattern: str) -> bool:
         return False
 
 
-def matches_filters(text: str, pattern: str, regex: str | None) -> bool:
-    """Check if text matches both pattern and regex filters.
+def matches_all_regexes(text: str, regexes: list[str]) -> bool:
+    """Check if text matches all regex patterns.
 
     Args:
-        text: Text to check against filters
-        pattern: Pattern for substring matching (required)
-        regex: Optional regex pattern for matching
+        text: Text to search in
+        regexes: List of regex patterns to search for (all must match)
 
     Returns:
-        True if text matches all provided filters, False otherwise
+        True if all regexes match text, False otherwise
     """
-    if not matches_pattern(text, pattern):
+    return all(matches_regex(text, regex) for regex in regexes)
+
+
+def task_matches_filters(
+    namespace: str,
+    group: str,
+    task_name: str,
+    description: str,
+    patterns: list[str] | None = None,
+    regexes: list[str] | None = None,
+) -> bool:
+    """Check if a task matches all patterns and regexes.
+
+    Patterns and regexes are checked against the combined text of:
+    namespace, group, task_name, and description.
+
+    Args:
+        namespace: Task namespace
+        group: Task group
+        task_name: Task name
+        description: Task description
+        patterns: List of patterns (all must match)
+        regexes: List of regexes (all must match)
+
+    Returns:
+        True if all patterns and regexes match, False otherwise
+    """
+    # Combine all searchable fields
+    combined = f"{namespace} {group} {task_name} {description}"
+
+    # Check all patterns match
+    if patterns and not matches_all_patterns(combined, patterns):
         return False
-    return not (regex and not matches_regex(text, regex))
 
-
-def filter_by_namespace(
-    taskfiles: list[Taskfile],
-    pattern: str,
-    regex: str | None = None,
-) -> list[SearchResult]:
-    """Filter taskfiles by namespace name.
-
-    Args:
-        taskfiles: List of (namespace, tasks) tuples
-        pattern: Pattern for substring matching (required)
-        regex: Optional regex pattern for matching
-
-    Returns:
-        List of search results for matching namespaces
-    """
-    results: list[SearchResult] = []
-
-    for namespace, tasks in taskfiles:
-        # If namespace matches, include all tasks from that namespace
-        if matches_filters(namespace, pattern, regex):
-            for group, task_name, description in tasks:
-                results.append((namespace, group, task_name, description, "namespace"))
-
-    return results
-
-
-def filter_by_group(
-    taskfiles: list[Taskfile],
-    pattern: str,
-    regex: str | None = None,
-) -> list[SearchResult]:
-    """Filter tasks by group name.
-
-    Args:
-        taskfiles: List of (namespace, tasks) tuples
-        pattern: Pattern for substring matching (required)
-        regex: Optional regex pattern for matching
-
-    Returns:
-        List of search results for tasks in matching groups
-    """
-    results: list[SearchResult] = []
-
-    for namespace, tasks in taskfiles:
-        for group, task_name, description in tasks:
-            if matches_filters(group, pattern, regex):
-                results.append((namespace, group, task_name, description, "group"))
-
-    return results
-
-
-def filter_by_task(
-    taskfiles: list[Taskfile],
-    pattern: str,
-    regex: str | None = None,
-) -> list[SearchResult]:
-    """Filter tasks by task name.
-
-    Args:
-        taskfiles: List of (namespace, tasks) tuples
-        pattern: Pattern for substring matching (required)
-        regex: Optional regex pattern for matching
-
-    Returns:
-        List of search results for matching tasks
-    """
-    results: list[SearchResult] = []
-
-    for namespace, tasks in taskfiles:
-        for group, task_name, description in tasks:
-            if matches_filters(task_name, pattern, regex):
-                results.append((namespace, group, task_name, description, "task"))
-
-    return results
+    # Check all regexes match and return result
+    return not (regexes and not matches_all_regexes(combined, regexes))
 
 
 def search_taskfiles(
     taskfiles: list[Taskfile],
-    pattern: str,
-    regex: str | None = None,
+    patterns: list[str] | None = None,
+    regexes: list[str] | None = None,
 ) -> list[SearchResult]:
-    """Search across namespaces, groups, and task names.
+    """Search across namespaces, groups, task names, and descriptions.
 
-    Searches in order: namespace → group → task.
-    Results are deduplicated (a task only appears once even if it matches multiple criteria).
+    All patterns and regexes must match somewhere in the combined text of:
+    namespace, group, task_name, and description.
 
     Args:
         taskfiles: List of (namespace, tasks) tuples
-        pattern: Pattern for substring matching (required)
-        regex: Optional regex pattern for additional matching
+        patterns: List of patterns for substring matching (all must match)
+        regexes: List of regexes for pattern matching (all must match)
 
     Returns:
-        List of unique search results with match context
+        List of search results for matching tasks
     """
-    # Pattern is now required, so no need to check for empty filters
+    # At least one pattern or regex is required
+    if not patterns and not regexes:
+        return []
 
-    # Collect all matches from different search types
-    all_results: list[SearchResult] = []
+    results: list[SearchResult] = []
 
-    # Search by namespace (highest priority)
-    all_results.extend(filter_by_namespace(taskfiles, pattern, regex))
+    for namespace, tasks in taskfiles:
+        for group, task_name, description in tasks:
+            if task_matches_filters(namespace, group, task_name, description, patterns=patterns, regexes=regexes):
+                results.append((namespace, group, task_name, description, "match"))
 
-    # Search by group
-    all_results.extend(filter_by_group(taskfiles, pattern, regex))
-
-    # Search by task name
-    all_results.extend(filter_by_task(taskfiles, pattern, regex))
-
-    # Deduplicate results while preserving order
-    # Use (namespace, task_name) as unique key
-    seen: set[tuple[str, str]] = set()
-    unique_results: list[SearchResult] = []
-
-    for namespace, group, task_name, description, match_type in all_results:
-        key = (namespace, task_name)
-        if key not in seen:
-            seen.add(key)
-            unique_results.append((namespace, group, task_name, description, match_type))
-
-    return unique_results
+    return results

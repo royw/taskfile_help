@@ -41,7 +41,9 @@ class Args:
     command: str
     namespace: str
     pattern: str | None
+    patterns: list[str] | None
     regex: str | None
+    regexes: list[str] | None
     no_color: bool
     search_dirs: list[Path] | None
     verbose: bool
@@ -175,34 +177,40 @@ Examples:
             "search",
             help="Search for tasks by pattern or regex",
             description="Search across namespaces, groups, and task names",
-            epilog="""
-Search filters:
-  A search pattern is required as a positional argument.
-  Optional --regex flag can be used for regular expression matching.
+            epilog="""\nSearch filters:
+  One or more search patterns can be provided as positional arguments.
+  Multiple --regex options can be provided for regular expression matching.
+  At least one pattern or regex is required.
+  All patterns and regexes are combined with AND logic (all must match).
 
 Search scope:
-  Searches across namespace names, group names, and task names.
-  Results show all tasks in matching namespaces/groups, or individual matching tasks.
+  Searches across namespace names, group names, task names, and descriptions.
+  A match occurs when ALL patterns and regexes match in any combination of these fields.
 
 Examples:
-  taskfile-help search test                    # Find tasks containing "test"
-  taskfile-help search lint --regex "fix$"     # Find "lint" tasks ending with "fix"
-  taskfile-help search format --json           # JSON output
-  taskfile-help search "^build" --regex ".*"   # Regex: tasks starting with "build"
+  taskfile-help search test                           # Find tasks with "test" anywhere
+  taskfile-help search version bump                   # Find tasks with both "version" AND "bump"
+  taskfile-help search minor version                  # Find tasks with both "minor" AND "version"
+  taskfile-help search --regex "^test"                # Find tasks starting with "test"
+  taskfile-help search lint --regex "fix$"            # Find "lint" tasks ending with "fix"
+  taskfile-help search --regex "test" --regex "unit"  # Find tasks matching both regexes
             """,
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
         search_parser.add_argument(
-            "pattern",
+            "patterns",
             type=str,
-            help="Search pattern (case-insensitive substring match)",
+            nargs="*",
+            help="Search patterns (case-insensitive substring match). Multiple patterns are combined with AND logic.",
         )
         search_parser.add_argument(
             "--regex",
             type=str,
+            action="append",
+            dest="regexes",
             default=None,
             metavar="STR",
-            help="Additional regular expression pattern filter",
+            help="Regular expression pattern filter (can be specified multiple times)",
         )
         Args._add_global_arguments(search_parser, list_of_paths)
 
@@ -211,14 +219,20 @@ Examples:
         # Extract command and command-specific arguments
         command = parsed.command if parsed.command else "namespace"
         namespace = getattr(parsed, "namespace", "")
-        pattern = getattr(parsed, "pattern", None)
-        regex = getattr(parsed, "regex", None)
+        patterns = getattr(parsed, "patterns", None)
+        # For backward compatibility, keep pattern as the first pattern if patterns exist
+        pattern = patterns[0] if patterns and len(patterns) > 0 else None
+        regexes = getattr(parsed, "regexes", None)
+        # For backward compatibility, keep regex as the first regex if regexes exist
+        regex = regexes[0] if regexes and len(regexes) > 0 else None
 
         return Args(
             command=command,
             namespace=namespace,
             pattern=pattern,
+            patterns=patterns,
             regex=regex,
+            regexes=regexes,
             no_color=parsed.no_color,
             search_dirs=parsed.search_dirs,
             verbose=parsed.verbose,

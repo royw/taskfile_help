@@ -187,6 +187,60 @@ task help:?            # List all available namespaces
 
 The wildcard task (`help:*`) in the main Taskfile eliminates the need to add help tasks to each namespace Taskfile.
 
+## Searching for Tasks
+
+### Using the Search Command
+
+Search across all taskfiles for tasks matching specific criteria:
+
+```bash
+# Search by single pattern
+taskfile-help search test
+taskfile-help search build
+
+# Search with multiple patterns (AND logic - all must match)
+taskfile-help search version bump
+taskfile-help search minor version
+
+# Search with regex
+taskfile-help search --regex "^test"
+taskfile-help search --regex "test" --regex "unit"
+
+# Combine patterns and regexes
+taskfile-help search version --regex "bump"
+```
+
+### Adding a Search Task Wrapper
+
+For convenience, add a search task to your main Taskfile:
+
+```yaml
+  # === Search ===
+  search:*:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    vars:
+      PATTERN: '{{index .MATCH 0}}'
+    cmd: taskfile-help search {{.PATTERN}}
+    silent: true
+```
+
+Now you can search using the task command:
+
+```bash
+task search:python              # Search for "python"
+task search:"version minor"     # Search for both "version" AND "minor"
+task search:test                # Search for "test"
+```
+
+### Search Behavior
+
+- Searches across namespace names, group names, task names, AND descriptions
+- Multiple patterns use AND logic (all must match)
+- Multiple regexes use AND logic (all must match)
+- Case-insensitive substring matching for patterns
+- Full regex support for regex filters
+
 ## Common Options
 
 ### Disable Colors

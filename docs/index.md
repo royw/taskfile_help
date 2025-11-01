@@ -7,11 +7,12 @@ similar to `task --list`, but with automatic grouping and namespace support.
 
 - 🎨 **Colored Output**: Automatic color support with TTY detection
 - 📦 **Namespace Support**: Organize tasks across multiple Taskfiles
-- 🔍 **Smart Search**: Search multiple directories for Taskfiles
+- 🔍 **Smart Search**: Search across namespaces, groups, task names, and descriptions with multi-pattern AND logic
 - 📊 **JSON Output**: Export task information in JSON format
 - 🎯 **Group Organization**: Automatic task grouping using comment markers
 - 🔒 **Internal Tasks**: Hide implementation details with `internal: true`
 - ⚡ **Fast**: Simple line-by-line parsing without full YAML overhead
+- 🔎 **Multi-Pattern Search**: Filter tasks with multiple patterns and regexes (all must match)
 
 ## Quick Start
 
@@ -98,6 +99,36 @@ task help:?         # List all namespaces (Dev, Test, ...)
 ```
 
 The wildcard task (`help:*`) eliminates the need to add help tasks to each namespace Taskfile.
+
+## Searching for Tasks
+
+Add a search task wrapper for convenient searching:
+
+```yaml
+  # === Search ===
+  search:*:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    vars:
+      PATTERN: '{{index .MATCH 0}}'
+    cmd: taskfile-help search {{.PATTERN}}
+    silent: true
+```
+
+Now you can search using simple commands:
+
+```bash
+task search:python              # Search for "python"
+task search:"version minor"     # Search for both "version" AND "minor"
+taskfile-help search test coverage  # Direct command with multiple patterns
+```
+
+Search features:
+
+- Searches across namespace names, group names, task names, AND descriptions
+- Multiple patterns use AND logic (all must match)
+- Supports multiple `--regex` options for advanced filtering
+- Case-insensitive substring matching
 
 See [Configuration](setup/configuration.md) for more details.
 

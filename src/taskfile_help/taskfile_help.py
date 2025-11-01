@@ -290,8 +290,12 @@ def _handle_search_command(config: Config, outputter: Outputter) -> int:
         int: Exit code
     """
     # Validate that at least one filter is provided
-    if not config.args.pattern and not config.args.regex:
-        outputter.output_error("At least one search filter (--pattern or --regex) is required")
+    # Check if patterns list is empty or None, and regexes is empty or None
+    has_patterns = config.args.patterns and len(config.args.patterns) > 0
+    has_regexes = config.args.regexes and len(config.args.regexes) > 0
+
+    if not has_patterns and not has_regexes:
+        outputter.output_error("At least one search filter (pattern or --regex) is required")
         return 1
 
     # Collect all taskfiles (main + all namespaces)
@@ -307,12 +311,14 @@ def _handle_search_command(config: Config, outputter: Outputter) -> int:
         taskfiles.append((ns, tasks))
 
     # Search across all taskfiles
-    # Pattern is required for search command, so it should never be None here
-    assert config.args.pattern is not None
+    # Pass None instead of empty list for cleaner handling
+    patterns = config.args.patterns if has_patterns else None
+    regexes = config.args.regexes if has_regexes else None
+
     results = search_taskfiles(
         taskfiles,
-        pattern=config.args.pattern,
-        regex=config.args.regex,
+        patterns=patterns,
+        regexes=regexes,
     )
 
     # Output results

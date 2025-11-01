@@ -165,3 +165,11 @@ tasks:
     cmd: taskfile-help search {{.CLI_ARGS}}
     silent: true  # Suppress task command echo
     
+  search:*:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    vars:
+      PATTERN: '{{index .MATCH 0}}'
+    cmd: taskfile-help search {{.PATTERN}}
+    silent: true  # Suppress task command echo
+    

@@ -105,6 +105,29 @@ task help:<namespace>   # Tasks from the given namespace
 task help:?     # List all namespaces (Dev, Test, ...)
 ```
 
+### Search Integration
+
+You can also add a search wrapper task for convenient searching:
+
+```yaml
+  # === Search ===
+  search:*:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    vars:
+      PATTERN: '{{index .MATCH 0}}'
+    cmd: taskfile-help search {{.PATTERN}}
+    silent: true
+```
+
+Now you can search using the task command:
+
+```bash
+task search:python              # Search for "python"
+task search:"version minor"     # Search for both "version" AND "minor"
+task search:test                # Search for "test"
+```
+
 ### Example Output
 
 ![task help](https://raw.githubusercontent.com/royw/taskfile_help/master/docs/images/task_help.png)
@@ -138,19 +161,28 @@ taskfile-help namespace --search-dirs /path/to/project
 
 ### Search Command
 
-Search for tasks across namespaces, groups, and task names:
+Search for tasks across namespaces, groups, task names, and descriptions:
 
 ```bash
-# Search by pattern (case-insensitive substring)
+# Search by single pattern (case-insensitive substring)
 taskfile-help search test
 taskfile-help search build
 
-# Search with regex filter
-taskfile-help search lint --regex "^lint"
-taskfile-help search fix --regex ".*fix$"
+# Search with multiple patterns (AND logic - all must match)
+taskfile-help search version bump
+taskfile-help search minor version
+taskfile-help search test coverage
 
-# Combine pattern and regex (AND logic)
-taskfile-help search test --regex "unit"
+# Search with regex filter
+taskfile-help search --regex "^test"
+taskfile-help search --regex ".*fix$"
+
+# Search with multiple regexes (AND logic - all must match)
+taskfile-help search --regex "test" --regex "unit"
+
+# Combine patterns and regexes (all must match)
+taskfile-help search version --regex "bump"
+taskfile-help search test unit --regex "coverage"
 
 # With global options
 taskfile-help search build --no-color
@@ -161,9 +193,12 @@ taskfile-help search deploy --regex "^deploy" --json --verbose
 
 - **Pattern matching**: Case-insensitive substring search
 - **Regex matching**: Full regular expression support
-- **Multiple filters**: All filters must match (AND logic)
-- **Search scope**: Searches namespace names, group names, and task names
-- **Results**: Shows all tasks in matching namespaces/groups, or individual matching tasks
+- **Multiple patterns**: All patterns must match (AND logic)
+- **Multiple regexes**: All regexes must match (AND logic)
+- **Combined matching**: All patterns AND all regexes must match somewhere in the task's combined text
+- **Search scope**: Searches across namespace names, group names, task names, AND descriptions
+- **At least one filter required**: Must provide at least one pattern or regex
+- **Results**: Shows tasks where all search criteria match in any combination of fields
 
 ### Global Options
 

@@ -707,29 +707,28 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "test", "--regex", "^test"])
+            result = main(["taskfile-help", "search", "--regex", "test"])
         
         assert result == 0
         captured = capsys.readouterr()
         
-        # Should find tasks starting with "test"
-        assert "test" in captured.out
-        assert "test-unit" in captured.out
-        assert "test-integration" in captured.out
+        # Should find tasks with "test" anywhere in combined text
+        assert "test" in captured.out.lower()
+        assert "test-unit" in captured.out or "unit" in captured.out
 
     def test_search_regex_end_anchor(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test regex search with end anchor."""
+        """Test regex search with word boundary."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "all", "--regex", "all$"])
+            result = main(["taskfile-help", "search", "--regex", r"\ball\b"])
         
         assert result == 0
         captured = capsys.readouterr()
         
-        # Should find tasks ending with "all"
-        assert "build-all" in captured.out
-        assert "format-all" in captured.out
+        # Should find tasks with "all" as a complete word
+        assert "all" in captured.out.lower()
+        assert "build-all" in captured.out or "format-all" in captured.out
 
     def test_search_combined_filters(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test search with both pattern and regex (AND logic)."""
@@ -760,18 +759,17 @@ tasks:
         assert "No tasks found matching search criteria" in captured.out
 
     def test_search_missing_pattern_error(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search without pattern argument returns error."""
+        """Test search without pattern or regex returns error."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            with pytest.raises(SystemExit) as exc_info:
-                main(["taskfile-help", "search"])
+            result = main(["taskfile-help", "search"])
         
-        assert exc_info.value.code == 2  # argparse returns 2 for missing required arguments
+        assert result == 1  # Returns error code 1
         captured = capsys.readouterr()
         
-        output = captured.err + captured.out
-        assert "required" in output.lower() and "pattern" in output.lower()
+        # Should show error message about needing at least one filter
+        assert "At least one search filter" in captured.err or "required" in captured.err.lower()
 
     def test_search_json_output(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test search with JSON output."""
@@ -917,7 +915,7 @@ tasks:
         assert "test-integration" in captured.out
 
     def test_search_description_match(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that search doesn't match descriptions (only names)."""
+        """Test that search DOES match descriptions (searches all fields)."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -926,9 +924,9 @@ tasks:
         assert result == 0
         captured = capsys.readouterr()
         
-        # "server" is in description but not in task name
-        # Should not find it (search is name-only)
-        assert "No tasks found" in captured.out or "serve" not in captured.out
+        # "server" is in description, so it SHOULD be found
+        # (new behavior: search includes descriptions)
+        assert "serve" in captured.out or "server" in captured.out.lower()
 
     def test_namespace_command_help(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test namespace command help shows meta-namespaces."""

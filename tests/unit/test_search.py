@@ -1,34 +1,38 @@
 """Unit tests for the search module."""
 
 from taskfile_help.search import (
-    filter_by_group,
-    filter_by_namespace,
-    filter_by_task,
-    matches_pattern,
+    matches_all_patterns,
+    matches_all_regexes,
     matches_regex,
     search_taskfiles,
+    task_matches_filters,
 )
 
 
 class TestMatchingFunctions:
     """Tests for pattern and regex matching functions."""
 
-    def test_matches_pattern_case_insensitive(self) -> None:
-        """Test case-insensitive pattern matching."""
-        assert matches_pattern("BuildAll", "build")
-        assert matches_pattern("test-unit", "TEST")
-        assert matches_pattern("format", "FORMAT")
+    def test_matches_all_patterns_single(self) -> None:
+        """Test matching with a single pattern."""
+        assert matches_all_patterns("version-bump", ["version"])
+        assert matches_all_patterns("version-bump", ["bump"])
 
-    def test_matches_pattern_substring(self) -> None:
-        """Test substring matching."""
-        assert matches_pattern("test-unit", "unit")
-        assert matches_pattern("build-all", "all")
-        assert matches_pattern("format-check", "check")
+    def test_matches_all_patterns_multiple(self) -> None:
+        """Test matching with multiple patterns (AND logic)."""
+        assert matches_all_patterns("version-bump", ["version", "bump"])
+        assert matches_all_patterns("test-unit-coverage", ["test", "unit", "coverage"])
+        assert matches_all_patterns("BuildAll", ["build", "all"])
 
-    def test_matches_pattern_no_match(self) -> None:
-        """Test pattern not matching."""
-        assert not matches_pattern("build", "test")
-        assert not matches_pattern("format", "lint")
+    def test_matches_all_patterns_case_insensitive(self) -> None:
+        """Test case-insensitive matching with multiple patterns."""
+        assert matches_all_patterns("VERSION-BUMP", ["version", "bump"])
+        assert matches_all_patterns("test-unit", ["TEST", "UNIT"])
+
+    def test_matches_all_patterns_no_match(self) -> None:
+        """Test when not all patterns match."""
+        assert not matches_all_patterns("version-bump", ["version", "release"])
+        assert not matches_all_patterns("test-unit", ["test", "integration"])
+        assert not matches_all_patterns("build", ["build", "deploy"])
 
     def test_matches_regex_basic(self) -> None:
         """Test basic regex matching."""
@@ -46,202 +50,164 @@ class TestMatchingFunctions:
         assert not matches_regex("test", "[invalid(")
         assert not matches_regex("build", "(?P<")
 
+    def test_matches_all_regexes(self) -> None:
+        """Test matching multiple regexes."""
+        assert matches_all_regexes("test-unit", ["test", "unit"])
+        assert matches_all_regexes("version-bump", ["^version", "bump$"])
 
-class TestFilterFunctions:
-    """Tests for filter functions."""
+    def test_matches_all_regexes_no_match(self) -> None:
+        """Test when not all regexes match."""
+        assert not matches_all_regexes("test-unit", ["test", "integration"])
 
-    def test_filter_by_namespace_pattern(self) -> None:
-        """Test filtering by namespace with pattern."""
-        taskfiles = [
-            ("test", [("Testing", "unit", "Run unit tests")]),
-            ("dev", [("Development", "serve", "Start server")]),
-        ]
-        
-        results = filter_by_namespace(taskfiles, pattern="test")
-        
-        assert len(results) == 1
-        assert results[0][0] == "test"
-        assert results[0][4] == "namespace"
 
-    def test_filter_by_namespace_regex(self) -> None:
-        """Test filtering by namespace with regex."""
-        taskfiles = [
-            ("test", [("Testing", "unit", "Run unit tests")]),
-            ("dev", [("Development", "serve", "Start server")]),
-        ]
-        
-        results = filter_by_namespace(taskfiles, pattern="dev", regex="^dev")
-        
-        assert len(results) == 1
-        assert results[0][0] == "dev"
+class TestTaskMatchesFilters:
+    """Tests for task_matches_filters function."""
 
-    def test_filter_by_namespace_no_match(self) -> None:
-        """Test namespace filter with no matches."""
-        taskfiles = [
-            ("test", [("Testing", "unit", "Run unit tests")]),
-        ]
-        
-        results = filter_by_namespace(taskfiles, pattern="nonexistent")
-        
-        assert len(results) == 0
+    def test_task_matches_single_pattern(self) -> None:
+        """Test task matching with a single pattern."""
+        assert task_matches_filters(
+            "version", "Version", "bump", "Bump version",
+            patterns=["version"]
+        )
+        assert task_matches_filters(
+            "version", "Version", "bump", "Bump version",
+            patterns=["bump"]
+        )
 
-    def test_filter_by_group_pattern(self) -> None:
-        """Test filtering by group with pattern."""
-        taskfiles = [
-            ("test", [
-                ("Testing", "unit", "Run unit tests"),
-                ("Linting", "lint", "Run linter"),
-            ]),
-        ]
-        
-        results = filter_by_group(taskfiles, pattern="lint")
-        
-        assert len(results) == 1
-        assert results[0][1] == "Linting"
-        assert results[0][4] == "group"
+    def test_task_matches_multiple_patterns(self) -> None:
+        """Test task matching with multiple patterns (AND logic)."""
+        assert task_matches_filters(
+            "version", "Version Management", "bump:minor", "Bump the minor version",
+            patterns=["version", "minor"]
+        )
+        assert task_matches_filters(
+            "test", "Testing", "unit", "Run unit tests",
+            patterns=["test", "unit"]
+        )
 
-    def test_filter_by_group_regex(self) -> None:
-        """Test filtering by group with regex."""
-        taskfiles = [
-            ("test", [
-                ("Testing", "unit", "Run unit tests"),
-                ("Building", "build", "Build project"),
-            ]),
-        ]
-        
-        results = filter_by_group(taskfiles, pattern="Test", regex="^Test")
-        
-        assert len(results) == 1
-        assert results[0][1] == "Testing"
+    def test_task_matches_patterns_across_fields(self) -> None:
+        """Test patterns matching across different fields."""
+        # "version" in namespace, "bump" in task name
+        assert task_matches_filters(
+            "version", "Management", "bump", "Update version",
+            patterns=["version", "bump"]
+        )
+        # "test" in namespace, "unit" in description
+        assert task_matches_filters(
+            "test", "Testing", "run", "Run unit tests",
+            patterns=["test", "unit"]
+        )
 
-    def test_filter_by_task_pattern(self) -> None:
-        """Test filtering by task name with pattern."""
-        taskfiles = [
-            ("test", [
-                ("Testing", "unit", "Run unit tests"),
-                ("Testing", "integration", "Run integration tests"),
-            ]),
-        ]
-        
-        results = filter_by_task(taskfiles, pattern="unit")
-        
-        assert len(results) == 1
-        assert results[0][2] == "unit"
-        assert results[0][4] == "task"
+    def test_task_no_match_patterns(self) -> None:
+        """Test task not matching when patterns don't all match."""
+        assert not task_matches_filters(
+            "version", "Version", "bump", "Bump version",
+            patterns=["version", "release"]
+        )
 
-    def test_filter_by_task_regex(self) -> None:
-        """Test filtering by task name with regex."""
-        taskfiles = [
-            ("test", [
-                ("Testing", "test-unit", "Run unit tests"),
-                ("Testing", "test-integration", "Run integration tests"),
-            ]),
-        ]
-        
-        results = filter_by_task(taskfiles, pattern="test", regex="^test-")
-        
-        assert len(results) == 2
-        assert all(r[2].startswith("test-") for r in results)
+    def test_task_matches_single_regex(self) -> None:
+        """Test task matching with a single regex."""
+        assert task_matches_filters(
+            "version", "Version", "bump", "Bump version",
+            regexes=["^version"]
+        )
 
-    def test_filter_by_task_combined_filters(self) -> None:
-        """Test filtering by task with both pattern and regex."""
-        taskfiles = [
-            ("test", [
-                ("Testing", "test-unit", "Run unit tests"),
-                ("Testing", "unit-test", "Run unit tests"),
-            ]),
-        ]
-        
-        results = filter_by_task(taskfiles, pattern="unit", regex="^test")
-        
-        # Only test-unit matches both filters
-        assert len(results) == 1
-        assert results[0][2] == "test-unit"
+    def test_task_matches_multiple_regexes(self) -> None:
+        """Test task matching with multiple regexes."""
+        assert task_matches_filters(
+            "test", "Testing", "unit", "Run unit tests",
+            regexes=["test", "unit"]
+        )
+
+    def test_task_matches_patterns_and_regexes(self) -> None:
+        """Test task matching with both patterns and regexes."""
+        assert task_matches_filters(
+            "version", "Version Management", "bump:minor", "Bump the minor version",
+            patterns=["version"],
+            regexes=["minor"]
+        )
 
 
 class TestSearchTaskfiles:
     """Tests for search_taskfiles function."""
 
-    def test_search_with_pattern(self) -> None:
-        """Test search with pattern is required."""
+    def test_search_with_single_pattern(self) -> None:
+        """Test search with a single pattern."""
         taskfiles = [
             ("test", [("Testing", "unit", "Run unit tests")]),
         ]
         
-        # Pattern is now required
-        results = search_taskfiles(taskfiles, pattern="test")
+        results = search_taskfiles(taskfiles, patterns=["test"])
         
         assert len(results) > 0
+        assert results[0][0] == "test"
 
-    def test_search_by_pattern(self) -> None:
-        """Test search by pattern."""
+    def test_search_with_multiple_patterns(self) -> None:
+        """Test search with multiple patterns (AND logic)."""
         taskfiles = [
-            ("test", [("Testing", "unit", "Run unit tests")]),
-            ("dev", [("Development", "serve", "Start server")]),
-        ]
-        
-        results = search_taskfiles(taskfiles, pattern="test")
-        
-        # Should match namespace "test" and show all its tasks
-        assert len(results) > 0
-        assert any(r[0] == "test" for r in results)
-
-    def test_search_with_regex(self) -> None:
-        """Test search with pattern and regex."""
-        taskfiles = [
-            ("test", [("Testing", "unit", "Run unit tests")]),
-            ("dev", [("Development", "serve", "Start server")]),
-        ]
-        
-        results = search_taskfiles(taskfiles, pattern="dev", regex="^dev")
-        
-        assert len(results) > 0
-        assert any(r[0] == "dev" for r in results)
-
-    def test_search_combined_filters(self) -> None:
-        """Test search with both pattern and regex."""
-        taskfiles = [
-            ("test", [
-                ("Testing", "test-unit", "Run unit tests"),
-                ("Testing", "unit-test", "Run unit tests"),
+            ("version", [
+                ("Version", "bump", "Bump version"),
+                ("Version", "bump:minor", "Bump the minor version"),
+                ("Version", "check", "Check version"),
             ]),
         ]
         
-        results = search_taskfiles(taskfiles, pattern="unit", regex="^test")
+        results = search_taskfiles(taskfiles, patterns=["version", "minor"])
         
-        # Should find test-unit (matches both)
-        assert len(results) > 0
+        # Only bump:minor has both "version" (namespace) and "minor" (description)
+        assert len(results) == 1
+        assert results[0][2] == "bump:minor"
 
-    def test_search_deduplication(self) -> None:
-        """Test that search results are deduplicated."""
+    def test_search_with_patterns_across_fields(self) -> None:
+        """Test search with patterns matching across different fields."""
         taskfiles = [
-            ("test", [("Testing", "test", "Run tests")]),
+            ("version", [
+                ("Management", "bump", "Bump the version"),
+            ]),
         ]
         
-        # Search with pattern that matches both namespace and task
-        results = search_taskfiles(taskfiles, pattern="test")
+        results = search_taskfiles(taskfiles, patterns=["version", "bump"])
         
-        # Task should only appear once even though it matches multiple criteria
-        task_names = [r[2] for r in results]
-        assert task_names.count("test") == 1
+        # "version" in namespace, "bump" in task name and description
+        assert len(results) == 1
+        assert results[0][2] == "bump"
 
-    def test_search_multiple_namespaces(self) -> None:
-        """Test search across multiple namespaces."""
+    def test_search_with_single_regex(self) -> None:
+        """Test search with a single regex."""
         taskfiles = [
             ("test", [("Testing", "unit", "Run unit tests")]),
-            ("dev", [("Testing", "integration", "Run integration tests")]),
+            ("dev", [("Development", "serve", "Start server")]),
         ]
         
-        results = search_taskfiles(taskfiles, pattern="test")
+        results = search_taskfiles(taskfiles, regexes=["^test"])
         
-        # Should find results from test namespace
-        assert any(r[0] == "test" for r in results)
+        assert len(results) > 0
+        assert results[0][0] == "test"
 
-    def test_search_empty_taskfiles(self) -> None:
-        """Test search with empty taskfiles list."""
-        results = search_taskfiles([], pattern="test")
+    def test_search_with_multiple_regexes(self) -> None:
+        """Test search with multiple regexes."""
+        taskfiles = [
+            ("test", [("Testing", "unit", "Run unit tests")]),
+        ]
         
-        assert results == []
+        results = search_taskfiles(taskfiles, regexes=["test", "unit"])
+        
+        assert len(results) == 1
+        assert results[0][2] == "unit"
+
+    def test_search_with_patterns_and_regexes(self) -> None:
+        """Test search with both patterns and regexes."""
+        taskfiles = [
+            ("version", [
+                ("Version", "bump", "Bump version"),
+                ("Version", "bump:minor", "Bump the minor version"),
+            ]),
+        ]
+        
+        results = search_taskfiles(taskfiles, patterns=["version"], regexes=["minor"])
+        
+        assert len(results) == 1
+        assert results[0][2] == "bump:minor"
 
     def test_search_no_matches(self) -> None:
         """Test search with no matching results."""
@@ -249,6 +215,22 @@ class TestSearchTaskfiles:
             ("test", [("Testing", "unit", "Run unit tests")]),
         ]
         
-        results = search_taskfiles(taskfiles, pattern="nonexistent")
+        results = search_taskfiles(taskfiles, patterns=["nonexistent"])
+        
+        assert results == []
+
+    def test_search_empty_taskfiles(self) -> None:
+        """Test search with empty taskfiles list."""
+        results = search_taskfiles([], patterns=["test"])
+        
+        assert results == []
+
+    def test_search_no_filters(self) -> None:
+        """Test search with no filters returns empty."""
+        taskfiles = [
+            ("test", [("Testing", "unit", "Run unit tests")]),
+        ]
+        
+        results = search_taskfiles(taskfiles)
         
         assert results == []
