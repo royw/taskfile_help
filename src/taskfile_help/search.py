@@ -46,32 +46,32 @@ def matches_regex(text: str, regex_pattern: str) -> bool:
         return False
 
 
-def matches_filters(text: str, pattern: str | None, regex: str | None) -> bool:
+def matches_filters(text: str, pattern: str, regex: str | None) -> bool:
     """Check if text matches both pattern and regex filters.
 
     Args:
         text: Text to check against filters
-        pattern: Optional pattern for substring matching
+        pattern: Pattern for substring matching (required)
         regex: Optional regex pattern for matching
 
     Returns:
         True if text matches all provided filters, False otherwise
     """
-    if pattern and not matches_pattern(text, pattern):
+    if not matches_pattern(text, pattern):
         return False
     return not (regex and not matches_regex(text, regex))
 
 
 def filter_by_namespace(
     taskfiles: list[Taskfile],
-    pattern: str | None = None,
+    pattern: str,
     regex: str | None = None,
 ) -> list[SearchResult]:
     """Filter taskfiles by namespace name.
 
     Args:
         taskfiles: List of (namespace, tasks) tuples
-        pattern: Optional pattern for substring matching
+        pattern: Pattern for substring matching (required)
         regex: Optional regex pattern for matching
 
     Returns:
@@ -90,14 +90,14 @@ def filter_by_namespace(
 
 def filter_by_group(
     taskfiles: list[Taskfile],
-    pattern: str | None = None,
+    pattern: str,
     regex: str | None = None,
 ) -> list[SearchResult]:
     """Filter tasks by group name.
 
     Args:
         taskfiles: List of (namespace, tasks) tuples
-        pattern: Optional pattern for substring matching
+        pattern: Pattern for substring matching (required)
         regex: Optional regex pattern for matching
 
     Returns:
@@ -115,14 +115,14 @@ def filter_by_group(
 
 def filter_by_task(
     taskfiles: list[Taskfile],
-    pattern: str | None = None,
+    pattern: str,
     regex: str | None = None,
 ) -> list[SearchResult]:
     """Filter tasks by task name.
 
     Args:
         taskfiles: List of (namespace, tasks) tuples
-        pattern: Optional pattern for substring matching
+        pattern: Pattern for substring matching (required)
         regex: Optional regex pattern for matching
 
     Returns:
@@ -140,7 +140,7 @@ def filter_by_task(
 
 def search_taskfiles(
     taskfiles: list[Taskfile],
-    pattern: str | None = None,
+    pattern: str,
     regex: str | None = None,
 ) -> list[SearchResult]:
     """Search across namespaces, groups, and task names.
@@ -150,15 +150,13 @@ def search_taskfiles(
 
     Args:
         taskfiles: List of (namespace, tasks) tuples
-        pattern: Optional pattern for substring matching
-        regex: Optional regex pattern for matching
+        pattern: Pattern for substring matching (required)
+        regex: Optional regex pattern for additional matching
 
     Returns:
         List of unique search results with match context
     """
-    # If no filters provided, return empty results
-    if not pattern and not regex:
-        return []
+    # Pattern is now required, so no need to check for empty filters
 
     # Collect all matches from different search types
     all_results: list[SearchResult] = []

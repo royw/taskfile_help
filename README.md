@@ -142,19 +142,19 @@ Search for tasks across namespaces, groups, and task names:
 
 ```bash
 # Search by pattern (case-insensitive substring)
-taskfile-help search --pattern "test"
-taskfile-help search --pattern "build"
+taskfile-help search test
+taskfile-help search build
 
-# Search by regex
-taskfile-help search --regex "^lint"
-taskfile-help search --regex ".*fix$"
+# Search with regex filter
+taskfile-help search lint --regex "^lint"
+taskfile-help search fix --regex ".*fix$"
 
-# Combine multiple filters (AND logic)
-taskfile-help search --pattern "test" --regex "unit"
+# Combine pattern and regex (AND logic)
+taskfile-help search test --regex "unit"
 
 # With global options
-taskfile-help search --pattern "build" --no-color
-taskfile-help search --regex "^deploy" --json --verbose
+taskfile-help search build --no-color
+taskfile-help search deploy --regex "^deploy" --json --verbose
 ```
 
 ### Search Behavior

@@ -177,34 +177,32 @@ Examples:
             description="Search across namespaces, groups, and task names",
             epilog="""
 Search filters:
-  At least one filter (--pattern or --regex) is required.
-  Multiple filters use AND logic (all must match).
+  A search pattern is required as a positional argument.
+  Optional --regex flag can be used for regular expression matching.
 
 Search scope:
   Searches across namespace names, group names, and task names.
   Results show all tasks in matching namespaces/groups, or individual matching tasks.
 
 Examples:
-  taskfile-help search --pattern "test"           # Find tasks containing "test"
-  taskfile-help search --regex "^build"           # Find tasks starting with "build"
-  taskfile-help search --pattern "lint" --regex "fix$"  # Combine filters
-  taskfile-help search --pattern "format" --json  # JSON output
+  taskfile-help search test                    # Find tasks containing "test"
+  taskfile-help search lint --regex "fix$"     # Find "lint" tasks ending with "fix"
+  taskfile-help search format --json           # JSON output
+  taskfile-help search "^build" --regex ".*"   # Regex: tasks starting with "build"
             """,
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
         search_parser.add_argument(
-            "--pattern",
+            "pattern",
             type=str,
-            default=None,
-            metavar="STR",
-            help="Search using case-insensitive substring match",
+            help="Search pattern (case-insensitive substring match)",
         )
         search_parser.add_argument(
             "--regex",
             type=str,
             default=None,
             metavar="STR",
-            help="Search using regular expression pattern",
+            help="Additional regular expression pattern filter",
         )
         Args._add_global_arguments(search_parser, list_of_paths)
 

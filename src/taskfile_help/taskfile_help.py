@@ -307,6 +307,8 @@ def _handle_search_command(config: Config, outputter: Outputter) -> int:
         taskfiles.append((ns, tasks))
 
     # Search across all taskfiles
+    # Pattern is required for search command, so it should never be None here
+    assert config.args.pattern is not None
     results = search_taskfiles(
         taskfiles,
         pattern=config.args.pattern,

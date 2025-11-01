@@ -10,7 +10,7 @@ Refactor CLI from single positional argument (namespace) to command-based struct
 
 - [x] Replace single `namespace` positional argument with command subparsers
 - [x] Add `namespace` subcommand with namespace argument (current behavior)
-- [x] Add `search` subcommand with `--pattern STR` and `--regex STR` filters
+- [x] Add `search` subcommand with positional `pattern` argument and optional `--regex STR` filter
 - [x] Maintain backward compatibility for existing flags (--no-color, --search-dirs, --verbose, --json, --completion, etc.)
 - [x] Update `Args` dataclass to include command type and search filters
 
@@ -107,15 +107,15 @@ taskfile-help namespace ?
 
 ```bash
 # Search by pattern (case-insensitive substring)
-taskfile-help search --pattern "test"
-taskfile-help search --pattern "lint"
+taskfile-help search test
+taskfile-help search lint
 
-# Search by regex
-taskfile-help search --regex "^build.*"
-taskfile-help search --regex ".*fix$"
+# Search with regex filter
+taskfile-help search build --regex "^build.*"
+taskfile-help search fix --regex ".*fix$"
 
-# Combine multiple filters (AND logic)
-taskfile-help search --pattern "lint" --regex ".*fix$"
+# Combine pattern and regex (AND logic)
+taskfile-help search lint --regex ".*fix$"
 ```
 
 ## Key Design Decisions

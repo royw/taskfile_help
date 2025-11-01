@@ -70,7 +70,7 @@ class TestFilterFunctions:
             ("dev", [("Development", "serve", "Start server")]),
         ]
         
-        results = filter_by_namespace(taskfiles, regex="^dev")
+        results = filter_by_namespace(taskfiles, pattern="dev", regex="^dev")
         
         assert len(results) == 1
         assert results[0][0] == "dev"
@@ -109,7 +109,7 @@ class TestFilterFunctions:
             ]),
         ]
         
-        results = filter_by_group(taskfiles, regex="^Test")
+        results = filter_by_group(taskfiles, pattern="Test", regex="^Test")
         
         assert len(results) == 1
         assert results[0][1] == "Testing"
@@ -138,7 +138,7 @@ class TestFilterFunctions:
             ]),
         ]
         
-        results = filter_by_task(taskfiles, regex="^test-")
+        results = filter_by_task(taskfiles, pattern="test", regex="^test-")
         
         assert len(results) == 2
         assert all(r[2].startswith("test-") for r in results)
@@ -162,15 +162,16 @@ class TestFilterFunctions:
 class TestSearchTaskfiles:
     """Tests for search_taskfiles function."""
 
-    def test_search_no_filters(self) -> None:
-        """Test search with no filters returns empty list."""
+    def test_search_with_pattern(self) -> None:
+        """Test search with pattern is required."""
         taskfiles = [
             ("test", [("Testing", "unit", "Run unit tests")]),
         ]
         
-        results = search_taskfiles(taskfiles)
+        # Pattern is now required
+        results = search_taskfiles(taskfiles, pattern="test")
         
-        assert results == []
+        assert len(results) > 0
 
     def test_search_by_pattern(self) -> None:
         """Test search by pattern."""
@@ -185,14 +186,14 @@ class TestSearchTaskfiles:
         assert len(results) > 0
         assert any(r[0] == "test" for r in results)
 
-    def test_search_by_regex(self) -> None:
-        """Test search by regex."""
+    def test_search_with_regex(self) -> None:
+        """Test search with pattern and regex."""
         taskfiles = [
             ("test", [("Testing", "unit", "Run unit tests")]),
             ("dev", [("Development", "serve", "Start server")]),
         ]
         
-        results = search_taskfiles(taskfiles, regex="^dev")
+        results = search_taskfiles(taskfiles, pattern="dev", regex="^dev")
         
         assert len(results) > 0
         assert any(r[0] == "dev" for r in results)

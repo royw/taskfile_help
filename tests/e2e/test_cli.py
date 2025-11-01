@@ -676,7 +676,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "test"])
+            result = main(["taskfile-help", "search", "test"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -694,7 +694,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "BUILD"])
+            result = main(["taskfile-help", "search", "BUILD"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -707,7 +707,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--regex", "^test"])
+            result = main(["taskfile-help", "search", "test", "--regex", "^test"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -722,7 +722,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--regex", "all$"])
+            result = main(["taskfile-help", "search", "all", "--regex", "all$"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -736,7 +736,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "check", "--regex", "^format"])
+            result = main(["taskfile-help", "search", "check", "--regex", "^format"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -752,31 +752,32 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "nonexistent"])
+            result = main(["taskfile-help", "search", "nonexistent"])
         
         assert result == 0
         captured = capsys.readouterr()
         
         assert "No tasks found matching search criteria" in captured.out
 
-    def test_search_no_filters_error(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search without any filters returns error."""
+    def test_search_missing_pattern_error(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test search without pattern argument returns error."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search"])
+            with pytest.raises(SystemExit) as exc_info:
+                main(["taskfile-help", "search"])
         
-        assert result == 1
+        assert exc_info.value.code == 2  # argparse returns 2 for missing required arguments
         captured = capsys.readouterr()
         
         output = captured.err + captured.out
-        assert "At least one" in output and "filter" in output
+        assert "required" in output.lower() and "pattern" in output.lower()
 
     def test_search_json_output(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test search with JSON output."""
         monkeypatch.chdir(search_taskfiles_dir)
         
-        result = main(["taskfile-help", "search", "--pattern", "test", "--json"])
+        result = main(["taskfile-help", "search", "test", "--json"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -802,7 +803,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=True):
-            result = main(["taskfile-help", "search", "--pattern", "build", "--no-color"])
+            result = main(["taskfile-help", "search", "build", "--no-color"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -816,7 +817,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "test", "--verbose"])
+            result = main(["taskfile-help", "search", "test", "--verbose"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -842,7 +843,7 @@ tasks:
         monkeypatch.chdir(other_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "deploy", "--search-dirs", str(project_dir)])
+            result = main(["taskfile-help", "search", "deploy", "--search-dirs", str(project_dir)])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -854,7 +855,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "format"])
+            result = main(["taskfile-help", "search", "format"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -872,7 +873,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "linting"])
+            result = main(["taskfile-help", "search", "linting"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -888,7 +889,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--regex", "[invalid("])
+            result = main(["taskfile-help", "search", "test", "--regex", "[invalid("])
         
         # Should handle gracefully - either error or no results
         assert result in [0, 1]
@@ -903,7 +904,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "test"])
+            result = main(["taskfile-help", "search", "test"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -920,7 +921,7 @@ tasks:
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
-            result = main(["taskfile-help", "search", "--pattern", "server"])
+            result = main(["taskfile-help", "search", "server"])
         
         assert result == 0
         captured = capsys.readouterr()
@@ -950,7 +951,7 @@ tasks:
         assert exc_info.value.code == 0
         captured = capsys.readouterr()
         
-        assert "--pattern" in captured.out
+        assert "pattern" in captured.out  # positional argument
         assert "--regex" in captured.out
         assert "Search filters:" in captured.out
         assert "Examples:" in captured.out
