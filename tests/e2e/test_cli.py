@@ -14,7 +14,7 @@ class TestCLIHelp:
     """Test CLI help output via different invocation methods."""
 
     def test_main_with_none_argv(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test main() called with None (simulates console script entry point)."""
+        """Test main() accepts None as argv parameter."""
         # Create a simple Taskfile
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
@@ -35,7 +35,7 @@ tasks:
         assert result == 0
 
     def test_python_module_help(self) -> None:
-        """Test 'python3 -m taskfile_help -h' shows help."""
+        """Test CLI displays help when invoked as Python module."""
         result = subprocess.run(
             [sys.executable, "-m", "taskfile_help", "-h"],
             capture_output=True,
@@ -48,7 +48,7 @@ tasks:
         assert "search" in result.stdout
 
     def test_console_script_help(self) -> None:
-        """Test '.venv/bin/taskfile-help -h' shows help."""
+        """Test CLI displays help when invoked as console script."""
         # Find the taskfile-help script in the virtual environment
         venv_bin = Path(sys.executable).parent
         script_path = venv_bin / "taskfile-help"
@@ -133,21 +133,33 @@ tasks:
 
         return tmp_path
 
-    def test_all_with_color_and_search_dirs(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test 'all' namespace with color enabled using --search-dirs."""
+    def test_search_dirs_option(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test --search-dirs option locates Taskfiles in specified directory."""
         # Change to a different directory to test --search-dirs
         other_dir = taskfiles_dir.parent / "other"
         other_dir.mkdir()
         monkeypatch.chdir(other_dir)
         
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help", "namespace", "--search-dirs", str(taskfiles_dir)])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        # Verify tasks from the specified directory are found
+        assert "build" in captured.out
+
+    def test_all_namespace_with_color(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test 'all' meta-namespace works with color output enabled."""
+        monkeypatch.chdir(taskfiles_dir)
+        
         # Mock isatty to enable colors
         with patch("sys.stdout.isatty", return_value=True):
-            result = main(["taskfile-help", "namespace", "all", "--search-dirs", str(taskfiles_dir)])
+            result = main(["taskfile-help", "namespace", "all"])
         
         assert result == 0
 
     def test_no_color_from_current_dir(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --no-color flag from current directory."""
+        """Test --no-color flag disables ANSI color codes in output."""
         monkeypatch.chdir(taskfiles_dir)
         
         # Even with TTY, colors should be disabled
@@ -161,7 +173,7 @@ tasks:
         assert "\x1b[" not in captured.out
 
     def test_specific_namespace(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test showing specific namespace (test)."""
+        """Test namespace command displays tasks from specified namespace."""
         monkeypatch.chdir(taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -177,7 +189,7 @@ tasks:
         assert "Run integration tests" in captured.out
 
     def test_piped_output_no_color(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that piped output (dev | cat) doesn't have color codes."""
+        """Test piped output automatically disables ANSI color codes."""
         monkeypatch.chdir(taskfiles_dir)
         
         # Simulate piped output by setting isatty to False
@@ -202,7 +214,7 @@ tasks:
             assert "Start development server" in output
 
     def test_all_namespace_shows_all_namespaces(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test 'all' namespace shows all namespaces."""
+        """Test 'all' meta-namespace displays tasks from all namespaces."""
         monkeypatch.chdir(taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -217,7 +229,7 @@ tasks:
         assert "unit" in captured.out   # test
 
     def test_json_output(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --json output format."""
+        """Test --json flag outputs tasks in JSON format."""
         monkeypatch.chdir(taskfiles_dir)
         
         result = main(["taskfile-help", "namespace", "--json"])
@@ -231,12 +243,23 @@ tasks:
         
         assert "tasks" in output
         assert len(output["tasks"]) > 0
+
+    def test_json_output_no_color_codes(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test JSON output never contains ANSI color codes."""
+        monkeypatch.chdir(taskfiles_dir)
         
+        # Even with TTY, JSON should not have color codes
+        with patch("sys.stdout.isatty", return_value=True):
+            result = main(["taskfile-help", "namespace", "--json"])
+        
+        assert result == 0
+        
+        captured = capsys.readouterr()
         # Verify no color codes in JSON output
         assert "\x1b[" not in captured.out
 
     def test_verbose_output(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --verbose flag shows search directories."""
+        """Test --verbose flag displays search directory information."""
         monkeypatch.chdir(taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -249,7 +272,7 @@ tasks:
         assert "Searching in directories:" in captured.err or "Searching in directories:" in captured.out
 
     def test_search_dirs_with_multiple_paths(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test --search-dirs with multiple colon-separated paths."""
+        """Test --search-dirs accepts multiple colon-separated directory paths."""
         # Create two directories with different taskfiles
         dir1 = tmp_path / "dir1"
         dir1.mkdir()
@@ -281,7 +304,7 @@ tasks:
         assert result == 0
 
     def test_question_mark_lists_namespaces(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test '?' namespace lists available namespaces."""
+        """Test '?' meta-namespace displays list of available namespaces."""
         monkeypatch.chdir(taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -297,7 +320,7 @@ tasks:
         assert "test" in output
 
     def test_nonexistent_namespace(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test error when requesting nonexistent namespace."""
+        """Test requesting nonexistent namespace returns error with suggestions."""
         monkeypatch.chdir(taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -314,7 +337,7 @@ tasks:
         assert "test" in output
 
     def test_no_taskfile_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test error when no Taskfile exists."""
+        """Test CLI returns error when no Taskfile is found."""
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()
         monkeypatch.chdir(empty_dir)
@@ -329,7 +352,7 @@ class TestCLIValidation:
     """Test CLI validation warnings."""
 
     def test_invalid_version_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
-        """Test that invalid version shows warning but continues."""
+        """Test invalid Taskfile version displays warning but continues processing."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '2'
 
@@ -350,7 +373,7 @@ tasks:
         assert "build" in captured.out  # Task should still be shown
 
     def test_missing_version_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
-        """Test that missing version shows warning but continues."""
+        """Test missing Taskfile version displays warning but continues processing."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""tasks:
   build:
@@ -369,7 +392,7 @@ tasks:
         assert "build" in captured.out  # Task should still be shown
 
     def test_invalid_task_structure_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
-        """Test that invalid task structure shows warning but continues."""
+        """Test invalid task structure displays warnings but continues processing."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
 
@@ -394,7 +417,7 @@ tasks:
         assert "build" in captured.out  # Valid task should still be shown
 
     def test_valid_taskfile_no_warnings(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
-        """Test that valid Taskfile produces no validation warnings."""
+        """Test valid Taskfile produces no validation warnings."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
 
@@ -423,7 +446,7 @@ tasks:
         assert "test" not in captured.out  # Internal task should not be shown
 
     def test_invalid_yaml_syntax_shows_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
-        """Test that invalid YAML syntax shows warning."""
+        """Test invalid YAML syntax displays warning but continues processing."""
         taskfile = tmp_path / "Taskfile.yml"
         taskfile.write_text("""version: '3'
 tasks:
@@ -447,7 +470,7 @@ class TestCLICompletion:
     """Test CLI completion functionality."""
 
     def test_completion_bash(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --completion bash generates bash completion script."""
+        """Test --completion bash outputs bash shell completion script."""
         result = main(["taskfile-help", "namespace", "--completion", "bash"])
         
         assert result == 0
@@ -457,7 +480,7 @@ class TestCLICompletion:
         assert "taskfile-help --complete" in captured.out
 
     def test_completion_zsh(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --completion zsh generates zsh completion script."""
+        """Test --completion zsh outputs zsh shell completion script."""
         result = main(["taskfile-help", "namespace", "--completion", "zsh"])
         
         assert result == 0
@@ -467,7 +490,7 @@ class TestCLICompletion:
         assert "taskfile-help --complete" in captured.out
 
     def test_completion_fish(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --completion fish generates fish completion script."""
+        """Test --completion fish outputs fish shell completion script."""
         result = main(["taskfile-help", "namespace", "--completion", "fish"])
         
         assert result == 0
@@ -476,7 +499,7 @@ class TestCLICompletion:
         assert "taskfile-help --complete" in captured.out
 
     def test_completion_unknown_shell(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --completion with unknown shell returns error."""
+        """Test --completion with unsupported shell returns error."""
         result = main(["taskfile-help", "namespace", "--completion", "powershell"])
         
         assert result == 1
@@ -484,7 +507,7 @@ class TestCLICompletion:
         assert "Unknown shell" in captured.err
 
     def test_complete_namespaces(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --complete returns available namespaces."""
+        """Test --complete outputs list of available namespaces."""
         # Create taskfiles
         (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  build:\n    desc: Build\n")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks:\n  serve:\n    desc: Serve\n")
@@ -502,7 +525,7 @@ class TestCLICompletion:
         assert "test" in captured.out
 
     def test_complete_partial_namespace(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --complete with partial namespace."""
+        """Test --complete filters namespaces by partial prefix match."""
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-deploy.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-test.yml").write_text("version: '3'\n")
@@ -518,7 +541,7 @@ class TestCLICompletion:
         assert "test" not in captured.out
 
     def test_complete_task_names(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --complete with namespace:task format."""
+        """Test --complete outputs task names for namespace:task completion."""
         (tmp_path / "Taskfile-dev.yml").write_text("""version: '3'
 tasks:
   build:
@@ -540,7 +563,7 @@ tasks:
         assert "dev:deploy" in captured.out
 
     def test_complete_partial_task_name(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --complete with partial task name."""
+        """Test --complete filters task names by partial prefix match."""
         (tmp_path / "Taskfile-dev.yml").write_text("""version: '3'
 tasks:
   build:
@@ -562,7 +585,7 @@ tasks:
         assert "dev:test" not in captured.out
 
     def test_install_completion_bash(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --install-completion bash."""
+        """Test --install-completion bash installs completion script to user directory."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             result = main(["taskfile-help", "namespace", "--install-completion", "bash"])
         
@@ -573,7 +596,7 @@ tasks:
         assert (tmp_path / ".bash_completion.d" / "taskfile-help").exists()
 
     def test_install_completion_auto_detect(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test --install-completion with auto-detection."""
+        """Test --install-completion auto-detects shell from SHELL environment variable."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             with patch.dict("os.environ", {"SHELL": "/bin/bash"}):
                 result = main(["taskfile-help", "namespace", "--install-completion"])
@@ -672,7 +695,7 @@ tasks:
         return tmp_path
 
     def test_search_pattern_basic(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test basic pattern search."""
+        """Test pattern search matches task names containing the pattern."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -690,7 +713,7 @@ tasks:
         assert "format" not in captured.out
 
     def test_search_pattern_case_insensitive(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that pattern search is case-insensitive."""
+        """Test pattern search performs case-insensitive matching."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -703,7 +726,7 @@ tasks:
         assert "build-all" in captured.out
 
     def test_search_regex_basic(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test basic regex search."""
+        """Test --regex flag enables regular expression pattern matching."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -717,7 +740,7 @@ tasks:
         assert "test-unit" in captured.out or "unit" in captured.out
 
     def test_search_regex_end_anchor(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test regex search with word boundary."""
+        """Test regex search supports word boundary anchors."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -731,7 +754,7 @@ tasks:
         assert "build-all" in captured.out or "format-all" in captured.out
 
     def test_search_combined_filters(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search with both pattern and regex (AND logic)."""
+        """Test combining pattern and --regex applies AND logic to filters."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -747,7 +770,7 @@ tasks:
         assert "lint" not in captured.out
 
     def test_search_no_results(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search with no matching results."""
+        """Test search displays appropriate message when no tasks match."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -759,7 +782,7 @@ tasks:
         assert "No tasks found matching search criteria" in captured.out
 
     def test_search_missing_pattern_error(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search without pattern or regex returns error."""
+        """Test search command requires at least one search filter."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -772,7 +795,7 @@ tasks:
         assert "At least one search filter" in captured.err or "required" in captured.err.lower()
 
     def test_search_json_output(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search with JSON output."""
+        """Test --json flag outputs search results in JSON format."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         result = main(["taskfile-help", "search", "test", "--json"])
@@ -786,6 +809,18 @@ tasks:
         
         assert "results" in output
         assert len(output["results"]) > 0
+
+    def test_search_json_structure(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test search JSON output contains required result fields."""
+        monkeypatch.chdir(search_taskfiles_dir)
+        
+        result = main(["taskfile-help", "search", "test", "--json"])
+        
+        assert result == 0
+        captured = capsys.readouterr()
+        
+        import json
+        output = json.loads(captured.out)
         
         # Check structure of results
         first_result = output["results"][0]
@@ -797,7 +832,7 @@ tasks:
         assert "match_type" in first_result
 
     def test_search_with_no_color(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search with --no-color flag."""
+        """Test --no-color flag disables ANSI color codes in search output."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=True):
@@ -811,7 +846,7 @@ tasks:
         assert "build" in captured.out
 
     def test_search_with_verbose(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search with --verbose flag."""
+        """Test --verbose flag displays search directory information."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -824,7 +859,7 @@ tasks:
         assert "Searching in directories:" in captured.err or "Searching in directories:" in captured.out
 
     def test_search_with_search_dirs(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search with custom --search-dirs."""
+        """Test search command respects --search-dirs option."""
         # Create taskfiles in a subdirectory
         project_dir = tmp_path / "project"
         project_dir.mkdir()
@@ -849,7 +884,7 @@ tasks:
         assert "deploy" in captured.out
 
     def test_search_namespace_match(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search matching namespace name shows all tasks in namespace."""
+        """Test search displays all tasks when pattern matches namespace name."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -867,7 +902,7 @@ tasks:
         assert "lint-fix" in captured.out
 
     def test_search_group_match(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search matching group name shows all tasks in group."""
+        """Test search displays all tasks when pattern matches group name."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -883,7 +918,7 @@ tasks:
         assert "lint-fix" in captured.out
 
     def test_search_invalid_regex(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search with invalid regex pattern."""
+        """Test search handles invalid regex patterns gracefully."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -898,7 +933,7 @@ tasks:
         assert "Invalid regex" in output or "No tasks found" in output or "error" in output.lower()
 
     def test_search_multiple_namespaces(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search results from multiple namespaces."""
+        """Test search returns matching tasks across all namespaces."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -915,7 +950,7 @@ tasks:
         assert "test-integration" in captured.out
 
     def test_search_description_match(self, search_taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test that search DOES match descriptions (searches all fields)."""
+        """Test search matches text in task descriptions."""
         monkeypatch.chdir(search_taskfiles_dir)
         
         with patch("sys.stdout.isatty", return_value=False):
@@ -929,7 +964,7 @@ tasks:
         assert "serve" in captured.out or "server" in captured.out.lower()
 
     def test_namespace_command_help(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test namespace command help shows meta-namespaces."""
+        """Test namespace command help displays meta-namespace documentation."""
         with pytest.raises(SystemExit) as exc_info:
             main(["taskfile-help", "namespace", "--help"])
         
@@ -942,7 +977,7 @@ tasks:
         assert "?" in captured.out
 
     def test_search_command_help(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test search command help shows filter options."""
+        """Test search command help displays filter options and examples."""
         with pytest.raises(SystemExit) as exc_info:
             main(["taskfile-help", "search", "--help"])
         
