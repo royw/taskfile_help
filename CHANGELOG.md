@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.3.1] - 2025-11-01
+
+### Added
+
 - simplify search command CLI to use positional pattern argument (de54ee1)
 - multi-argument search with AND logic across all fields (namespace, group, task name, description)
 - support for multiple `--regex` options in search command
