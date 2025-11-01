@@ -12,9 +12,11 @@ tasks:
   build:
     desc: Prepare and build a release, run after version:bump (default release task)
     summary: Validates readiness, runs tests, updates CHANGELOG, builds packages
+    vars:
+      NEW_VERSION:
+        sh: task version:pyproject
     cmds:
       - cmd: echo "🔍 Verifying release readiness..."
-        silent: true
       - |
         # Check for uncommitted changes
         if [ -n "$(git status --porcelain)" ]; then
@@ -54,48 +56,37 @@ tasks:
         awk '/## \[Unreleased\]/,/^## \[[0-9]/ {if (/^## \[[0-9]/) exit; print}' CHANGELOG.md | head -30
         echo "----------------------------------------"
       - cmd: echo "🧪 Running full test suite..."
-        silent: true
       - cmd: task make
       - cmd: echo "✅ All tests passed!"
-        silent: true
       - cmd: echo "📝 Preparing CHANGELOG for release..."
-        silent: true
       - |
-        NEW_VERSION=$(task version:pyproject)
         TODAY=$(date +%Y-%m-%d)
         
         # Move [Unreleased] content to new version section
         # Add empty [Unreleased] section for future development
-        sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n### Added\n\n### Changed\n\n### Fixed\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
+        sed -i.bak "s/## \[Unreleased\]/## [Unreleased]\n\n### Added\n\n### Changed\n\n### Fixed\n\n## [{{.NEW_VERSION}}] - $TODAY/" CHANGELOG.md
         
         rm CHANGELOG.md.bak
-        echo "✅ CHANGELOG.md prepared for v$NEW_VERSION"
+        echo "✅ CHANGELOG.md prepared for v{{.NEW_VERSION}}"
       - cmd: echo "📝 Committing release preparation..."
-        silent: true
       - |
-        NEW_VERSION=$(task version:pyproject)
         git add pyproject.toml CHANGELOG.md
-        git commit -m "chore: prepare release v$NEW_VERSION" --no-verify
-        echo "✅ Committed release preparation for v$NEW_VERSION"
+        git commit -m "chore: prepare release v{{.NEW_VERSION}}" --no-verify
+        echo "✅ Committed release preparation for v{{.NEW_VERSION}}"
       - cmd: echo "🏗️  Building release package..."
-        silent: true
       - cmd: task build
       - |
         # Commit uv.lock if it was changed by the build
         if [ -n "$(git status --porcelain uv.lock)" ]; then
-          NEW_VERSION=$(task version:pyproject)
           git add uv.lock
-          git commit -m "chore: update uv.lock for v$NEW_VERSION" --no-verify
+          git commit -m "chore: update uv.lock for v{{.NEW_VERSION}}" --no-verify
           echo "✅ Committed updated uv.lock"
         fi
-      - cmd: echo "✅ Release v$NEW_VERSION ready!"
-        silent: true
-      - cmd: 'echo "📌 Next steps:"'
-        silent: true
-      - cmd: 'echo "   • Tag release: task release:tag"'
-        silent: true
-      - cmd: 'echo "   • Or continue development (changes will go to next release)"'
-        silent: true
+      - |
+        echo "✅ Release v{{.NEW_VERSION}} ready!"
+        echo "📌 Next steps:"
+        echo "   • Tag release: task release:tag"
+        echo "   • Or continue development (changes will go to next release)"
     silent: true
 
   tag:
