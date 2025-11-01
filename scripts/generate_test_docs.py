@@ -6,6 +6,7 @@ table for documentation purposes.
 """
 
 import ast
+import re
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -77,8 +78,10 @@ def generate_markdown_table(tests: list[TestInfo], title: str) -> str:
     lines.append("|------------|-----------|-------------|")
 
     for test in sorted(tests, key=lambda t: (t.class_name, t.method_name)):
-        # Escape pipe characters in docstrings
+        # Escape special markdown characters in docstrings
         description = test.docstring.replace("|", "\\|")
+        # Escape underscores that start words (e.g., _get_sourcing_instructions)
+        description = re.sub(r'\b_', r'\\_', description)
         lines.append(f"| {test.class_name} | `{test.method_name}` | {description} |")
 
     lines.append("")  # Empty line after table

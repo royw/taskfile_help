@@ -1,6 +1,6 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-01 12:38:02  
+> **Auto-generated** on 2025-11-01 13:27:36  
 > **Total Tests**: 285
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
@@ -146,7 +146,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestInstallCompletion | `test_installs_tcsh_completion` | Test installing tcsh completion script. |
 | TestInstallCompletion | `test_installs_zsh_completion` | Test installing zsh completion script. |
 | TestInstallCompletion | `test_overwrites_existing_completion_script` | Test that existing completion script is overwritten. |
-| TestInstallCompletion | `test_unsupported_shell_in_sourcing_instructions` | Test that _get_sourcing_instructions handles unsupported shells gracefully. |
+| TestInstallCompletion | `test_unsupported_shell_in_sourcing_instructions` | Test that \_get_sourcing_instructions handles unsupported shells gracefully. |
 | TestIntegration | `test_complete_workflow_bash` | Test complete workflow: discover, complete, generate. |
 | TestIntegration | `test_partial_namespace_completion` | Test partial namespace completion. |
 | TestIntegration | `test_partial_task_completion` | Test partial task name completion. |
