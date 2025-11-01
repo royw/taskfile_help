@@ -91,9 +91,13 @@ tasks:
 
   tag:
     desc: Create and push a git tag for the current version
-    summary: Tags the current version and pushes to origin
-    deps:
-      - task: :version:current
+    summary: |
+      Creates a git tag and pushes it to origin.
+      This triggers GitHub Actions to:
+      - Build the package
+      - Run tests
+      - Create a GitHub release with assets
+      - Publish to PyPI automatically
     cmds:
       - |
         VERSION=$(task version:pyproject)
@@ -101,6 +105,14 @@ tasks:
         git tag "v$VERSION"
         git push origin "v$VERSION"
         echo "✅ Tag v$VERSION created and pushed to origin!"
+        echo ""
+        echo "🤖 GitHub Actions will now:"
+        echo "   1. Build the package"
+        echo "   2. Run tests"
+        echo "   3. Create GitHub release with assets"
+        echo "   4. Publish to PyPI"
+        echo ""
+        echo "📊 Monitor progress at: https://github.com/royw/taskfile_help/actions"
 
   pypi-test:
     desc: Test PyPI upload

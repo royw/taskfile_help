@@ -145,6 +145,7 @@ nav:
     - Git Hooks: githooks.md
     - Testing: development/testing.md
     - Test Documentation: tests.md
+    - Release Process: development/releasing.md
     - Contributing: development/contributing.md
   - Reference: reference/
 
