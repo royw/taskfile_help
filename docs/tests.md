@@ -1,6 +1,6 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-01 13:27:36  
+> **Auto-generated** on 2025-11-01 13:27:36
 > **Total Tests**: 285
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.

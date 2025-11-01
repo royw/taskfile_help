@@ -135,7 +135,7 @@ def main() -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     content = [
         "# Test Documentation\n",
-        f"> **Auto-generated** on {timestamp}  ",
+        f"> **Auto-generated** on {timestamp} ",
         f"> **Total Tests**: {total_count}\n",
         "This page provides a comprehensive overview of all tests in the project, "
         "automatically extracted from test docstrings.\n",
