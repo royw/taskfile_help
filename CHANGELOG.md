@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [0.3.1] - 2025-11-01
+
+### Added
+
+### Changed
+
 - optimize release task with task variable and cleanup (c36bd4d)
 
 ### Fixed
