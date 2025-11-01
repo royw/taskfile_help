@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - search now includes task descriptions in addition to names, groups, and namespaces
 
 ### Changed
+- add automated test documentation table generation (b235e2f)
 
 - search command now accepts multiple patterns as positional arguments (all must match)
 - search matching logic changed to AND across all fields instead of OR by field type

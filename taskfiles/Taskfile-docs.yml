@@ -9,9 +9,19 @@ tasks:
 
   # === Documentation ===
 
+  generate-tests:
+    desc: Generate test documentation table from test docstrings
+    summary: Extracts test info and creates docs/tests.md
+    cmds:
+      - cmd: echo "📝 Generating test documentation..."
+        silent: true
+      - python3 scripts/generate_test_docs.py
+
   build:
     desc: Build documentation with MkDocs
     summary: Generates static documentation site in site/ directory
+    deps:
+      - generate-tests
     cmds:
       - cmd: echo "📚 Building documentation..."
         silent: true
