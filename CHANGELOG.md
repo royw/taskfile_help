@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated search help text and examples to reflect new multi-pattern behavior
 
 ### Fixed
+
 - escape underscores at word boundaries in test documentation (0d47386)
 
 ## [0.3.0] - 2025-10-31
