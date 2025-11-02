@@ -3,11 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable
 import json
 import sys
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import Any, Protocol
 
-
-if TYPE_CHECKING:
-    from .config import Config
+from .config import Config
 
 
 # Task column width for formatting

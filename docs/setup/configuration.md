@@ -8,22 +8,59 @@ taskfile-help supports configuration through:
 
 1. **Command-line arguments** - Highest priority
 2. **Environment variables** - Shell or `.env` file
-3. **pyproject.toml** - Project-level configuration
+3. **Configuration files** - `taskfile_help.yml` (preferred) or `pyproject.toml` (fallback)
 4. **Default values** - Built-in defaults
+
+## Configuration Files
+
+taskfile-help supports two configuration file formats:
+
+### taskfile_help.yml (Recommended)
+
+A dedicated YAML configuration file for taskfile-help settings. This file takes precedence over `pyproject.toml` if both exist.
+
+**Example:**
+
+```yaml
+# taskfile_help.yml
+search-dirs:
+  - "."
+  - "taskfiles"
+  - "../shared"
+
+no-color: false
+
+group-pattern: "\\s*#\\s*===\\s*(.+?)\\s*==="
+```
+
+### pyproject.toml (Alternative)
+
+Configuration can also be specified in `pyproject.toml` under the `[tool.taskfile-help]` section. This is useful for Python projects that already use `pyproject.toml`.
+
+**Example:**
+
+```toml
+[tool.taskfile-help]
+search-dirs = [".", "taskfiles", "../shared"]
+no-color = false
+group-pattern = "\\s*#\\s*===\\s*(.+?)\\s*==="
+```
+
+**File Precedence:** If both `taskfile_help.yml` and `pyproject.toml` exist in the current directory, `taskfile_help.yml` takes precedence.
 
 ## Supported Configuration Options
 
 The following table shows all available configuration options and their supported configuration methods:
 
-| Option | CLI Flag | Environment Variable(s) | pyproject.toml | .env File | Default |
-|--------|----------|------------------------|----------------|-----------|---------|
+| Option | CLI Flag | Environment Variable(s) | Config File | .env File | Default |
+|--------|----------|------------------------|-------------|-----------|---------|
 | **search-dirs** | `--search-dirs`, `-s` | `TASKFILE_HELP_SEARCH_DIRS` | `search-dirs` | ✓ | Current directory |
 | **no-color** | `--no-color` | `NO_COLOR`, `TASKFILE_HELP_NO_COLOR` | `no-color` | ✓ | Auto-detect TTY |
 | **group-pattern** | `--group-pattern` | `TASKFILE_HELP_GROUP_PATTERN` | `group-pattern` | ✓ | `\s*#\s*===\s*(.+?)\s*===` |
 | **verbose** | `--verbose`, `-v` | - | - | - | `false` |
 | **json** | `--json` | - | - | - | `false` |
 
-**Priority Order:** Command-line > Environment Variables > pyproject.toml > Defaults
+**Priority Order:** Command-line > Environment Variables > Config File (taskfile_help.yml or pyproject.toml) > Defaults
 
 **Note:** Environment variables can be set in your shell or in a `.env` file in the current directory.
 
@@ -46,7 +83,17 @@ NO_COLOR=1
 EOF
 taskfile-help
 
-# Using pyproject.toml
+# Using taskfile_help.yml (recommended)
+cat > taskfile_help.yml << EOF
+search-dirs:
+  - "."
+  - "../shared"
+no-color: false
+group-pattern: "\\\\s*##\\\\s*(.+?)\\\\s*##"
+EOF
+taskfile-help
+
+# Using pyproject.toml (alternative)
 cat >> pyproject.toml << EOF
 [tool.taskfile-help]
 search-dirs = [".", "../shared"]
@@ -177,9 +224,20 @@ taskfile-help --group-pattern '\s*#\s*---\s*(.+?)\s*---'
 
 Customize the regular expression pattern used to identify group markers in Taskfiles. The pattern must contain one capture group that extracts the group name.
 
-## Configuration File (pyproject.toml)
+## Configuration File Options
 
-You can configure default settings in `pyproject.toml`:
+You can configure default settings in either `taskfile_help.yml` or `pyproject.toml`:
+
+**taskfile_help.yml:**
+
+```yaml
+search-dirs:
+  - "."
+  - "../shared"
+  - "~/common"
+```
+
+**pyproject.toml:**
 
 ```toml
 [tool.taskfile-help]
@@ -191,6 +249,29 @@ search-dirs = [".", "../shared", "~/common"]
 #### search-dirs
 
 List of directories to search for Taskfiles.
+
+**taskfile_help.yml:**
+
+```yaml
+# Single directory
+search-dirs:
+  - "."
+
+# Multiple directories
+search-dirs:
+  - "."
+  - "../shared"
+  - "~/common"
+
+# Absolute and relative paths
+search-dirs:
+  - "."
+  - "../other-project"
+  - "/opt/shared-tasks"
+  - "~/my-tasks"
+```
+
+**pyproject.toml:**
 
 ```toml
 [tool.taskfile-help]
@@ -213,6 +294,18 @@ search-dirs = [
 
 Disable colored output by default.
 
+**taskfile_help.yml:**
+
+```yaml
+# Disable colors
+no-color: true
+
+# Enable colors (default)
+no-color: false
+```
+
+**pyproject.toml:**
+
 ```toml
 [tool.taskfile-help]
 # Disable colors
@@ -225,6 +318,21 @@ no-color = false
 #### group-pattern
 
 Regular expression pattern for identifying group markers in Taskfiles.
+
+**taskfile_help.yml:**
+
+```yaml
+# Default pattern (matches: # === Group Name ===)
+group-pattern: "\\s*#\\s*===\\s*(.+?)\\s*==="
+
+# Custom pattern (matches: ## Group Name ##)
+group-pattern: "\\s*##\\s*(.+?)\\s*##"
+
+# Alternative pattern (matches: # --- Group Name ---)
+group-pattern: "\\s*#\\s*---\\s*(.+?)\\s*---"
+```
+
+**pyproject.toml:**
 
 ```toml
 [tool.taskfile-help]
@@ -240,7 +348,7 @@ group-pattern = "\\s*#\\s*---\\s*(.+?)\\s*---"
 
 The pattern must be a valid regular expression with one capture group that extracts the group name.
 
-**Note**: Command-line arguments take precedence over environment variables, which take precedence over `pyproject.toml` settings.
+**Note**: Command-line arguments take precedence over environment variables, which take precedence over configuration file settings.
 
 ## File Naming Conventions
 
@@ -517,16 +625,18 @@ When searching for Taskfiles:
 Configuration is applied in this order (later overrides earlier):
 
 1. Default values
-2. `pyproject.toml` settings
+2. Configuration file (`taskfile_help.yml` or `pyproject.toml`)
 3. `.env` file variables
 4. Environment variables (shell)
 5. Command-line arguments
 
+**Config File Precedence:** If both `taskfile_help.yml` and `pyproject.toml` exist, `taskfile_help.yml` takes precedence.
+
 **Supported Configuration Options:**
 
-- **search-dirs**: `--search-dirs`, `TASKFILE_HELP_SEARCH_DIRS`, `pyproject.toml`
-- **no-color**: `--no-color`, `NO_COLOR` or `TASKFILE_HELP_NO_COLOR`, `pyproject.toml`
-- **group-pattern**: `--group-pattern`, `TASKFILE_HELP_GROUP_PATTERN`, `pyproject.toml`
+- **search-dirs**: `--search-dirs`, `TASKFILE_HELP_SEARCH_DIRS`, config file
+- **no-color**: `--no-color`, `NO_COLOR` or `TASKFILE_HELP_NO_COLOR`, config file
+- **group-pattern**: `--group-pattern`, `TASKFILE_HELP_GROUP_PATTERN`, config file
 
 Example:
 
@@ -537,8 +647,17 @@ TASKFILE_HELP_SEARCH_DIRS=.:../shared
 TASKFILE_HELP_GROUP_PATTERN=\s*##\s*(.+?)\s*##
 ```
 
+```yaml
+# taskfile_help.yml (takes precedence over pyproject.toml)
+search-dirs:
+  - "."
+  - "../shared"
+no-color: false
+group-pattern: "\\s*##\\s*(.+?)\\s*##"
+```
+
 ```toml
-# pyproject.toml
+# pyproject.toml (used if taskfile_help.yml doesn't exist)
 [tool.taskfile-help]
 search-dirs = [".", "../shared"]
 no-color = false
@@ -546,7 +665,7 @@ group-pattern = "\\s*##\\s*(.+?)\\s*##"
 ```
 
 ```bash
-# Shell environment variables override .env and pyproject.toml
+# Shell environment variables override .env and config files
 export NO_COLOR=1
 export TASKFILE_HELP_SEARCH_DIRS=/custom/path
 export TASKFILE_HELP_GROUP_PATTERN='\s*#\s*---\s*(.+?)\s*---'
@@ -558,6 +677,17 @@ taskfile-help --no-color --search-dirs /other/path --group-pattern '\s*#\s*===\s
 ## Examples
 
 ### Project with Shared Tasks
+
+**Using taskfile_help.yml:**
+
+```yaml
+# taskfile_help.yml
+search-dirs:
+  - "."
+  - "../shared-tasks"
+```
+
+**Using pyproject.toml:**
 
 ```toml
 # pyproject.toml

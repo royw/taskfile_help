@@ -9,30 +9,123 @@ import os
 from pathlib import Path
 import sys
 import tomllib
-from typing import Any
+from typing import Any, Protocol
+
+import yaml
 
 from .discovery import TaskfileDiscovery
 
 
-def _load_pyproject_config() -> dict[str, Any]:
-    """Load taskfile-help configuration from pyproject.toml if it exists.
+class ConfigFile(Protocol):
+    """Protocol for configuration file readers.
+
+    Implementations must provide a method to load configuration data
+    from a specific file format.
+    """
+
+    def load_config(self) -> dict[str, Any]:
+        """Load configuration from the file.
+
+        Returns:
+            Dictionary with configuration values, empty if file doesn't exist or parsing fails
+        """
+        ...
+
+
+class PyProjectConfigFile:
+    """Configuration file reader for pyproject.toml files."""
+
+    def __init__(self, file_path: Path) -> None:
+        """Initialize with path to pyproject.toml file.
+
+        Args:
+            file_path: Path to the pyproject.toml file
+        """
+        self.file_path = file_path
+
+    def load_config(self) -> dict[str, Any]:
+        """Load taskfile-help configuration from pyproject.toml.
+
+        Returns:
+            Dictionary with configuration values from [tool.taskfile-help] section,
+            empty if file doesn't exist or no config found
+        """
+        if not self.file_path.exists():
+            return {}
+
+        try:
+            with open(self.file_path, "rb") as f:
+                data: dict[str, Any] = tomllib.load(f)
+                tool_section: dict[str, Any] = data.get("tool", {})
+                config: dict[str, Any] = tool_section.get("taskfile-help", {})
+                return config
+        except Exception:
+            # Silently ignore any parsing errors
+            return {}
+
+
+class TaskfileHelpConfigFile:
+    """Configuration file reader for taskfile_help.yml files."""
+
+    def __init__(self, file_path: Path) -> None:
+        """Initialize with path to taskfile_help.yml file.
+
+        Args:
+            file_path: Path to the taskfile_help.yml file
+        """
+        self.file_path = file_path
+
+    def load_config(self) -> dict[str, Any]:
+        """Load taskfile-help configuration from taskfile_help.yml.
+
+        Returns:
+            Dictionary with configuration values,
+            empty if file doesn't exist or parsing fails
+        """
+        if not self.file_path.exists():
+            return {}
+
+        try:
+            with open(self.file_path, encoding="utf-8") as f:
+                data: dict[str, Any] = yaml.safe_load(f) or {}
+                # The YAML file contains the config directly at the root level
+                return data
+        except Exception:
+            # Silently ignore any parsing errors
+            return {}
+
+
+def get_config_file(config_file_names: list[str] | None = None) -> ConfigFile | None:
+    """Factory function to get the appropriate ConfigFile implementation.
+
+    Searches the current directory for config files in the order specified.
+    Returns the first one found.
+
+    Args:
+        config_file_names: List of config file names to search for in order.
+                          Defaults to ["taskfile_help.yml", "pyproject.toml"]
 
     Returns:
-        Dictionary with configuration values, empty if file doesn't exist or no config found
+        ConfigFile implementation for the first found config file, or None if none found
     """
-    pyproject_path = Path.cwd() / "pyproject.toml"
-    if not pyproject_path.exists():
-        return {}
+    # Mapping of config filenames to their implementation classes
+    config_class_map: dict[str, type[PyProjectConfigFile] | type[TaskfileHelpConfigFile]] = {
+        "pyproject.toml": PyProjectConfigFile,
+        "taskfile_help.yml": TaskfileHelpConfigFile,
+    }
 
-    try:
-        with open(pyproject_path, "rb") as f:
-            data: dict[str, Any] = tomllib.load(f)
-            tool_section: dict[str, Any] = data.get("tool", {})
-            config: dict[str, Any] = tool_section.get("taskfile-help", {})
-            return config
-    except Exception:
-        # Silently ignore any parsing errors
-        return {}
+    if config_file_names is None:
+        config_file_names = ["taskfile_help.yml", "pyproject.toml"]
+
+    cwd = Path.cwd()
+
+    for config_name in config_file_names:
+        config_path = cwd / config_name
+        if config_path.exists() and config_name in config_class_map:
+            config_class = config_class_map[config_name]
+            return config_class(config_path)
+
+    return None
 
 
 @dataclass
@@ -258,11 +351,11 @@ class Config:
     """Application configuration with derived values."""
 
     @staticmethod
-    def _get_search_dirs_from_pyproject(config: dict[str, Any]) -> list[Path]:
-        """Extract and resolve search directories from pyproject.toml config.
+    def _get_search_dirs_from_config(config: dict[str, Any]) -> list[Path]:
+        """Extract and resolve search directories from config file.
 
         Args:
-            config: Configuration dictionary from pyproject.toml
+            config: Configuration dictionary from config file
 
         Returns:
             List of resolved Path objects from config
@@ -276,19 +369,19 @@ class Config:
     @staticmethod
     def _resolve_search_dirs(
         args_search_dirs: list[Path] | None,
-        pyproject_config: dict[str, Any],
+        file_config: dict[str, Any],
     ) -> list[Path]:
         """Resolve search directories from arguments, environment, and config.
 
         Priority order:
         1. Command-line argument (--search-dirs)
         2. Environment variable (TASKFILE_HELP_SEARCH_DIRS)
-        3. pyproject.toml configuration
+        3. Configuration file (taskfile_help.yml or pyproject.toml)
         4. Default (current working directory)
 
         Args:
             args_search_dirs: Search directories from command-line arguments
-            pyproject_config: Configuration from pyproject.toml
+            file_config: Configuration from config file
 
         Returns:
             List of resolved search directory paths (deduplicated, preserving order)
@@ -304,9 +397,9 @@ class Config:
             if env_search_dirs:
                 # Parse colon-separated paths from environment variable
                 search_dirs = [Path(p).resolve() for p in env_search_dirs.split(":") if p]
-            elif "search-dirs" in pyproject_config:
-                # Use config from pyproject.toml
-                search_dirs = Config._get_search_dirs_from_pyproject(pyproject_config)
+            elif "search-dirs" in file_config:
+                # Use config from config file
+                search_dirs = Config._get_search_dirs_from_config(file_config)
             else:
                 # Default to current working directory
                 search_dirs = [Path.cwd()]
@@ -319,18 +412,18 @@ class Config:
         return list(dict.fromkeys(search_dirs))
 
     @staticmethod
-    def _resolve_no_color(args_no_color: bool, pyproject_config: dict[str, Any]) -> bool:
+    def _resolve_no_color(args_no_color: bool, file_config: dict[str, Any]) -> bool:
         """Resolve no-color setting from arguments, environment, and config.
 
         Priority order:
         1. Command-line argument (--no-color)
         2. Environment variable (NO_COLOR or TASKFILE_HELP_NO_COLOR)
-        3. pyproject.toml configuration
+        3. Configuration file (taskfile_help.yml or pyproject.toml)
         4. Default (False)
 
         Args:
             args_no_color: No-color flag from command-line arguments
-            pyproject_config: Configuration from pyproject.toml
+            file_config: Configuration from config file
 
         Returns:
             Boolean indicating whether to disable colors
@@ -348,9 +441,9 @@ class Config:
         if env_no_color and env_no_color.lower() in ("1", "true", "yes"):
             return True
 
-        # pyproject.toml configuration
-        if "no-color" in pyproject_config:
-            return bool(pyproject_config["no-color"])
+        # Configuration file
+        if "no-color" in file_config:
+            return bool(file_config["no-color"])
 
         # Default
         return False
@@ -358,19 +451,19 @@ class Config:
     @staticmethod
     def _resolve_group_pattern(
         args_group_pattern: str | None,
-        pyproject_config: dict[str, Any],
+        file_config: dict[str, Any],
     ) -> str:
         """Resolve group pattern from arguments, environment, and config.
 
         Priority order:
         1. Command-line argument (--group-pattern)
         2. Environment variable (TASKFILE_HELP_GROUP_PATTERN)
-        3. pyproject.toml configuration
+        3. Configuration file (taskfile_help.yml or pyproject.toml)
         4. Default pattern
 
         Args:
             args_group_pattern: Group pattern from command-line arguments
-            pyproject_config: Configuration from pyproject.toml
+            file_config: Configuration from config file
 
         Returns:
             Group pattern string
@@ -387,9 +480,9 @@ class Config:
         if env_pattern is not None:
             return env_pattern
 
-        # pyproject.toml configuration
-        if "group-pattern" in pyproject_config:
-            pattern: str = pyproject_config["group-pattern"]
+        # Configuration file
+        if "group-pattern" in file_config:
+            pattern: str = file_config["group-pattern"]
             return pattern
 
         # Default
@@ -403,22 +496,23 @@ class Config:
         """
         self.args = Args.parse_args(argv)
 
-        # Load configuration from pyproject.toml if available
-        pyproject_config = _load_pyproject_config()
+        # Load configuration from config file if available
+        config_file = get_config_file()
+        file_config = config_file.load_config() if config_file else {}
 
         # Resolve no-color setting
-        no_color = self._resolve_no_color(self.args.no_color, pyproject_config)
+        no_color = self._resolve_no_color(self.args.no_color, file_config)
 
         # Colorize if output is a TTY and no-color is not set
         self.colorize = sys.stdout.isatty() and not no_color
 
         # Resolve taskfile search directories
-        search_dirs = self._resolve_search_dirs(self.args.search_dirs, pyproject_config)
+        search_dirs = self._resolve_search_dirs(self.args.search_dirs, file_config)
 
         self.discovery = TaskfileDiscovery(search_dirs)
 
         # Resolve group pattern
-        self.group_pattern = self._resolve_group_pattern(self.args.group_pattern, pyproject_config)
+        self.group_pattern = self._resolve_group_pattern(self.args.group_pattern, file_config)
 
     @property
     def namespace(self) -> str:

@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-01 22:37:43 
-> **Total Tests**: 311
+> **Auto-generated** on 2025-11-02 14:51:34 
+> **Total Tests**: 329
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -98,7 +98,9 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestConfig | `test_config_colorize_tty` | Test colorize enabled when output is TTY. |
 | TestConfig | `test_config_default_search_dir` | Test config with default search directory. |
 | TestConfig | `test_config_empty_search_dirs_defaults_to_cwd` | Test empty search dirs defaults to current directory. |
+| TestConfig | `test_config_group_pattern_from_taskfile_help_yml` | Test group-pattern setting from taskfile_help.yml. |
 | TestConfig | `test_config_namespace_property` | Test namespace property. |
+| TestConfig | `test_config_no_color_from_taskfile_help_yml` | Test no-color setting from taskfile_help.yml. |
 | TestConfig | `test_config_removes_duplicate_search_dirs` | Test duplicate search directories are removed. |
 | TestConfig | `test_config_removes_duplicate_search_dirs_order` | Test duplicate search directories preserve first occurrence order. |
 | TestConfig | `test_config_resolves_relative_paths` | Test relative paths are resolved to absolute paths. |
@@ -107,6 +109,8 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestConfig | `test_config_search_dirs_from_pyproject_empty_string` | Test config with search dirs from pyproject.toml as empty string. |
 | TestConfig | `test_config_search_dirs_from_pyproject_list_with_empty` | Test config with search dirs from pyproject.toml list containing empty strings. |
 | TestConfig | `test_config_search_dirs_from_pyproject_single_string` | Test config with search dirs from pyproject.toml as single string. |
+| TestConfig | `test_config_search_dirs_from_taskfile_help_yml` | Test config with search dirs from taskfile_help.yml. |
+| TestConfig | `test_config_taskfile_help_yml_takes_precedence` | Test taskfile_help.yml takes precedence over pyproject.toml. |
 | TestConfigEdgeCases | `test_config_nonexistent_search_dir` | Test config with non-existent search directory. |
 | TestConfigEdgeCases | `test_config_search_dirs_with_spaces` | Test search dirs with spaces in path names. |
 | TestConfigEdgeCases | `test_load_config_permission_error` | Test loading config when pyproject.toml is not readable. |
@@ -160,6 +164,11 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestGetCompletions | `test_complete_namespace_without_colon` | Test completing namespace names. |
 | TestGetCompletions | `test_complete_task_name_with_colon` | Test completing task names within a namespace. |
 | TestGetCompletions | `test_empty_word_returns_all_namespaces` | Test that empty word returns all available namespaces. |
+| TestGetConfigFile | `test_get_config_file_custom_order` | Get config file with custom search order. |
+| TestGetConfigFile | `test_get_config_file_no_config` | Get config file when no config files exist. |
+| TestGetConfigFile | `test_get_config_file_only_taskfile_help_yml` | Get config file when only taskfile_help.yml exists. |
+| TestGetConfigFile | `test_get_config_file_pyproject_toml_fallback` | Get config file when only pyproject.toml exists. |
+| TestGetConfigFile | `test_get_config_file_taskfile_help_yml_first` | Get config file when taskfile_help.yml exists (takes precedence). |
 | TestInstallCompletion | `test_auto_detect_shell_from_environment` | Test auto-detecting shell from $SHELL environment variable. |
 | TestInstallCompletion | `test_creates_parent_directories` | Test that parent directories are created if they don't exist. |
 | TestInstallCompletion | `test_fails_for_unsupported_shell` | Test failure for unsupported shell. |
@@ -192,10 +201,6 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestJsonOutputter | `test_output_single_main_namespace` | Test outputting tasks for main namespace in JSON. |
 | TestJsonOutputter | `test_output_single_with_tasks` | Test outputting tasks in JSON format. |
 | TestJsonOutputter | `test_output_warning` | Test outputting a warning in JSON format. |
-| TestLoadPyprojectConfig | `test_load_config_invalid_toml` | Test loading config with invalid TOML. |
-| TestLoadPyprojectConfig | `test_load_config_no_file` | Test loading config when pyproject.toml doesn't exist. |
-| TestLoadPyprojectConfig | `test_load_config_no_tool_section` | Test loading config when tool section doesn't exist. |
-| TestLoadPyprojectConfig | `test_load_config_with_search_dirs` | Test loading config with search-dirs. |
 | TestMain | `test_main_all_with_no_taskfiles` | Test main 'all' namespace when no taskfiles exist. |
 | TestMain | `test_main_colors_disabled_for_json` | Test colors are disabled for JSON output. |
 | TestMain | `test_main_namespace_main_alias` | Test 'main' namespace is treated as main taskfile. |
@@ -242,6 +247,12 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestParserEdgeCases | `test_parse_taskfile_desc_before_task` | Test desc appearing before any task definition. |
 | TestParserEdgeCases | `test_parse_taskfile_internal_before_desc` | Test internal flag appearing before desc. |
 | TestParserEdgeCases | `test_parse_taskfile_multiple_desc_lines` | Test task with multiple desc lines (last one wins). |
+| TestPyProjectConfigFile | `test_load_config_invalid_toml` | Load config with invalid TOML. |
+| TestPyProjectConfigFile | `test_load_config_no_file` | Load config when pyproject.toml doesn't exist. |
+| TestPyProjectConfigFile | `test_load_config_no_tool_section` | Load config when tool section doesn't exist. |
+| TestPyProjectConfigFile | `test_load_config_with_group_pattern` | Load config with group-pattern from pyproject.toml. |
+| TestPyProjectConfigFile | `test_load_config_with_no_color` | Load config with no-color setting from pyproject.toml. |
+| TestPyProjectConfigFile | `test_load_config_with_search_dirs` | Load config with search-dirs from pyproject.toml. |
 | TestSaveTaskIfValid | `test_internal_task_not_saved` | Test that internal tasks are not saved. |
 | TestSaveTaskIfValid | `test_multiple_tasks` | Test saving multiple tasks. |
 | TestSaveTaskIfValid | `test_task_without_description_not_saved` | Test that tasks without descriptions are not saved. |
@@ -295,6 +306,13 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestTaskfileDiscovery | `test_namespace_with_numbers` | Test namespace with numbers in the name. |
 | TestTaskfileDiscovery | `test_namespace_with_underscores` | Test namespace with underscores in the name. |
 | TestTaskfileDiscovery | `test_search_dirs_order_matters` | Test search directory order determines precedence (first match wins). |
+| TestTaskfileHelpConfigFile | `test_load_config_empty_file` | Load config from empty taskfile_help.yml. |
+| TestTaskfileHelpConfigFile | `test_load_config_invalid_yaml` | Load config with invalid YAML. |
+| TestTaskfileHelpConfigFile | `test_load_config_no_file` | Load config when taskfile_help.yml doesn't exist. |
+| TestTaskfileHelpConfigFile | `test_load_config_with_all_settings` | Load config with all supported settings from taskfile_help.yml. |
+| TestTaskfileHelpConfigFile | `test_load_config_with_group_pattern` | Load config with group-pattern from taskfile_help.yml. |
+| TestTaskfileHelpConfigFile | `test_load_config_with_no_color` | Load config with no-color setting from taskfile_help.yml. |
+| TestTaskfileHelpConfigFile | `test_load_config_with_search_dirs` | Load config with search-dirs from taskfile_help.yml. |
 | TestTextOutputter | `test_output_all` | Test outputting all taskfiles. |
 | TestTextOutputter | `test_output_error` | Test outputting an error message. |
 | TestTextOutputter | `test_output_heading` | Test outputting a heading. |

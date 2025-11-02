@@ -5,56 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from taskfile_help.config import Args, Config, _load_pyproject_config
-
-
-class TestLoadPyprojectConfig:
-    """Tests for _load_pyproject_config function."""
-
-    def test_load_config_with_search_dirs(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test loading config with search-dirs."""
-        pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text("""
-[tool.taskfile-help]
-search-dirs = [".", "../shared"]
-""")
-        monkeypatch.chdir(tmp_path)
-        
-        config = _load_pyproject_config()
-        
-        assert "search-dirs" in config
-        assert config["search-dirs"] == [".", "../shared"]
-
-    def test_load_config_no_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test loading config when pyproject.toml doesn't exist."""
-        monkeypatch.chdir(tmp_path)
-        
-        config = _load_pyproject_config()
-        
-        assert config == {}
-
-    def test_load_config_no_tool_section(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test loading config when tool section doesn't exist."""
-        pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text("""
-[project]
-name = "test"
-""")
-        monkeypatch.chdir(tmp_path)
-        
-        config = _load_pyproject_config()
-        
-        assert config == {}
-
-    def test_load_config_invalid_toml(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test loading config with invalid TOML."""
-        pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text("invalid toml [[[")
-        monkeypatch.chdir(tmp_path)
-        
-        config = _load_pyproject_config()
-        
-        assert config == {}
+from taskfile_help.config import Args, Config
 
 
 class TestArgs:
@@ -387,3 +338,73 @@ search-dirs = [".", "../other"]
         
         assert len(config.discovery.search_dirs) == 1
         assert config.discovery.search_dirs[0] == tmp_path
+
+    def test_config_search_dirs_from_taskfile_help_yml(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test config with search dirs from taskfile_help.yml."""
+        config_file = tmp_path / "taskfile_help.yml"
+        config_file.write_text("""
+search-dirs:
+  - "."
+  - "../other"
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        config = Config(["script.py", "namespace"])
+        
+        # Should have at least current directory
+        assert len(config.discovery.search_dirs) >= 1
+        assert tmp_path in config.discovery.search_dirs
+
+    def test_config_taskfile_help_yml_takes_precedence(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test taskfile_help.yml takes precedence over pyproject.toml."""
+        # Create both config files with different values
+        yaml_config = tmp_path / "taskfile_help.yml"
+        yaml_config.write_text("""
+search-dirs:
+  - "yaml_dir"
+""")
+        
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("""
+[tool.taskfile-help]
+search-dirs = ["toml_dir"]
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        config = Config(["script.py", "namespace"])
+        
+        # Should use the YAML config (first in search order)
+        assert len(config.discovery.search_dirs) == 1
+        assert config.discovery.search_dirs[0] == tmp_path / "yaml_dir"
+
+    def test_config_no_color_from_taskfile_help_yml(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test no-color setting from taskfile_help.yml."""
+        config_file = tmp_path / "taskfile_help.yml"
+        config_file.write_text("""
+no-color: true
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        config = Config(["script.py", "namespace"])
+        
+        assert config.colorize is False
+
+    def test_config_group_pattern_from_taskfile_help_yml(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test group-pattern setting from taskfile_help.yml."""
+        config_file = tmp_path / "taskfile_help.yml"
+        config_file.write_text(r"""
+group-pattern: "\\s*#\\s*---\\s*(.+?)\\s*---"
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        config = Config(["script.py", "namespace"])
+        
+        assert config.group_pattern == r"\s*#\s*---\s*(.+?)\s*---"

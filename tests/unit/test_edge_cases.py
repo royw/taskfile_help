@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from taskfile_help.config import Config, _load_pyproject_config
+from taskfile_help.config import Config, PyProjectConfigFile
 from taskfile_help.output import Outputter, TextOutputter
 from taskfile_help.parser import parse_taskfile
 from taskfile_help.taskfile_help import main
@@ -116,7 +116,8 @@ class TestConfigEdgeCases:
             pyproject.chmod(0o000)
             monkeypatch.chdir(tmp_path)
             
-            config = _load_pyproject_config()
+            config_file = PyProjectConfigFile(pyproject)
+            config = config_file.load_config()
             
             # Should silently return empty dict
             assert config == {}

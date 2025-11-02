@@ -11,7 +11,8 @@ similar to `task --list`, but with automatic grouping and namespace support.
 
 **What is a Group?**
 
-In lieu of a task tag, a group is a set of tasks organized under a group comment marker. Group comments follow a known pattern like the default pattern: `# === <group name> ===` and all tasks following the comment belong to that group until the next group comment or end of file.
+In lieu of a task tag, a group is a set of tasks organized under a group comment marker. Group comments follow a known pattern like the default
+pattern: `# === <group name> ===` and all tasks following the comment belong to that group until the next group comment or end of file.
 
 ## Features
 

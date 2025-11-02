@@ -240,17 +240,26 @@ For detailed installation instructions and troubleshooting, see the [Shell Compl
 
 taskfile-help supports multiple configuration methods with a clear priority order.
 
+### Configuration Files
+
+taskfile-help supports two configuration file formats:
+
+1. **`taskfile_help.yml`** - Dedicated YAML configuration file (takes precedence)
+1. **`pyproject.toml`** - Python project configuration file (fallback)
+
+If both files exist, `taskfile_help.yml` takes precedence.
+
 ### Configuration Matrix
 
-| Option | CLI Flag | Environment Variable(s) | pyproject.toml | .env File | Default |
-|--------|----------|------------------------|----------------|-----------|---------|
+| Option | CLI Flag | Environment Variable(s) | Config File | .env File | Default |
+|--------|----------|------------------------|-------------|-----------|---------|
 | **search-dirs** | `--search-dirs`, `-s` | `TASKFILE_HELP_SEARCH_DIRS` | `search-dirs` | ✓ | Current directory |
 | **no-color** | `--no-color` | `NO_COLOR`, `TASKFILE_HELP_NO_COLOR` | `no-color` | ✓ | Auto-detect TTY |
 | **group-pattern** | `--group-pattern` | `TASKFILE_HELP_GROUP_PATTERN` | `group-pattern` | ✓ | `\s*#\s*===\s*(.+?)\s*===` |
 | **verbose** | `--verbose`, `-v` | - | - | - | `false` |
 | **json** | `--json` | - | - | - | `false` |
 
-**Priority Order:** Command-line > Environment Variables > pyproject.toml > Defaults
+**Priority Order:** Command-line > Environment Variables > Config File (taskfile_help.yml or pyproject.toml) > Defaults
 
 ### Configuration Examples
 
@@ -270,7 +279,17 @@ NO_COLOR=1
 EOF
 taskfile-help
 
-# Using pyproject.toml
+# Using taskfile_help.yml (recommended)
+cat > taskfile_help.yml << EOF
+search-dirs:
+  - "."
+  - "../shared"
+no-color: false
+group-pattern: "\\\\s*#\\\\s*===\\\\s*(.+?)\\\\s*==="
+EOF
+taskfile-help
+
+# Using pyproject.toml (alternative)
 [tool.taskfile-help]
 search-dirs = [".", "../shared"]
 no-color = true

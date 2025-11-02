@@ -1,0 +1,15 @@
+# Example taskfile_help.yml configuration file
+# This file takes precedence over pyproject.toml if both exist
+
+# Search paths for Taskfiles
+# Can be a list of directories (relative or absolute)
+search-dirs:
+  - "."
+  - "taskfiles"
+
+# Disable colored output (optional, default: false)
+# no-color: true
+
+# Custom group pattern for task grouping (optional)
+# Default pattern: r"\s*#\s*===\s*(.+?)\s*==="
+# group-pattern: "\\s*#\\s*---\\s*(.+?)\\s*---"
