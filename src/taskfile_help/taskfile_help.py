@@ -281,26 +281,16 @@ def _handle_namespace_command(config: Config, outputter: Outputter) -> int:
     return _show_main_or_namespace(config, outputter, namespace)
 
 
-def _handle_search_command(config: Config, outputter: Outputter) -> int:
-    """Handle the search command.
+def _collect_all_taskfiles(config: Config, outputter: Outputter) -> list[tuple[str, list[tuple[str, str, str]]]]:
+    """Collect all taskfiles (main + all namespaces).
 
     Args:
-        config: Configuration object containing search filters
-        outputter: Outputter instance for formatted output
+        config: Configuration object with discovery settings
+        outputter: Outputter instance for error reporting
 
     Returns:
-        int: Exit code
+        List of tuples containing (namespace, tasks) for each taskfile
     """
-    # Validate that at least one filter is provided
-    # Check if patterns list is empty or None, and regexes is empty or None
-    has_patterns = config.args.patterns and len(config.args.patterns) > 0
-    has_regexes = config.args.regexes and len(config.args.regexes) > 0
-
-    if not has_patterns and not has_regexes:
-        outputter.output_error("At least one search filter (pattern or --regex) is required")
-        return 1
-
-    # Collect all taskfiles (main + all namespaces)
     taskfiles: list[tuple[str, list[tuple[str, str, str]]]] = []
 
     main_taskfile = config.discovery.find_main_taskfile()
@@ -312,16 +302,56 @@ def _handle_search_command(config: Config, outputter: Outputter) -> int:
         tasks = parse_taskfile(taskfile_path, ns, outputter, config.group_pattern)
         taskfiles.append((ns, tasks))
 
-    # Search across all taskfiles
-    # Pass None instead of empty list for cleaner handling
-    patterns = config.args.patterns if has_patterns else None
-    regexes = config.args.regexes if has_regexes else None
+    return taskfiles
 
-    results = search_taskfiles(
+
+def _search_across_all_taskfiles(
+    taskfiles: list[tuple[str, list[tuple[str, str, str]]]],
+    patterns: list[str] | None,
+    regexes: list[str] | None,
+) -> list[tuple[str, str, str, str, str]]:
+    """Search across all taskfiles with given patterns and regexes.
+
+    Args:
+        taskfiles: List of (namespace, tasks) tuples
+        patterns: List of substring patterns to match (AND logic)
+        regexes: List of regex patterns to match (AND logic)
+
+    Returns:
+        List of matching tasks as (namespace, group, task_name, description, match_type) tuples
+    """
+
+    return search_taskfiles(
         taskfiles,
-        patterns=patterns,
-        regexes=regexes,
+        patterns=patterns or None,  # Pass None instead of empty list for cleaner handling
+        regexes=regexes or None,  # Pass None instead of empty list for cleaner handling
     )
+
+
+def _handle_search_command(config: Config, outputter: Outputter) -> int:
+    """Handle the search command.
+
+    Args:
+        config: Configuration object containing search filters
+        outputter: Outputter instance for formatted output
+
+    Returns:
+        int: Exit code
+    """
+    # Validate that at least one filter is provided
+    has_patterns = config.args.patterns and len(config.args.patterns) > 0
+    has_regexes = config.args.regexes and len(config.args.regexes) > 0
+
+    if not has_patterns and not has_regexes:
+        outputter.output_error("At least one search filter (pattern or --regex) is required")
+        return 1
+
+    # Collect all taskfiles (main + all namespaces)
+    taskfiles = _collect_all_taskfiles(config, outputter)
+
+    # Search across all taskfiles
+
+    results = _search_across_all_taskfiles(taskfiles, config.args.patterns, config.args.regexes)
 
     # Output results
     outputter.output_search_results(results)

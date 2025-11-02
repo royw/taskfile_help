@@ -134,9 +134,7 @@ class Args:
 
     command: str
     namespace: str
-    pattern: str | None
     patterns: list[str] | None
-    regex: str | None
     regexes: list[str] | None
     no_color: bool
     search_dirs: list[Path] | None
@@ -220,34 +218,15 @@ class Args:
         )
 
     @staticmethod
-    def parse_args(argv: list[str]) -> Args:
-        """Parse command line arguments using argparse.
+    def _list_of_paths(arg: str) -> list[Path]:
+        """Parse colon-separated paths and remove duplicates."""
+        return list(dict.fromkeys(Path(p).resolve() for p in arg.split(":")))
 
-        Args:
-            argv: List of command line arguments
-
-        Returns:
-            Args: Parsed arguments
-        """
-
-        def list_of_paths(arg: str) -> list[Path]:
-            # Use dict.fromkeys() to remove duplicates while preserving order (keeps first occurrence)
-            return list(dict.fromkeys(Path(p).resolve() for p in arg.split(":")))
-
-        parser = argparse.ArgumentParser(
-            description="Dynamic Taskfile help generator",
-            add_help=True,
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-        )
-
-        # Create subparsers for commands
-        subparsers = parser.add_subparsers(
-            dest="command",
-            help="Command to execute",
-            required=True,
-        )
-
-        # Namespace command (current behavior)
+    @staticmethod
+    def _create_namespace_parser(
+        subparsers: argparse._SubParsersAction[argparse.ArgumentParser], list_of_paths: Callable[[str], list[Path]]
+    ) -> None:
+        """Create namespace command parser."""
         namespace_parser = subparsers.add_parser(
             "namespace",
             help="Show tasks for a specific namespace",
@@ -275,7 +254,11 @@ Examples:
         )
         Args._add_global_arguments(namespace_parser, list_of_paths)
 
-        # Search command (new feature)
+    @staticmethod
+    def _create_search_parser(
+        subparsers: argparse._SubParsersAction[argparse.ArgumentParser], list_of_paths: Callable[[str], list[Path]]
+    ) -> None:
+        """Create search command parser."""
         search_parser = subparsers.add_parser(
             "search",
             help="Search for tasks by pattern or regex",
@@ -317,24 +300,62 @@ Examples:
         )
         Args._add_global_arguments(search_parser, list_of_paths)
 
-        parsed = parser.parse_args(argv[1:])
+    @staticmethod
+    def _extract_command_values(parsed: argparse.Namespace) -> tuple[str, str, list[str] | None, list[str] | None]:
+        """Extract command-specific arguments from parsed namespace.
 
-        # Extract command and command-specific arguments
+        Args:
+            parsed: Parsed argparse.Namespace containing command-line arguments
+
+        Returns:
+            Tuple of (command, namespace, patterns, regexes) where:
+            - command: The subcommand name ("namespace" or "search")
+            - namespace: The namespace argument (for namespace command)
+            - patterns: List of all search patterns (for search command)
+            - regexes: List of all regex patterns (for search command)
+        """
         command = parsed.command if parsed.command else "namespace"
         namespace = getattr(parsed, "namespace", "")
         patterns = getattr(parsed, "patterns", None)
-        # For backward compatibility, keep pattern as the first pattern if patterns exist
-        pattern = patterns[0] if patterns and len(patterns) > 0 else None
         regexes = getattr(parsed, "regexes", None)
-        # For backward compatibility, keep regex as the first regex if regexes exist
-        regex = regexes[0] if regexes and len(regexes) > 0 else None
+        return command, namespace, patterns, regexes
+
+    @staticmethod
+    def parse_args(argv: list[str]) -> Args:
+        """Parse command line arguments using argparse.
+
+        Args:
+            argv: List of command line arguments
+
+        Returns:
+            Args: Parsed arguments
+        """
+        parser = argparse.ArgumentParser(
+            description="Dynamic Taskfile help generator",
+            add_help=True,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+
+        # Create subparsers for commands
+        subparsers = parser.add_subparsers(
+            dest="command",
+            help="Command to execute",
+            required=True,
+        )
+
+        # Create command parsers
+        Args._create_namespace_parser(subparsers, Args._list_of_paths)
+        Args._create_search_parser(subparsers, Args._list_of_paths)
+
+        parsed = parser.parse_args(argv[1:])
+
+        # Extract command and command-specific arguments
+        command, namespace, patterns, regexes = Args._extract_command_values(parsed)
 
         return Args(
             command=command,
             namespace=namespace,
-            pattern=pattern,
             patterns=patterns,
-            regex=regex,
             regexes=regexes,
             no_color=parsed.no_color,
             search_dirs=parsed.search_dirs,
@@ -367,6 +388,20 @@ class Config:
             return [Path(config_dirs).resolve()] if config_dirs else []
 
     @staticmethod
+    def _get_search_dirs(file_config: dict[str, Any]) -> list[Path]:
+        env_search_dirs = os.environ.get("TASKFILE_HELP_SEARCH_DIRS")
+        if env_search_dirs:
+            # Parse colon-separated paths from environment variable
+            search_dirs = [Path(p).resolve() for p in env_search_dirs.split(":") if p]
+        elif "search-dirs" in file_config:
+            # Use config from config file
+            search_dirs = Config._get_search_dirs_from_config(file_config)
+        else:
+            # Default to current working directory
+            search_dirs = [Path.cwd()]
+        return search_dirs
+
+    @staticmethod
     def _resolve_search_dirs(
         args_search_dirs: list[Path] | None,
         file_config: dict[str, Any],
@@ -386,23 +421,9 @@ class Config:
         Returns:
             List of resolved search directory paths (deduplicated, preserving order)
         """
-        search_dirs: list[Path]
-
-        if args_search_dirs is not None:
-            # Command-line argument takes precedence
-            search_dirs = args_search_dirs[:]
-        else:
-            # Check environment variable
-            env_search_dirs = os.environ.get("TASKFILE_HELP_SEARCH_DIRS")
-            if env_search_dirs:
-                # Parse colon-separated paths from environment variable
-                search_dirs = [Path(p).resolve() for p in env_search_dirs.split(":") if p]
-            elif "search-dirs" in file_config:
-                # Use config from config file
-                search_dirs = Config._get_search_dirs_from_config(file_config)
-            else:
-                # Default to current working directory
-                search_dirs = [Path.cwd()]
+        search_dirs: list[Path] = (
+            args_search_dirs[:] if args_search_dirs is not None else Config._get_search_dirs(file_config)
+        )
 
         # Handle edge case of all-empty paths
         if not search_dirs:
@@ -410,6 +431,30 @@ class Config:
 
         # Remove duplicates while preserving order (dict preserves insertion order in Python 3.7+)
         return list(dict.fromkeys(search_dirs))
+
+    @staticmethod
+    def _check_no_color_env() -> bool:
+        """Check environment variables for no-color setting.
+
+        Returns:
+            True if NO_COLOR or TASKFILE_HELP_NO_COLOR is set
+        """
+        # Check standard NO_COLOR environment variable (https://no-color.org/)
+        if os.environ.get("NO_COLOR"):
+            return True
+
+        # Check taskfile-help specific environment variable
+        env_no_color = os.environ.get("TASKFILE_HELP_NO_COLOR")
+        return bool(env_no_color and env_no_color.lower() in ("1", "true", "yes"))
+
+    @staticmethod
+    def _get_no_color_from_config(file_config: dict[str, Any]) -> bool:
+        """Get no-color setting from config file.
+
+        Returns:
+            Boolean from config file, or False if not set
+        """
+        return bool(file_config.get("no-color", False))
 
     @staticmethod
     def _resolve_no_color(args_no_color: bool, file_config: dict[str, Any]) -> bool:
@@ -432,21 +477,12 @@ class Config:
         if args_no_color:
             return True
 
-        # Check standard NO_COLOR environment variable (https://no-color.org/)
-        if os.environ.get("NO_COLOR"):
-            return True
-
-        # Check taskfile-help specific environment variable
-        env_no_color = os.environ.get("TASKFILE_HELP_NO_COLOR")
-        if env_no_color and env_no_color.lower() in ("1", "true", "yes"):
+        # Check environment variables
+        if Config._check_no_color_env():
             return True
 
         # Configuration file
-        if "no-color" in file_config:
-            return bool(file_config["no-color"])
-
-        # Default
-        return False
+        return Config._get_no_color_from_config(file_config)
 
     @staticmethod
     def _resolve_group_pattern(

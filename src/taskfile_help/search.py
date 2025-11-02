@@ -94,6 +94,16 @@ def task_matches_filters(
     return not (regexes and not matches_all_regexes(combined, regexes))
 
 
+def _search_each_taskfile(
+    taskfiles: list[Taskfile], patterns: list[str] | None, regexes: list[str] | None, results: list[SearchResult]
+) -> list[SearchResult]:
+    for namespace, tasks in taskfiles:
+        for group, task_name, description in tasks:
+            if task_matches_filters(namespace, group, task_name, description, patterns=patterns, regexes=regexes):
+                results.append((namespace, group, task_name, description, "match"))
+    return results
+
+
 def search_taskfiles(
     taskfiles: list[Taskfile],
     patterns: list[str] | None = None,
@@ -118,9 +128,5 @@ def search_taskfiles(
 
     results: list[SearchResult] = []
 
-    for namespace, tasks in taskfiles:
-        for group, task_name, description in tasks:
-            if task_matches_filters(namespace, group, task_name, description, patterns=patterns, regexes=regexes):
-                results.append((namespace, group, task_name, description, "match"))
-
+    _search_each_taskfile(taskfiles, patterns, regexes, results)
     return results
