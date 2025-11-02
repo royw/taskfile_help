@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-02 14:51:34
-> **Total Tests**: 329
+> **Auto-generated** on 2025-11-02 15:43:48 
+> **Total Tests**: 345
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -77,6 +77,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestArgs | `test_parse_args_search_dirs_short` | Test parsing args with -s short option. |
 | TestArgs | `test_parse_args_verbose` | Test parsing args with --verbose flag. |
 | TestArgs | `test_parse_args_verbose_short` | Test parsing args with -v short option. |
+| TestCollectAllTaskfiles | `test_search_with_namespace_taskfiles` | Test search collects tasks from namespace taskfiles. |
 | TestColors | `test_colors_enabled_by_default` | Test colors are enabled by default. |
 | TestColors | `test_disable_colors` | Test disabling colors. |
 | TestCompleteFlags | `test_completes_long_flags` | Test completing long flags. |
@@ -91,6 +92,14 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestCompleteTaskName | `test_handles_parse_taskfile_exception` | Test that exceptions from parse_taskfile are caught and handled. |
 | TestCompleteTaskName | `test_handles_parsing_errors_gracefully` | Test that parsing errors are handled gracefully. |
 | TestCompleteTaskName | `test_returns_empty_for_nonexistent_namespace` | Test that empty list is returned for nonexistent namespace. |
+| TestCompletionFeatures | `test_completion_helper` | Test completion helper for shell callbacks. |
+| TestCompletionFeatures | `test_completion_installation_auto` | Test completion installation with auto-detection. |
+| TestCompletionFeatures | `test_completion_installation_failure` | Test completion installation failure. |
+| TestCompletionFeatures | `test_completion_installation_specific_shell` | Test completion installation for specific shell. |
+| TestCompletionFeatures | `test_completion_script_generation_bash` | Test generating bash completion script. |
+| TestCompletionFeatures | `test_completion_script_generation_fish` | Test generating fish completion script. |
+| TestCompletionFeatures | `test_completion_script_generation_unknown_shell` | Test generating completion script for unknown shell. |
+| TestCompletionFeatures | `test_completion_script_generation_zsh` | Test generating zsh completion script. |
 | TestConfig | `test_config_all_namespace` | Test 'all' namespace. |
 | TestConfig | `test_config_args_override_pyproject` | Test command line args override pyproject.toml. |
 | TestConfig | `test_config_colorize_no_color_flag` | Test colorize disabled with --no-color flag. |
@@ -185,6 +194,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestIntegration | `test_complete_workflow_bash` | Test complete workflow: discover, complete, generate. |
 | TestIntegration | `test_partial_namespace_completion` | Test partial namespace completion. |
 | TestIntegration | `test_partial_task_completion` | Test partial task name completion. |
+| TestInvalidCommand | `test_invalid_command_error` | Test invalid command returns error. |
 | TestIsInternalTask | `test_empty_line` | Test empty line. |
 | TestIsInternalTask | `test_internal_false` | Test internal: false flag. |
 | TestIsInternalTask | `test_internal_true` | Test internal: true flag. |
@@ -229,6 +239,8 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestMatchingFunctions | `test_matches_regex_basic` | Test basic regex matching. |
 | TestMatchingFunctions | `test_matches_regex_invalid` | Test invalid regex returns False. |
 | TestMatchingFunctions | `test_matches_regex_no_match` | Test regex not matching. |
+| TestNamespaceQuestionMark | `test_namespace_question_mark_no_namespaces` | Test '?' namespace with no namespace taskfiles. |
+| TestNamespaceQuestionMark | `test_namespace_question_mark_with_namespaces` | Test '?' namespace shows available namespaces. |
 | TestOutputEdgeCases | `test_text_outputter_error_message` | Test error message output. |
 | TestOutputEdgeCases | `test_text_outputter_heading_message` | Test heading message output. |
 | TestOutputEdgeCases | `test_text_outputter_plain_message` | Test plain message output. |
@@ -258,6 +270,10 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestSaveTaskIfValid | `test_task_without_description_not_saved` | Test that tasks without descriptions are not saved. |
 | TestSaveTaskIfValid | `test_task_without_name_not_saved` | Test that tasks without names are not saved. |
 | TestSaveTaskIfValid | `test_valid_public_task` | Test saving a valid public task. |
+| TestSearchCommand | `test_search_no_filters_error` | Test search command without filters returns error. |
+| TestSearchCommand | `test_search_with_multiple_patterns` | Test search command with multiple patterns. |
+| TestSearchCommand | `test_search_with_regex` | Test search command with regex pattern. |
+| TestSearchCommand | `test_search_with_single_pattern` | Test search command with single pattern. |
 | TestSearchTaskfiles | `test_search_empty_taskfiles` | Test search with empty taskfiles list. |
 | TestSearchTaskfiles | `test_search_no_filters` | Test search with no filters returns empty. |
 | TestSearchTaskfiles | `test_search_no_matches` | Test search with no matching results. |
