@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-01 13:27:36
-> **Total Tests**: 285
+> **Auto-generated** on 2025-11-01 22:37:43 
+> **Total Tests**: 311
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -22,6 +22,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestCLIHelp | `test_console_script_help` | Test CLI displays help when invoked as console script. |
 | TestCLIHelp | `test_main_with_none_argv` | Test main() accepts None as argv parameter. |
 | TestCLIHelp | `test_python_module_help` | Test CLI displays help when invoked as Python module. |
+| TestCLIInvalidCommand | `test_invalid_command_error` | Test error message for invalid command. |
 | TestCLISearch | `test_namespace_command_help` | Test namespace command help displays meta-namespace documentation. |
 | TestCLISearch | `test_search_combined_filters` | Test combining pattern and --regex applies AND logic to filters. |
 | TestCLISearch | `test_search_command_help` | Test search command help displays filter options and examples. |
@@ -109,6 +110,31 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestConfigEdgeCases | `test_config_nonexistent_search_dir` | Test config with non-existent search directory. |
 | TestConfigEdgeCases | `test_config_search_dirs_with_spaces` | Test search dirs with spaces in path names. |
 | TestConfigEdgeCases | `test_load_config_permission_error` | Test loading config when pyproject.toml is not readable. |
+| TestEnvironmentVariableEdgeCases | `test_no_color_case_insensitive` | TASKFILE_HELP_NO_COLOR is case-insensitive. |
+| TestEnvironmentVariableEdgeCases | `test_no_color_yes_uppercase` | TASKFILE_HELP_NO_COLOR=YES (uppercase) disables colors. |
+| TestEnvironmentVariableEdgeCases | `test_search_dirs_removes_duplicates` | TASKFILE_HELP_SEARCH_DIRS removes duplicate directories. |
+| TestEnvironmentVariableEdgeCases | `test_search_dirs_with_empty_entries` | TASKFILE_HELP_SEARCH_DIRS with empty entries filters them out. |
+| TestEnvironmentVariablePriority | `test_cli_overrides_group_pattern_env` | Command-line --group-pattern overrides TASKFILE_HELP_GROUP_PATTERN. |
+| TestEnvironmentVariablePriority | `test_cli_overrides_no_color_env` | Command-line --no-color flag takes precedence over NO_COLOR env var. |
+| TestEnvironmentVariablePriority | `test_cli_overrides_search_dirs_env` | Command-line --search-dirs overrides TASKFILE_HELP_SEARCH_DIRS. |
+| TestEnvironmentVariablePriority | `test_env_overrides_pyproject` | Environment variable overrides pyproject.toml. |
+| TestEnvironmentVariablePriority | `test_no_color_takes_precedence_over_taskfile_help_no_color` | NO_COLOR takes precedence over TASKFILE_HELP_NO_COLOR. |
+| TestEnvironmentVariables | `test_group_pattern_env_var` | TASKFILE_HELP_GROUP_PATTERN environment variable sets group pattern. |
+| TestEnvironmentVariables | `test_group_pattern_env_var_not_set` | Missing TASKFILE_HELP_GROUP_PATTERN uses default pattern. |
+| TestEnvironmentVariables | `test_no_color_env_var` | NO_COLOR environment variable disables colors. |
+| TestEnvironmentVariables | `test_no_color_env_var_empty` | Empty NO_COLOR environment variable does not disable colors. |
+| TestEnvironmentVariables | `test_search_dirs_env_var` | TASKFILE_HELP_SEARCH_DIRS environment variable sets search directories. |
+| TestEnvironmentVariables | `test_search_dirs_env_var_empty` | Empty TASKFILE_HELP_SEARCH_DIRS defaults to current directory. |
+| TestEnvironmentVariables | `test_search_dirs_env_var_single` | TASKFILE_HELP_SEARCH_DIRS with single directory. |
+| TestEnvironmentVariables | `test_taskfile_help_no_color_false` | TASKFILE_HELP_NO_COLOR=false does not disable colors. |
+| TestEnvironmentVariables | `test_taskfile_help_no_color_one` | TASKFILE_HELP_NO_COLOR=1 disables colors. |
+| TestEnvironmentVariables | `test_taskfile_help_no_color_true` | TASKFILE_HELP_NO_COLOR=true disables colors. |
+| TestEnvironmentVariables | `test_taskfile_help_no_color_yes` | TASKFILE_HELP_NO_COLOR=yes disables colors. |
+| TestEnvironmentVariablesWithPyproject | `test_env_group_pattern_overrides_pyproject` | Environment TASKFILE_HELP_GROUP_PATTERN overrides pyproject.toml. |
+| TestEnvironmentVariablesWithPyproject | `test_env_no_color_overrides_pyproject` | Environment NO_COLOR overrides pyproject.toml no-color setting. |
+| TestEnvironmentVariablesWithPyproject | `test_pyproject_group_pattern_when_no_env` | pyproject.toml group-pattern is used when no environment variable is set. |
+| TestEnvironmentVariablesWithPyproject | `test_pyproject_no_color_when_no_env` | pyproject.toml no-color is used when no environment variable is set. |
+| TestEnvironmentVariablesWithPyproject | `test_pyproject_search_dirs_when_no_env` | pyproject.toml search-dirs is used when no environment variable is set. |
 | TestExtractDescription | `test_description_with_extra_spaces` | Test description with extra spaces. |
 | TestExtractDescription | `test_empty_description` | Test empty description. |
 | TestExtractDescription | `test_non_desc_line` | Test non-description line. |

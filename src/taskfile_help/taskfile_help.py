@@ -52,6 +52,8 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+from dotenv import load_dotenv
+
 from .completion import (
     generate_bash_completion,
     generate_fish_completion,
@@ -99,11 +101,11 @@ def _show_all_tasks(config: Config, outputter: Outputter) -> int:
 
     main_taskfile = config.discovery.find_main_taskfile()
     if main_taskfile:
-        tasks = parse_taskfile(main_taskfile, "", outputter)
+        tasks = parse_taskfile(main_taskfile, "", outputter, config.group_pattern)
         taskfiles.append(("", tasks))
 
     for ns, taskfile_path in config.discovery.get_all_namespace_taskfiles():
-        tasks = parse_taskfile(taskfile_path, ns, outputter)
+        tasks = parse_taskfile(taskfile_path, ns, outputter, config.group_pattern)
         taskfiles.append((ns, tasks))
 
     outputter.output_all(taskfiles)
@@ -251,7 +253,7 @@ def _show_main_or_namespace(config: Config, outputter: Outputter, namespace: str
         _show_namespace_not_found(config, outputter, namespace)
         return 1
 
-    tasks = parse_taskfile(taskfile, display_namespace, outputter)
+    tasks = parse_taskfile(taskfile, display_namespace, outputter, config.group_pattern)
     outputter.output_single(display_namespace, tasks)
     return 0
 
@@ -303,11 +305,11 @@ def _handle_search_command(config: Config, outputter: Outputter) -> int:
 
     main_taskfile = config.discovery.find_main_taskfile()
     if main_taskfile:
-        tasks = parse_taskfile(main_taskfile, "", outputter)
+        tasks = parse_taskfile(main_taskfile, "", outputter, config.group_pattern)
         taskfiles.append(("", tasks))
 
     for ns, taskfile_path in config.discovery.get_all_namespace_taskfiles():
-        tasks = parse_taskfile(taskfile_path, ns, outputter)
+        tasks = parse_taskfile(taskfile_path, ns, outputter, config.group_pattern)
         taskfiles.append((ns, tasks))
 
     # Search across all taskfiles
@@ -346,6 +348,9 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         int: Exit code
     """
+    # Load .env file if it exists (doesn't override existing environment variables)
+    load_dotenv()
+
     config = Config(argv or sys.argv)
 
     # Handle completion-related operations

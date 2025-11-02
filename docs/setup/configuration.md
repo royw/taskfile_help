@@ -1,6 +1,60 @@
 # Configuration
 
-taskfile-help can be configured via command-line arguments or `pyproject.toml`.
+taskfile-help can be configured via multiple methods with a clear priority order.
+
+## Configuration Methods
+
+taskfile-help supports configuration through:
+
+1. **Command-line arguments** - Highest priority
+2. **Environment variables** - Shell or `.env` file
+3. **pyproject.toml** - Project-level configuration
+4. **Default values** - Built-in defaults
+
+## Supported Configuration Options
+
+The following table shows all available configuration options and their supported configuration methods:
+
+| Option | CLI Flag | Environment Variable(s) | pyproject.toml | .env File | Default |
+|--------|----------|------------------------|----------------|-----------|---------|
+| **search-dirs** | `--search-dirs`, `-s` | `TASKFILE_HELP_SEARCH_DIRS` | `search-dirs` | ✓ | Current directory |
+| **no-color** | `--no-color` | `NO_COLOR`, `TASKFILE_HELP_NO_COLOR` | `no-color` | ✓ | Auto-detect TTY |
+| **group-pattern** | `--group-pattern` | `TASKFILE_HELP_GROUP_PATTERN` | `group-pattern` | ✓ | `\s*#\s*===\s*(.+?)\s*===` |
+| **verbose** | `--verbose`, `-v` | - | - | - | `false` |
+| **json** | `--json` | - | - | - | `false` |
+
+**Priority Order:** Command-line > Environment Variables > pyproject.toml > Defaults
+
+**Note:** Environment variables can be set in your shell or in a `.env` file in the current directory.
+
+### Quick Examples
+
+```bash
+# Using command-line arguments
+taskfile-help --no-color --search-dirs /path/to/project
+
+# Using environment variables
+export TASKFILE_HELP_SEARCH_DIRS=.:../shared
+export NO_COLOR=1
+taskfile-help
+
+# Using .env file
+cat > .env << EOF
+TASKFILE_HELP_SEARCH_DIRS=.:../shared
+TASKFILE_HELP_GROUP_PATTERN=\s*##\s*(.+?)\s*##
+NO_COLOR=1
+EOF
+taskfile-help
+
+# Using pyproject.toml
+cat >> pyproject.toml << EOF
+[tool.taskfile-help]
+search-dirs = [".", "../shared"]
+group-pattern = "\\\\s*##\\\\s*(.+?)\\\\s*##"
+no-color = true
+EOF
+taskfile-help
+```
 
 ## Command-Line Options
 
@@ -111,6 +165,18 @@ Searching in directories:
   /home/user/shared
 ```
 
+### Group Pattern
+
+```bash
+# Use custom group pattern
+taskfile-help --group-pattern '\s*##\s*(.+?)\s*##'
+
+# Use alternative pattern
+taskfile-help --group-pattern '\s*#\s*---\s*(.+?)\s*---'
+```
+
+Customize the regular expression pattern used to identify group markers in Taskfiles. The pattern must contain one capture group that extracts the group name.
+
 ## Configuration File (pyproject.toml)
 
 You can configure default settings in `pyproject.toml`:
@@ -143,7 +209,38 @@ search-dirs = [
 ]
 ```
 
-**Note**: Command-line arguments take precedence over `pyproject.toml` settings.
+#### no-color
+
+Disable colored output by default.
+
+```toml
+[tool.taskfile-help]
+# Disable colors
+no-color = true
+
+# Enable colors (default)
+no-color = false
+```
+
+#### group-pattern
+
+Regular expression pattern for identifying group markers in Taskfiles.
+
+```toml
+[tool.taskfile-help]
+# Default pattern (matches: # === Group Name ===)
+group-pattern = "\\s*#\\s*===\\s*(.+?)\\s*==="
+
+# Custom pattern (matches: ## Group Name ##)
+group-pattern = "\\s*##\\s*(.+?)\\s*##"
+
+# Alternative pattern (matches: # --- Group Name ---)
+group-pattern = "\\s*#\\s*---\\s*(.+?)\\s*---"
+```
+
+The pattern must be a valid regular expression with one capture group that extracts the group name.
+
+**Note**: Command-line arguments take precedence over environment variables, which take precedence over `pyproject.toml` settings.
 
 ## File Naming Conventions
 
@@ -313,6 +410,74 @@ All validation warnings are written to stderr, so they won't interfere with:
 
 ## Environment Variables
 
+taskfile-help automatically loads environment variables from a `.env` file in the current directory if it exists. Environment variables set in your shell take precedence over those in the `.env` file.
+
+### NO_COLOR
+
+Standard environment variable to disable colored output (see [no-color.org](https://no-color.org/)):
+
+```bash
+# Disable colors using standard NO_COLOR
+export NO_COLOR=1
+taskfile-help
+
+# One-time use
+NO_COLOR=1 taskfile-help
+```
+
+### TASKFILE_HELP_NO_COLOR
+
+Alternative taskfile-help specific variable to disable colors:
+
+```bash
+# Disable colors
+export TASKFILE_HELP_NO_COLOR=true
+taskfile-help
+
+# Also accepts: 1, yes
+TASKFILE_HELP_NO_COLOR=1 taskfile-help
+```
+
+### TASKFILE_HELP_SEARCH_DIRS
+
+Set search directories via environment variable (colon-separated):
+
+```bash
+# Single directory
+export TASKFILE_HELP_SEARCH_DIRS=/path/to/project
+taskfile-help
+
+# Multiple directories
+export TASKFILE_HELP_SEARCH_DIRS=.:/path/to/shared:~/common
+taskfile-help
+```
+
+### TASKFILE_HELP_GROUP_PATTERN
+
+Set a custom group pattern via environment variable:
+
+```bash
+# Use custom group pattern
+export TASKFILE_HELP_GROUP_PATTERN='\s*##\s*(.+?)\s*##'
+taskfile-help
+
+# One-time use
+TASKFILE_HELP_GROUP_PATTERN='\s*#\s*---\s*(.+?)\s*---' taskfile-help
+```
+
+### Using .env File
+
+You can also set these in a `.env` file:
+
+```bash
+# .env
+NO_COLOR=1
+TASKFILE_HELP_SEARCH_DIRS=.:../shared
+TASKFILE_HELP_GROUP_PATTERN=\s*##\s*(.+?)\s*##
+```
+
+### Terminal Behavior
+
 taskfile-help respects standard terminal behavior:
 
 - **TTY Detection**: Automatically detects if output is to a terminal
@@ -351,21 +516,43 @@ When searching for Taskfiles:
 
 Configuration is applied in this order (later overrides earlier):
 
-1. Default values (current directory)
+1. Default values
 2. `pyproject.toml` settings
-3. Command-line arguments
+3. `.env` file variables
+4. Environment variables (shell)
+5. Command-line arguments
+
+**Supported Configuration Options:**
+
+- **search-dirs**: `--search-dirs`, `TASKFILE_HELP_SEARCH_DIRS`, `pyproject.toml`
+- **no-color**: `--no-color`, `NO_COLOR` or `TASKFILE_HELP_NO_COLOR`, `pyproject.toml`
+- **group-pattern**: `--group-pattern`, `TASKFILE_HELP_GROUP_PATTERN`, `pyproject.toml`
 
 Example:
+
+```bash
+# .env file
+NO_COLOR=1
+TASKFILE_HELP_SEARCH_DIRS=.:../shared
+TASKFILE_HELP_GROUP_PATTERN=\s*##\s*(.+?)\s*##
+```
 
 ```toml
 # pyproject.toml
 [tool.taskfile-help]
 search-dirs = [".", "../shared"]
+no-color = false
+group-pattern = "\\s*##\\s*(.+?)\\s*##"
 ```
 
 ```bash
-# This overrides pyproject.toml
-taskfile-help --search-dirs /custom/path
+# Shell environment variables override .env and pyproject.toml
+export NO_COLOR=1
+export TASKFILE_HELP_SEARCH_DIRS=/custom/path
+export TASKFILE_HELP_GROUP_PATTERN='\s*#\s*---\s*(.+?)\s*---'
+
+# Command-line arguments override all
+taskfile-help --no-color --search-dirs /other/path --group-pattern '\s*#\s*===\s*(.+?)\s*==='
 ```
 
 ## Examples

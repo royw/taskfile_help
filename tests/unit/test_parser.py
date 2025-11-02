@@ -1,6 +1,7 @@
 """Unit tests for the parser module."""
 
 from pathlib import Path
+import re
 from unittest.mock import Mock
 
 import pytest
@@ -15,6 +16,9 @@ from taskfile_help.parser import (
     parse_taskfile,
 )
 
+# Default group pattern for tests
+_DEFAULT_GROUP_PATTERN = re.compile(r"\s*#\s*===\s*(.+?)\s*===")
+
 
 class TestExtractGroupName:
     """Tests for _extract_group_name function."""
@@ -22,31 +26,31 @@ class TestExtractGroupName:
     def test_valid_group_marker(self) -> None:
         """Test extraction of valid group marker."""
         line = "  # === Build and Release ==="
-        result = _extract_group_name(line)
+        result = _extract_group_name(line, _DEFAULT_GROUP_PATTERN)
         assert result == "Build and Release"
 
     def test_group_marker_with_extra_spaces(self) -> None:
         """Test group marker with extra spaces."""
         line = "  #  ===   Testing   ===  "
-        result = _extract_group_name(line)
+        result = _extract_group_name(line, _DEFAULT_GROUP_PATTERN)
         assert result == "Testing"
 
     def test_no_group_marker(self) -> None:
         """Test line without group marker."""
         line = "  # This is just a comment"
-        result = _extract_group_name(line)
+        result = _extract_group_name(line, _DEFAULT_GROUP_PATTERN)
         assert result is None
 
     def test_empty_line(self) -> None:
         """Test empty line."""
         line = ""
-        result = _extract_group_name(line)
+        result = _extract_group_name(line, _DEFAULT_GROUP_PATTERN)
         assert result is None
 
     def test_task_line(self) -> None:
         """Test task definition line (should not match)."""
         line = "  build:"
-        result = _extract_group_name(line)
+        result = _extract_group_name(line, _DEFAULT_GROUP_PATTERN)
         assert result is None
 
 

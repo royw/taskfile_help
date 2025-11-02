@@ -988,3 +988,39 @@ tasks:
         assert "--regex" in captured.out
         assert "Search filters:" in captured.out
         assert "Examples:" in captured.out
+
+
+class TestCLIInvalidCommand:
+    """Test CLI error handling for invalid commands."""
+
+    def test_invalid_command_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test error message for invalid command."""
+        # Create a simple Taskfile
+        taskfile = tmp_path / "Taskfile.yml"
+        taskfile.write_text("""version: '3'
+
+tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        # Manually create a Config with an invalid command
+        # We need to bypass argparse which would catch this earlier
+        from taskfile_help.config import Config
+        from taskfile_help.output import create_outputter
+        
+        # Create a mock config with invalid command
+        config = Config(["taskfile-help", "namespace"])
+        config.args.command = "invalid_command"  # Force invalid command
+        
+        outputter = create_outputter(config)
+        
+        from taskfile_help.taskfile_help import _handle_command
+        result = _handle_command(config, outputter)
+        
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Invalid command 'invalid_command'" in captured.err

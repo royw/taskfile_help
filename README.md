@@ -13,9 +13,9 @@ Parses Taskfile YAML files and outputs organized, colored help text similar to
 
 **Links:**
 
-- 📖 [Documentation](https://royw.github.io/taskfile_help/)
-- 💻 [GitHub Repository](https://github.com/royw/taskfile_help)
-- 🐛 [Issue Tracker](https://github.com/royw/taskfile_help/issues)
+- [Documentation](https://royw.github.io/taskfile_help/)
+- [GitHub Repository](https://github.com/royw/taskfile_help)
+- [Issue Tracker](https://github.com/royw/taskfile_help/issues)
 
 ## Why Taskfile Help?
 
@@ -238,14 +238,46 @@ For detailed installation instructions and troubleshooting, see the [Shell Compl
 
 ## Configuration
 
-Settings can be configured in pyproject.toml under \[tool.taskfile-help\]:
+taskfile-help supports multiple configuration methods with a clear priority order.
 
-```toml
+### Configuration Matrix
+
+| Option | CLI Flag | Environment Variable(s) | pyproject.toml | .env File | Default |
+|--------|----------|------------------------|----------------|-----------|---------|
+| **search-dirs** | `--search-dirs`, `-s` | `TASKFILE_HELP_SEARCH_DIRS` | `search-dirs` | ✓ | Current directory |
+| **no-color** | `--no-color` | `NO_COLOR`, `TASKFILE_HELP_NO_COLOR` | `no-color` | ✓ | Auto-detect TTY |
+| **group-pattern** | `--group-pattern` | `TASKFILE_HELP_GROUP_PATTERN` | `group-pattern` | ✓ | `\s*#\s*===\s*(.+?)\s*===` |
+| **verbose** | `--verbose`, `-v` | - | - | - | `false` |
+| **json** | `--json` | - | - | - | `false` |
+
+**Priority Order:** Command-line > Environment Variables > pyproject.toml > Defaults
+
+### Configuration Examples
+
+```bash
+# Using command-line arguments
+taskfile-help --no-color --search-dirs /path/to/project
+
+# Using environment variables
+export TASKFILE_HELP_SEARCH_DIRS=.:../shared
+export NO_COLOR=1
+taskfile-help
+
+# Using .env file
+cat > .env << EOF
+TASKFILE_HELP_SEARCH_DIRS=.:../shared
+NO_COLOR=1
+EOF
+taskfile-help
+
+# Using pyproject.toml
 [tool.taskfile-help]
-search-dirs = [".", "../shared"]  # List of directories to search
+search-dirs = [".", "../shared"]
+no-color = true
+group-pattern = "\\\\s*##\\\\s*(.+?)\\\\s*##"
 ```
 
-Command-line arguments take precedence over pyproject.toml settings.
+For detailed configuration options, see the [Configuration Documentation](https://royw.github.io/taskfile_help/setup/configuration/).
 
 ## File Naming Conventions
 

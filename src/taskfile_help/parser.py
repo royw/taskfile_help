@@ -9,7 +9,6 @@ from taskfile_help.validator import validate_taskfile
 
 
 # Compiled regex patterns for better performance
-_GROUP_PATTERN = re.compile(r"\s*#\s*===\s*(.+?)\s*===")
 _TASK_PATTERN = re.compile(r"^  ([a-zA-Z0-9_:-]+):\s*$")
 _DESC_PATTERN = re.compile(r"^    desc:\s*(.+)$")
 _INTERNAL_PATTERN = re.compile(r"^    internal:\s*true")
@@ -61,12 +60,16 @@ class _ParserState:
         self.is_internal = True
 
 
-def _extract_group_name(line: str) -> str | None:
+def _extract_group_name(line: str, group_pattern: re.Pattern[str]) -> str | None:
     """Extract group name from a group marker comment.
-    The group marker is "# === Group Name ===".
+    The group marker is "# === Group Name ===" by default.
     Returns None if a group marker is not found.
+
+    Args:
+        line: Line to check for group marker
+        group_pattern: Compiled regex pattern for group markers
     """
-    match = _GROUP_PATTERN.match(line)
+    match = group_pattern.match(line)
     return match.group(1).strip() if match else None
 
 
@@ -120,9 +123,21 @@ def _try_handle_tasks_section_start(line: str, state: _ParserState) -> bool:
     return False
 
 
-def _try_handle_group_marker(line: str, state: _ParserState, tasks: list[tuple[str, str, str]]) -> bool:
-    """Check if line is a group marker and handle it."""
-    group_name = _extract_group_name(line)
+def _try_handle_group_marker(
+    line: str,
+    state: _ParserState,
+    tasks: list[tuple[str, str, str]],
+    group_pattern: re.Pattern[str],
+) -> bool:
+    """Check if line is a group marker and handle it.
+
+    Args:
+        line: Line to check
+        state: Current parser state
+        tasks: List of tasks
+        group_pattern: Compiled regex pattern for group markers
+    """
+    group_name = _extract_group_name(line, group_pattern)
     if group_name:
         state.handle_group_marker(group_name, tasks)
         return True
@@ -159,6 +174,7 @@ def _process_line(
     line: str,
     state: _ParserState,
     tasks: list[tuple[str, str, str]],
+    group_pattern: re.Pattern[str],
 ) -> None:
     """Process a single line of the Taskfile.
 
@@ -166,6 +182,7 @@ def _process_line(
         line: Line to process
         state: Current parser state
         tasks: List to append completed tasks to
+        group_pattern: Compiled regex pattern for group markers
     """
     # Try each handler in order until one succeeds
     if _try_handle_tasks_section_start(line, state):
@@ -174,7 +191,7 @@ def _process_line(
     if not state.in_tasks_section:
         return
 
-    if _try_handle_group_marker(line, state, tasks):
+    if _try_handle_group_marker(line, state, tasks, group_pattern):
         return
 
     if _try_handle_task_definition(line, state, tasks):
@@ -202,7 +219,12 @@ def taskfile_lines(filepath: Path, outputter: Outputter) -> Generator[list[str],
         yield []
 
 
-def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list[tuple[str, str, str]]:
+def parse_taskfile(
+    filepath: Path,
+    namespace: str,
+    outputter: Outputter,
+    group_pattern: str = r"\s*#\s*===\s*(.+?)\s*===",
+) -> list[tuple[str, str, str]]:
     """
     Parse a Taskfile and extract public tasks with their descriptions and groups.
 
@@ -215,12 +237,15 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
     Args:
         filepath: Path to the Taskfile YAML
         namespace: The namespace prefix (e.g., 'rag', 'dev')
+        outputter: Outputter instance for error messages
+        group_pattern: Regular expression pattern for group markers (default: r"\\s*#\\s*===\\s*(.+?)\\s*===")
 
     Returns:
         List of (group, task_name, description) tuples
     """
     tasks: list[tuple[str, str, str]] = []
     state = _ParserState()
+    compiled_group_pattern = re.compile(group_pattern)
 
     with taskfile_lines(filepath, outputter) as lines:
         # Validate YAML structure
@@ -228,7 +253,7 @@ def parse_taskfile(filepath: Path, namespace: str, outputter: Outputter) -> list
 
         # Process each line
         for line in lines:
-            _process_line(line, state, tasks)
+            _process_line(line, state, tasks, compiled_group_pattern)
 
     # Save the last task
     _save_task_if_valid(tasks, state.current_group, state.current_task, state.current_desc, state.is_internal)

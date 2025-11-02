@@ -105,7 +105,7 @@ def _complete_task_name(namespace: str, partial: str, search_dirs: list[Path]) -
     if not taskfile:
         return []
 
-    # Parse tasks
+    # Parse tasks (use default group pattern for completion)
     outputter = TextOutputter()
     try:
         tasks = parse_taskfile(taskfile, namespace, outputter)

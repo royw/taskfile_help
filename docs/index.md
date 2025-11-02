@@ -1,25 +1,35 @@
-# Taskfile Help
+# Taskfile-Help
 
 A dynamic Taskfile help generator that parses Taskfile YAML files and outputs organized, colored help text
 similar to `task --list`, but with automatic grouping and namespace support.
 
+**Key Capabilities:**
+
+- List tasks organized by namespace
+- Display tasks from a specific namespace
+- Search for substrings or regex patterns across namespaces, group names, task names, and task descriptions
+
+**What is a Group?**
+
+In lieu of a task tag, a group is a set of tasks organized under a group comment marker. Group comments follow a known pattern like the default pattern: `# === <group name> ===` and all tasks following the comment belong to that group until the next group comment or end of file.
+
 ## Features
 
-- 🎨 **Colored Output**: Automatic color support with TTY detection
-- 📦 **Namespace Support**: Organize tasks across multiple Taskfiles
-- 🔍 **Smart Search**: Search across namespaces, groups, task names, and descriptions with multi-pattern AND logic
-- 📊 **JSON Output**: Export task information in JSON format
-- 🎯 **Group Organization**: Automatic task grouping using comment markers
-- 🔒 **Internal Tasks**: Hide implementation details with `internal: true`
-- ⚡ **Fast**: Simple line-by-line parsing without full YAML overhead
-- 🔎 **Multi-Pattern Search**: Filter tasks with multiple patterns and regexes (all must match)
+- **Colored Output**: Automatic color support with TTY detection
+- **Namespace Support**: Organize tasks across multiple Taskfiles
+- **Smart Search**: Search across namespaces, groups, task names, and descriptions with multi-pattern AND logic
+- **JSON Output**: Export task information in JSON format
+- **Group Organization**: Automatic task grouping using comment markers
+- **Internal Tasks**: Hide implementation details with `internal: true`
+- **Fast**: Simple line-by-line parsing without full YAML overhead
+- **Multi-Pattern Search**: Filter tasks with multiple patterns and regexes (all must match)
 
 ## Quick Start
 
 Install the package:
 
 ```bash
-pip install taskfile-help
+pipx install taskfile-help
 ```
 
 Show help for your main Taskfile:
@@ -44,7 +54,7 @@ taskfile-help all
 
 ![task help](images/task_help.png)
 
-## Why Taskfile Help?
+## Why Taskfile-Help?
 
 The built-in `task --list` command is useful, but has limitations:
 
@@ -56,9 +66,23 @@ The built-in `task --list` command is useful, but has limitations:
 
 - Automatic task grouping using comment markers
 - Support for multiple Taskfiles with namespaces
+- List by namespace or search across namespaces, groups, task names, and descriptions
 - Flexible search paths and configuration
+- Configuration in environment, .env, pyproject.toml, or command-line arguments
 - JSON output for integration with other tools
 - Consistent color handling (respects TTY detection)
+
+### Configuration Matrix
+
+| Option | CLI Flag | Environment Variable(s) | pyproject.toml | .env File | Default |
+|--------|----------|------------------------|----------------|-----------|---------|
+| **search-dirs** | `--search-dirs`, `-s` | `TASKFILE_HELP_SEARCH_DIRS` | `search-dirs` | ✓ | Current directory |
+| **no-color** | `--no-color` | `NO_COLOR`, `TASKFILE_HELP_NO_COLOR` | `no-color` | ✓ | Auto-detect TTY |
+| **group-pattern** | `--group-pattern` | `TASKFILE_HELP_GROUP_PATTERN` | `group-pattern` | ✓ | `\s*#\s*===\s*(.+?)\s*===` |
+| **verbose** | `--verbose`, `-v` | - | - | - | `false` |
+| **json** | `--json` | - | - | - | `false` |
+
+**Priority Order:** Command-line > Environment Variables > pyproject.toml > Defaults
 
 ## Creating Help Tasks
 

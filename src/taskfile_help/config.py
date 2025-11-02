@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable
 from dataclasses import dataclass
+import os
 from pathlib import Path
 import sys
 import tomllib
@@ -51,6 +52,7 @@ class Args:
     completion: str | None
     complete: str | None
     install_completion: str | None
+    group_pattern: str | None
 
     @staticmethod
     def _add_global_arguments(parser: argparse.ArgumentParser, list_of_paths: Callable[[str], list[Path]]) -> None:
@@ -114,6 +116,14 @@ class Args:
             const="auto",
             metavar="SHELL",
             help="Install completion script for specified shell (auto-detects if not specified)",
+        )
+        parser.add_argument(
+            "--group-pattern",
+            type=str,
+            dest="group_pattern",
+            default=None,
+            metavar="PATTERN",
+            help='Regular expression pattern for group markers (default: r"\\s*#\\s*===\\s*(.+?)\\s*===")',
         )
 
     @staticmethod
@@ -240,6 +250,7 @@ Examples:
             completion=parsed.completion,
             complete=parsed.complete,
             install_completion=parsed.install_completion,
+            group_pattern=parsed.group_pattern,
         )
 
 
@@ -267,7 +278,13 @@ class Config:
         args_search_dirs: list[Path] | None,
         pyproject_config: dict[str, Any],
     ) -> list[Path]:
-        """Resolve search directories from arguments and config.
+        """Resolve search directories from arguments, environment, and config.
+
+        Priority order:
+        1. Command-line argument (--search-dirs)
+        2. Environment variable (TASKFILE_HELP_SEARCH_DIRS)
+        3. pyproject.toml configuration
+        4. Default (current working directory)
 
         Args:
             args_search_dirs: Search directories from command-line arguments
@@ -281,12 +298,18 @@ class Config:
         if args_search_dirs is not None:
             # Command-line argument takes precedence
             search_dirs = args_search_dirs[:]
-        elif "search-dirs" in pyproject_config:
-            # Use config from pyproject.toml
-            search_dirs = Config._get_search_dirs_from_pyproject(pyproject_config)
         else:
-            # Default to current working directory
-            search_dirs = [Path.cwd()]
+            # Check environment variable
+            env_search_dirs = os.environ.get("TASKFILE_HELP_SEARCH_DIRS")
+            if env_search_dirs:
+                # Parse colon-separated paths from environment variable
+                search_dirs = [Path(p).resolve() for p in env_search_dirs.split(":") if p]
+            elif "search-dirs" in pyproject_config:
+                # Use config from pyproject.toml
+                search_dirs = Config._get_search_dirs_from_pyproject(pyproject_config)
+            else:
+                # Default to current working directory
+                search_dirs = [Path.cwd()]
 
         # Handle edge case of all-empty paths
         if not search_dirs:
@@ -294,6 +317,83 @@ class Config:
 
         # Remove duplicates while preserving order (dict preserves insertion order in Python 3.7+)
         return list(dict.fromkeys(search_dirs))
+
+    @staticmethod
+    def _resolve_no_color(args_no_color: bool, pyproject_config: dict[str, Any]) -> bool:
+        """Resolve no-color setting from arguments, environment, and config.
+
+        Priority order:
+        1. Command-line argument (--no-color)
+        2. Environment variable (NO_COLOR or TASKFILE_HELP_NO_COLOR)
+        3. pyproject.toml configuration
+        4. Default (False)
+
+        Args:
+            args_no_color: No-color flag from command-line arguments
+            pyproject_config: Configuration from pyproject.toml
+
+        Returns:
+            Boolean indicating whether to disable colors
+        """
+        # Command-line argument takes precedence
+        if args_no_color:
+            return True
+
+        # Check standard NO_COLOR environment variable (https://no-color.org/)
+        if os.environ.get("NO_COLOR"):
+            return True
+
+        # Check taskfile-help specific environment variable
+        env_no_color = os.environ.get("TASKFILE_HELP_NO_COLOR")
+        if env_no_color and env_no_color.lower() in ("1", "true", "yes"):
+            return True
+
+        # pyproject.toml configuration
+        if "no-color" in pyproject_config:
+            return bool(pyproject_config["no-color"])
+
+        # Default
+        return False
+
+    @staticmethod
+    def _resolve_group_pattern(
+        args_group_pattern: str | None,
+        pyproject_config: dict[str, Any],
+    ) -> str:
+        """Resolve group pattern from arguments, environment, and config.
+
+        Priority order:
+        1. Command-line argument (--group-pattern)
+        2. Environment variable (TASKFILE_HELP_GROUP_PATTERN)
+        3. pyproject.toml configuration
+        4. Default pattern
+
+        Args:
+            args_group_pattern: Group pattern from command-line arguments
+            pyproject_config: Configuration from pyproject.toml
+
+        Returns:
+            Group pattern string
+        """
+        # Default pattern
+        default_pattern = r"\s*#\s*===\s*(.+?)\s*==="
+
+        # Command-line argument takes precedence
+        if args_group_pattern is not None:
+            return args_group_pattern
+
+        # Environment variable is next
+        env_pattern = os.environ.get("TASKFILE_HELP_GROUP_PATTERN")
+        if env_pattern is not None:
+            return env_pattern
+
+        # pyproject.toml configuration
+        if "group-pattern" in pyproject_config:
+            pattern: str = pyproject_config["group-pattern"]
+            return pattern
+
+        # Default
+        return default_pattern
 
     def __init__(self, argv: list[str]) -> None:
         """Initialize configuration from command-line arguments.
@@ -306,13 +406,19 @@ class Config:
         # Load configuration from pyproject.toml if available
         pyproject_config = _load_pyproject_config()
 
-        # Colorize if output is a TTY and --no-color is not specified
-        self.colorize = sys.stdout.isatty() and not self.args.no_color
+        # Resolve no-color setting
+        no_color = self._resolve_no_color(self.args.no_color, pyproject_config)
+
+        # Colorize if output is a TTY and no-color is not set
+        self.colorize = sys.stdout.isatty() and not no_color
 
         # Resolve taskfile search directories
         search_dirs = self._resolve_search_dirs(self.args.search_dirs, pyproject_config)
 
         self.discovery = TaskfileDiscovery(search_dirs)
+
+        # Resolve group pattern
+        self.group_pattern = self._resolve_group_pattern(self.args.group_pattern, pyproject_config)
 
     @property
     def namespace(self) -> str:
