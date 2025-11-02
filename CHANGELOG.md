@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.3.2] - 2025-11-02
+
+### Added
+
 - add taskfile_help.yml config file support with protocol-based architecture (6246699)
 
 - add automated GitHub release workflow (04fbcee)
