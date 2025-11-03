@@ -1,5 +1,6 @@
 """Unit tests for the config module."""
 
+import argparse
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -142,6 +143,223 @@ class TestArgs:
         assert args.verbose is False
         assert args.search_dirs == [Path("/path")]
         assert args.json_output is False
+
+    def test_parse_args_global_option_before_subcommand(self) -> None:
+        """Global option --json works before subcommand."""
+        args = Args.parse_args(["script.py", "--json", "search", "test"])
+        
+        assert args.command == "search"
+        assert args.json_output is True
+        assert args.patterns == ["test"]
+
+    def test_parse_args_global_option_after_subcommand(self) -> None:
+        """Global option --json works after subcommand."""
+        args = Args.parse_args(["script.py", "search", "test", "--json"])
+        
+        assert args.command == "search"
+        assert args.json_output is True
+        assert args.patterns == ["test"]
+
+    def test_parse_args_multiple_global_options_before_subcommand(self) -> None:
+        """Multiple global options work before subcommand."""
+        args = Args.parse_args(["script.py", "--json", "--verbose", "search", "test"])
+        
+        assert args.command == "search"
+        assert args.json_output is True
+        assert args.verbose is True
+        assert args.patterns == ["test"]
+
+    def test_parse_args_multiple_global_options_after_subcommand(self) -> None:
+        """Multiple global options work after subcommand."""
+        args = Args.parse_args(["script.py", "search", "test", "--json", "--verbose"])
+        
+        assert args.command == "search"
+        assert args.json_output is True
+        assert args.verbose is True
+        assert args.patterns == ["test"]
+
+    def test_parse_args_global_options_mixed_positions(self) -> None:
+        """Global options work in mixed positions (before and after subcommand)."""
+        args = Args.parse_args(["script.py", "--json", "search", "test", "--verbose"])
+        
+        assert args.command == "search"
+        assert args.json_output is True
+        assert args.verbose is True
+        assert args.patterns == ["test"]
+
+    def test_parse_args_no_color_before_subcommand(self) -> None:
+        """Global option --no-color works before subcommand."""
+        args = Args.parse_args(["script.py", "--no-color", "namespace", "dev"])
+        
+        assert args.command == "namespace"
+        assert args.namespace == "dev"
+        assert args.no_color is True
+
+    def test_parse_args_search_dirs_before_subcommand(self) -> None:
+        """Global option --search-dirs works before subcommand."""
+        args = Args.parse_args(["script.py", "--search-dirs", "/path1:/path2", "namespace"])
+        
+        assert args.command == "namespace"
+        assert args.search_dirs == [Path("/path1"), Path("/path2")]
+
+    def test_parse_args_search_dirs_short_before_subcommand(self) -> None:
+        """Global option -s works before subcommand."""
+        args = Args.parse_args(["script.py", "-s", "/path", "namespace", "main"])
+        
+        assert args.command == "namespace"
+        assert args.namespace == "main"
+        assert args.search_dirs == [Path("/path")]
+
+    def test_parse_args_verbose_before_subcommand(self) -> None:
+        """Global option --verbose works before subcommand."""
+        args = Args.parse_args(["script.py", "--verbose", "search", "pattern"])
+        
+        assert args.command == "search"
+        assert args.verbose is True
+        assert args.patterns == ["pattern"]
+
+    def test_parse_args_verbose_short_before_subcommand(self) -> None:
+        """Global option -v works before subcommand."""
+        args = Args.parse_args(["script.py", "-v", "search", "pattern"])
+        
+        assert args.command == "search"
+        assert args.verbose is True
+        assert args.patterns == ["pattern"]
+
+    def test_parse_args_group_pattern_before_subcommand(self) -> None:
+        """Global option --group-pattern works before subcommand."""
+        args = Args.parse_args(["script.py", "--group-pattern", "custom.*pattern", "namespace"])
+        
+        assert args.command == "namespace"
+        assert args.group_pattern == "custom.*pattern"
+
+    def test_parse_args_completion_before_subcommand(self) -> None:
+        """Global option --completion works before subcommand."""
+        args = Args.parse_args(["script.py", "--completion", "bash", "namespace"])
+        
+        assert args.command == "namespace"
+        assert args.completion == "bash"
+
+    def test_parse_args_all_global_options_before_subcommand(self) -> None:
+        """All global options work before subcommand."""
+        args = Args.parse_args([
+            "script.py",
+            "--no-color",
+            "--search-dirs", "/path",
+            "--verbose",
+            "--json",
+            "--group-pattern", "test",
+            "search",
+            "pattern"
+        ])
+        
+        assert args.command == "search"
+        assert args.no_color is True
+        assert args.search_dirs == [Path("/path")]
+        assert args.verbose is True
+        assert args.json_output is True
+        assert args.group_pattern == "test"
+        assert args.patterns == ["pattern"]
+
+    def test_main_help_shows_global_options(self) -> None:
+        """Main help (taskfile-help --help) displays all global options."""
+        # Create the parser as parse_args does
+        command_parser = argparse.ArgumentParser(
+            description="Dynamic Taskfile help generator",
+            add_help=True,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        Args._add_global_arguments(command_parser, Args._list_of_paths)
+        subparsers = command_parser.add_subparsers(dest="command", help="Command to execute", required=True)
+        Args._create_namespace_parser(subparsers, Args._list_of_paths)
+        Args._create_search_parser(subparsers, Args._list_of_paths)
+        
+        help_text = command_parser.format_help()
+        
+        # Verify all global options appear in help
+        assert "--no-color" in help_text
+        assert "--search-dirs" in help_text
+        assert "-s SEARCH_DIRS" in help_text
+        assert "--verbose" in help_text
+        assert "-v" in help_text
+        assert "--json" in help_text
+        assert "--completion" in help_text
+        assert "--install-completion" in help_text
+        assert "--group-pattern" in help_text
+        
+        # Verify help descriptions
+        assert "Disable colored output" in help_text
+        assert "Show verbose output" in help_text
+        assert "Output tasks in JSON format" in help_text
+
+    def test_namespace_help_shows_global_options(self) -> None:
+        """Namespace subcommand help (taskfile-help namespace --help) displays all global options."""
+        # Create the parser as parse_args does
+        command_parser = argparse.ArgumentParser(
+            description="Dynamic Taskfile help generator",
+            add_help=True,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        Args._add_global_arguments(command_parser, Args._list_of_paths)
+        subparsers = command_parser.add_subparsers(dest="command", help="Command to execute", required=True)
+        Args._create_namespace_parser(subparsers, Args._list_of_paths)
+        Args._create_search_parser(subparsers, Args._list_of_paths)
+        
+        # Get the namespace subparser via the choices dict
+        namespace_parser = subparsers.choices['namespace']
+        help_text = namespace_parser.format_help()
+        
+        # Verify all global options appear in namespace help
+        assert "--no-color" in help_text
+        assert "--search-dirs" in help_text
+        assert "-s SEARCH_DIRS" in help_text
+        assert "--verbose" in help_text
+        assert "-v" in help_text
+        assert "--json" in help_text
+        assert "--completion" in help_text
+        assert "--install-completion" in help_text
+        assert "--group-pattern" in help_text
+        
+        # Verify help descriptions
+        assert "Disable colored output" in help_text
+        assert "Show verbose output" in help_text
+        assert "Output tasks in JSON format" in help_text
+
+    def test_search_help_shows_global_options(self) -> None:
+        """Search subcommand help (taskfile-help search --help) displays all global options."""
+        # Create the parser as parse_args does
+        command_parser = argparse.ArgumentParser(
+            description="Dynamic Taskfile help generator",
+            add_help=True,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        Args._add_global_arguments(command_parser, Args._list_of_paths)
+        subparsers = command_parser.add_subparsers(dest="command", help="Command to execute", required=True)
+        Args._create_namespace_parser(subparsers, Args._list_of_paths)
+        Args._create_search_parser(subparsers, Args._list_of_paths)
+        
+        # Get the search subparser via the choices dict
+        search_parser = subparsers.choices['search']
+        help_text = search_parser.format_help()
+        
+        # Verify all global options appear in search help
+        assert "--no-color" in help_text
+        assert "--search-dirs" in help_text
+        assert "-s SEARCH_DIRS" in help_text
+        assert "--verbose" in help_text
+        assert "-v" in help_text
+        assert "--json" in help_text
+        assert "--completion" in help_text
+        assert "--install-completion" in help_text
+        assert "--group-pattern" in help_text
+        
+        # Verify help descriptions
+        assert "Disable colored output" in help_text
+        assert "Show verbose output" in help_text
+        assert "Output tasks in JSON format" in help_text
+        
+        # Verify search-specific option is also present
+        assert "--regex" in help_text
 
 
 class TestConfig:
