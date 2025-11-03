@@ -26,6 +26,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# log files
+logs/
+
 # Local only files
 TODO*
 
