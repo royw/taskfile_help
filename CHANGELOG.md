@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- validate test documentation is committed before release (4dc9e77)
 
 ### Changed
 - update test documentation with new argument parsing tests (27e1773)

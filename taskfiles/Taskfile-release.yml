@@ -58,6 +58,18 @@ tasks:
       - cmd: echo "🧪 Running full test suite..."
       - cmd: task make
       - cmd: echo "✅ All tests passed!"
+      - |
+        # Check if test documentation was regenerated and needs to be committed
+        if [ -n "$(git status --porcelain docs/tests.md)" ]; then
+          echo "❌ Error: Test documentation (docs/tests.md) has changed"
+          echo "💡 The test suite regenerated docs/tests.md with updated test counts or descriptions"
+          echo "📝 Please commit the changes and re-run 'task release'"
+          echo ""
+          echo "Changed file:"
+          git status --short docs/tests.md
+          exit 1
+        fi
+        echo "✅ Test documentation is up to date"
       - cmd: echo "📝 Preparing CHANGELOG for release..."
       - |
         TODAY=$(date +%Y-%m-%d)
