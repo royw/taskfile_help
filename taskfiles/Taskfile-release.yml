@@ -100,6 +100,8 @@ tasks:
       - Publish to PyPI automatically
     cmds:
       - |
+        echo "Pushing changes to master..."
+        git push origin master
         VERSION=$(task version:pyproject)
         echo "Creating tag v$VERSION..."
         git tag "v$VERSION"
