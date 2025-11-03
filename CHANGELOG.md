@@ -8,12 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - validate test documentation is committed before release (4dc9e77)
 
 ### Changed
+
 - update test documentation with new argument parsing tests (27e1773)
 
 ### Fixed
+- remove trailing space from test documentation timestamp (4ac9ea9)
+
 - remove duplicate PyPI publishing from release.yml (ea67a30)
 
 ## [0.3.3] - 2025-11-03
