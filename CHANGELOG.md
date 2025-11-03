@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [0.3.3] - 2025-11-03
+
+### Added
+
+### Changed
+
 - implement two-pass argument parsing for flexible global option positioning (43ff443)
 
 ### Fixed
