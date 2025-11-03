@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- update test documentation with new argument parsing tests (27e1773)
 
 ### Fixed
 

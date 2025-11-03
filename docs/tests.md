@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-02 15:43:48 
-> **Total Tests**: 345
+> **Auto-generated** on 2025-11-03 14:16:04 
+> **Total Tests**: 361
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -65,18 +65,34 @@ This page provides a comprehensive overview of all tests in the project, automat
 
 | Test Class | Test Name | Description |
 |------------|-----------|-------------|
+| TestArgs | `test_main_help_shows_global_options` | Main help (taskfile-help --help) displays all global options. |
+| TestArgs | `test_namespace_help_shows_global_options` | Namespace subcommand help (taskfile-help namespace --help) displays all global options. |
+| TestArgs | `test_parse_args_all_global_options_before_subcommand` | All global options work before subcommand. |
 | TestArgs | `test_parse_args_all_namespace` | Test parsing args with 'all' namespace. |
+| TestArgs | `test_parse_args_completion_before_subcommand` | Global option --completion works before subcommand. |
 | TestArgs | `test_parse_args_default` | Test parsing args with defaults. |
+| TestArgs | `test_parse_args_global_option_after_subcommand` | Global option --json works after subcommand. |
+| TestArgs | `test_parse_args_global_option_before_subcommand` | Global option --json works before subcommand. |
+| TestArgs | `test_parse_args_global_options_mixed_positions` | Global options work in mixed positions (before and after subcommand). |
+| TestArgs | `test_parse_args_group_pattern_before_subcommand` | Global option --group-pattern works before subcommand. |
 | TestArgs | `test_parse_args_json` | Test parsing args with --json flag. |
+| TestArgs | `test_parse_args_multiple_global_options_after_subcommand` | Multiple global options work after subcommand. |
+| TestArgs | `test_parse_args_multiple_global_options_before_subcommand` | Multiple global options work before subcommand. |
 | TestArgs | `test_parse_args_namespace` | Test parsing args with namespace. |
 | TestArgs | `test_parse_args_namespace_with_no_color` | Test parsing namespace with --no-color flag. |
 | TestArgs | `test_parse_args_namespace_with_search_dirs` | Test parsing namespace with --search-dirs. |
 | TestArgs | `test_parse_args_namespace_with_verbose` | Test parsing namespace with --verbose flag. |
 | TestArgs | `test_parse_args_no_color` | Test parsing args with --no-color flag. |
+| TestArgs | `test_parse_args_no_color_before_subcommand` | Global option --no-color works before subcommand. |
 | TestArgs | `test_parse_args_search_dirs` | Test parsing args with --search-dirs. |
+| TestArgs | `test_parse_args_search_dirs_before_subcommand` | Global option --search-dirs works before subcommand. |
 | TestArgs | `test_parse_args_search_dirs_short` | Test parsing args with -s short option. |
+| TestArgs | `test_parse_args_search_dirs_short_before_subcommand` | Global option -s works before subcommand. |
 | TestArgs | `test_parse_args_verbose` | Test parsing args with --verbose flag. |
+| TestArgs | `test_parse_args_verbose_before_subcommand` | Global option --verbose works before subcommand. |
 | TestArgs | `test_parse_args_verbose_short` | Test parsing args with -v short option. |
+| TestArgs | `test_parse_args_verbose_short_before_subcommand` | Global option -v works before subcommand. |
+| TestArgs | `test_search_help_shows_global_options` | Search subcommand help (taskfile-help search --help) displays all global options. |
 | TestCollectAllTaskfiles | `test_search_with_namespace_taskfiles` | Test search collects tasks from namespace taskfiles. |
 | TestColors | `test_colors_enabled_by_default` | Test colors are enabled by default. |
 | TestColors | `test_disable_colors` | Test disabling colors. |
