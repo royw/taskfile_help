@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- trigger PyPI publish after release workflow completes (695ad1f)
 
 ## [0.3.4] - 2025-11-03
 
