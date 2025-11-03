@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - update test documentation with new argument parsing tests (27e1773)
 
 ### Fixed
+- remove duplicate PyPI publishing from release.yml (ea67a30)
 
 ## [0.3.3] - 2025-11-03
 
