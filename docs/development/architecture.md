@@ -49,6 +49,34 @@ Manages application configuration from multiple sources:
 - TTY detection for color support
 - Search directory resolution
 - Configuration priority handling
+- Two-pass argument parsing for flexible global option positioning
+
+#### Two-Pass Argument Parsing
+
+The argument parser uses a two-pass approach to allow global options to appear before or after subcommands:
+
+**First Pass**: Parse global options only
+
+```python
+global_parser = argparse.ArgumentParser(add_help=False)
+Args._add_global_arguments(global_parser, Args._list_of_paths)
+global_args, remaining_argv = global_parser.parse_known_args(argv[1:])
+```
+
+**Second Pass**: Parse complete command with subcommands
+
+```python
+command_parser = argparse.ArgumentParser(...)
+Args._add_global_arguments(command_parser, Args._list_of_paths)
+# Add subparsers for namespace and search commands
+command_args = command_parser.parse_args(argv[1:])
+```
+
+This allows flexible command structures:
+
+- `taskfile-help --json namespace dev` (options before)
+- `taskfile-help namespace dev --json` (options after)
+- `taskfile-help --json namespace dev --verbose` (mixed)
 
 ### 3. Discovery (`discovery.py`)
 

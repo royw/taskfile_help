@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- add two-pass argument parsing explanation to architecture (566f3f2)
 - document flexible global option positioning (bcc65cd)
 - expand help and search task examples (24e3000)
 
