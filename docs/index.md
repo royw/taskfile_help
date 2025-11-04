@@ -121,6 +121,8 @@ Now you can run:
 task help           # Main tasks only
 task help:all       # All tasks from all namespaces (Main + Dev + ...)
 task help:<namespace>   # Tasks from the given namespace
+task help -- <namespace> <namespace> ...   # Tasks from the given namespace(s)
+task help:"<namespace> <namespace> ..."   # Tasks from the given namespace(s)
 task help:?         # List all namespaces (Dev, Test, ...)
 ```
 
@@ -145,7 +147,13 @@ Now you can search using simple commands:
 
 ```bash
 task search:python              # Search for "python"
+task search -- python           # Search for "python"
 task search:"version minor"     # Search for both "version" AND "minor"
+task search -- version minor   # Search for "test" AND "minor"
+task search -- --regex "m\S+or"     # Search for "minor", "major", "import", "mdformat"
+task search -- --regex "m.*or" --regex "b\S+p"   # Search for "minor" or "major" AND "bump"
+task search -- --regex "m.*or" bump   # Search for "minor" or "major" AND "bump"
+task search:"bump --regex m\S+or"  # Search for "bump" AND "minor" or "major"
 taskfile-help search test coverage  # Direct command with multiple patterns
 ```
 

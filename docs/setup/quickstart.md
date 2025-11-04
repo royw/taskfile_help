@@ -181,6 +181,8 @@ Now you can access each namespace using the wildcard help task:
 task help              # Main tasks only
 task help:dev          # Development tasks
 task help:test         # Testing tasks
+task help -- dev test  # Development and testing tasks
+task help:"dev test"   # Development and testing tasks
 task help:all          # All tasks from all namespaces
 task help:?            # List all available namespaces
 ```
@@ -229,8 +231,13 @@ Now you can search using the task command:
 
 ```bash
 task search:python              # Search for "python"
+task search -- python           # Search for "python"
 task search:"version minor"     # Search for both "version" AND "minor"
-task search:test                # Search for "test"
+task search -- version minor   # Search for "version" AND "minor"
+task search -- --regex "m\S+or"     # Search for "minor", "major", "import", "mdformat"
+task search -- --regex "m.*or" --regex "b\S+p"   # Search for "minor" or "major" AND "bump"
+task search -- --regex "m.*or" bump   # Search for "minor" or "major" AND "bump"
+task search:"bump --regex m\S+or"  # Search for "bump" AND "minor" or "major"
 ```
 
 ### Search Behavior
