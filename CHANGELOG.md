@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- extract _create_subcommand_parser helper method (0e71ce8)
+
+- extract \_create_subcommand_parser helper method (0e71ce8)
 
 - extract helper methods from \_handle_namespace_command (4dfa715)
 
