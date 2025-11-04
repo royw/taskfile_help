@@ -5,11 +5,11 @@ from multiple sources (CLI args, config file, environment variables).
 """
 
 import argparse
-import os
-import sys
 from dataclasses import dataclass
+import os
 from pathlib import Path
-from typing import Any, Callable, Protocol
+import sys
+from typing import Any, Protocol
 
 import tomli
 import yaml

@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-03 21:43:47
-> **Total Tests**: 363
+> **Auto-generated** on 2025-11-03 23:22:05
+> **Total Tests**: 377
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -359,6 +359,20 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestTextOutputter | `test_output_single_no_tasks` | Test outputting when no tasks exist. |
 | TestTextOutputter | `test_output_single_with_tasks` | Test outputting tasks for a single namespace. |
 | TestTextOutputter | `test_output_warning` | Test outputting a warning message. |
+| TestTwoStepParser | `test_basic_usage` | Test basic parser creation and usage. |
+| TestTwoStepParser | `test_command_specific_arguments` | Test that command-specific arguments are properly isolated. |
+| TestTwoStepParser | `test_command_with_choices` | Test command argument with choices. |
+| TestTwoStepParser | `test_default_values` | Test default values for global options. |
+| TestTwoStepParser | `test_formatter_class` | Test custom formatter class. |
+| TestTwoStepParser | `test_global_option_after_command` | Test global option placed after command. |
+| TestTwoStepParser | `test_global_option_before_command` | Test global option placed before command. |
+| TestTwoStepParser | `test_mixed_global_options` | Test global options in mixed positions. |
+| TestTwoStepParser | `test_multiple_commands` | Test parser with multiple commands. |
+| TestTwoStepParser | `test_multiple_global_options_same_position` | Test multiple global options in the same position. |
+| TestTwoStepParser | `test_no_command_fails` | Test that parser requires a command. |
+| TestTwoStepParser | `test_optional_arguments` | Test optional command arguments with nargs. |
+| TestTwoStepParser | `test_required_arguments` | Test required command arguments. |
+| TestTwoStepParser | `test_short_and_long_options` | Test both short and long option forms. |
 | TestValidateTaskfile | `test_empty_file` | Test warning when file is empty. |
 | TestValidateTaskfile | `test_invalid_yaml_syntax` | Test warning when YAML has syntax errors. |
 | TestValidateTaskfile | `test_missing_tasks_section` | Test warning when tasks section is missing. |
