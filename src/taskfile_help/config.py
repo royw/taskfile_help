@@ -1,17 +1,20 @@
-"""Configuration management for taskfile-help."""
+"""Configuration management for taskfile-help.
 
-from __future__ import annotations
+This module handles command-line argument parsing and configuration loading
+from multiple sources (CLI args, config file, environment variables).
+"""
 
 import argparse
-from collections.abc import Callable
-from dataclasses import dataclass
 import os
-from pathlib import Path
 import sys
-import tomllib
-from typing import Any, Protocol
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Protocol
 
+import tomli
 import yaml
+
+from taskfile_help.two_step_parser import TwoStepParser
 
 from .discovery import TaskfileDiscovery
 
@@ -55,7 +58,7 @@ class PyProjectConfigFile:
 
         try:
             with open(self.file_path, "rb") as f:
-                data: dict[str, Any] = tomllib.load(f)
+                data: dict[str, Any] = tomli.load(f)
                 tool_section: dict[str, Any] = data.get("tool", {})
                 config: dict[str, Any] = tool_section.get("taskfile-help", {})
                 return config
@@ -146,94 +149,23 @@ class Args:
     group_pattern: str | None
 
     @staticmethod
-    def _add_global_arguments(parser: argparse.ArgumentParser, list_of_paths: Callable[[str], list[Path]]) -> None:
-        """Add global arguments to a parser.
-
-        Args:
-            parser: ArgumentParser to add arguments to
-            list_of_paths: Function to parse colon-separated paths
-        """
-        parser.add_argument(
-            "--no-color",
-            action="store_true",
-            dest="no_color",
-            help="Disable colored output",
-        )
-        parser.add_argument(
-            "--search-dirs",
-            "-s",
-            type=list_of_paths,
-            dest="search_dirs",
-            default=None,
-            help="Colon-separated list of directories to search for taskfiles. "
-            "Paths may be absolute or relative to current working directory. "
-            "(default: current working directory)",
-        )
-        parser.add_argument(
-            "--verbose",
-            "-v",
-            action="store_true",
-            dest="verbose",
-            help="Show verbose output including search directories",
-        )
-        parser.add_argument(
-            "--json",
-            action="store_true",
-            dest="json_output",
-            help="Output tasks in JSON format",
-        )
-        parser.add_argument(
-            "--completion",
-            type=str,
-            dest="completion",
-            default=None,
-            metavar="SHELL",
-            help="Generate completion script for specified shell (bash, zsh, fish, tcsh, ksh)",
-        )
-        parser.add_argument(
-            "--complete",
-            type=str,
-            dest="complete",
-            default=None,
-            metavar="WORD",
-            help=argparse.SUPPRESS,  # Hidden flag for shell completion callbacks
-        )
-        parser.add_argument(
-            "--install-completion",
-            type=str,
-            dest="install_completion",
-            default=None,
-            nargs="?",
-            const="auto",
-            metavar="SHELL",
-            help="Install completion script for specified shell (auto-detects if not specified)",
-        )
-        parser.add_argument(
-            "--group-pattern",
-            type=str,
-            dest="group_pattern",
-            default=None,
-            metavar="PATTERN",
-            help='Regular expression pattern for group markers (default: r"\\s*#\\s*===\\s*(.+?)\\s*===")',
-        )
-
-    @staticmethod
     def _list_of_paths(arg: str) -> list[Path]:
         """Parse colon-separated paths and remove duplicates."""
         return list(dict.fromkeys(Path(p).resolve() for p in arg.split(":")))
 
     @staticmethod
-    def _create_namespace_parser(
-        subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
-        list_of_paths: Callable[[str], list[Path]],
-    ) -> None:
-        """Create namespace command parser.
+    def _configure_namespace_command(
+        parser: TwoStepParser,
+    ) -> argparse.ArgumentParser:
+        """Configure namespace command in the parser.
 
         Args:
-            subparsers: Subparsers action to add the namespace parser to
-            list_of_paths: Function to parse colon-separated paths
+            parser: TwoStepParser to add namespace command to
+
+        Returns:
+            ArgumentParser for the namespace command
         """
-        namespace_parser = subparsers.add_parser(
+        namespace_cmd = parser.add_command(
             "namespace",
             help="Show tasks for a specific namespace",
             description="Display tasks from a specific namespace or all namespaces",
@@ -253,26 +185,27 @@ Examples:
             """,
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
-        namespace_parser.add_argument(
+        namespace_cmd.add_argument(
             "namespace",
             nargs="*",
             default=[],
             help="Namespace(s) to show (or 'main', 'all', '?' for meta-namespaces)",
         )
-        Args._add_global_arguments(namespace_parser, list_of_paths)
+        return namespace_cmd
 
     @staticmethod
-    def _create_search_parser(
-        subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
-        list_of_paths: Callable[[str], list[Path]],
-    ) -> None:
-        """Create search command parser.
+    def _configure_search_command(
+        parser: TwoStepParser,
+    ) -> argparse.ArgumentParser:
+        """Configure search command in the parser.
 
         Args:
-            subparsers: Subparsers action to add the search parser to
-            list_of_paths: Function to parse colon-separated paths
+            parser: TwoStepParser to add search command to
+
+        Returns:
+            ArgumentParser for the search command
         """
-        search_parser = subparsers.add_parser(
+        search_cmd = parser.add_command(
             "search",
             help="Search for tasks by pattern or regex",
             description="Search across namespaces, groups, and task names",
@@ -296,13 +229,13 @@ Examples:
             """,
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
-        search_parser.add_argument(
+        search_cmd.add_argument(
             "patterns",
             type=str,
             nargs="*",
             help="Search patterns (case-insensitive substring match). Multiple patterns are combined with AND logic.",
         )
-        search_parser.add_argument(
+        search_cmd.add_argument(
             "--regex",
             type=str,
             action="append",
@@ -311,7 +244,7 @@ Examples:
             metavar="STR",
             help="Regular expression pattern filter (can be specified multiple times)",
         )
-        Args._add_global_arguments(search_parser, list_of_paths)
+        return search_cmd
 
     @staticmethod
     def _extract_command_values(
@@ -339,10 +272,10 @@ Examples:
         return command, namespace, patterns, regexes
 
     @staticmethod
-    def parse_args(argv: list[str]) -> Args:
-        """Parse command line arguments using argparse.
+    def parse_args(argv: list[str]) -> "Args":
+        """Parse command line arguments using TwoStepParser.
 
-        Uses a two-pass approach:
+        Uses TwoStepParser for two-pass argument parsing:
         1. Parse global options from anywhere in argv
         2. Parse command-specific options with remaining args
 
@@ -354,52 +287,101 @@ Examples:
         Returns:
             Args: Parsed arguments
         """
-        # First pass: parse global options only
-        global_parser = argparse.ArgumentParser(add_help=False)
-        Args._add_global_arguments(global_parser, Args._list_of_paths)
-        global_args, remaining_argv = global_parser.parse_known_args(argv[1:])
-
-        # Second pass: parse commands with remaining args
-        command_parser = argparse.ArgumentParser(
+        # Create two-step parser
+        parser = TwoStepParser(
             description="Dynamic Taskfile help generator",
-            add_help=True,
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
 
-        # Add global arguments to command parser for help display
-        Args._add_global_arguments(command_parser, Args._list_of_paths)
-
-        # Create subparsers for commands
-        subparsers = command_parser.add_subparsers(
-            dest="command",
-            help="Command to execute",
-            required=True,
+        # Add global arguments
+        parser.add_global_argument(
+            "--no-color",
+            action="store_true",
+            dest="no_color",
+            help="Disable colored output",
+        )
+        parser.add_global_argument(
+            "--search-dirs",
+            "-s",
+            type=Args._list_of_paths,
+            dest="search_dirs",
+            default=None,
+            help="Colon-separated list of directories to search for taskfiles. "
+            "Paths may be absolute or relative to current working directory. "
+            "Defaults to current directory and parent directories up to filesystem root.",
+        )
+        parser.add_global_argument(
+            "--verbose",
+            "-v",
+            action="store_true",
+            dest="verbose",
+            help="Show verbose output including search directories",
+        )
+        parser.add_global_argument(
+            "--json",
+            action="store_true",
+            dest="json_output",
+            help="Output tasks in JSON format",
+        )
+        parser.add_global_argument(
+            "--completion",
+            type=str,
+            dest="completion",
+            default=None,
+            metavar="SHELL",
+            help="Generate completion script for specified shell (bash, zsh, fish, tcsh, ksh)",
+        )
+        parser.add_global_argument(
+            "--complete",
+            type=str,
+            dest="complete",
+            default=None,
+            metavar="PREFIX",
+            help="Internal: Complete the given prefix (used by completion scripts)",
+        )
+        parser.add_global_argument(
+            "--install-completion",
+            type=str,
+            dest="install_completion",
+            default=None,
+            nargs="?",
+            const="auto",
+            metavar="SHELL",
+            help="Install completion script for specified shell (auto-detects if not specified)",
+        )
+        parser.add_global_argument(
+            "--group-pattern",
+            type=str,
+            dest="group_pattern",
+            default=None,
+            metavar="PATTERN",
+            help='Regular expression pattern for group markers (default: r"\\s*#\\s*===\\s*(.+?)\\s*===")',
         )
 
-        # Create command parsers (global arguments added for help display)
-        Args._create_namespace_parser(subparsers, Args._list_of_paths)
-        Args._create_search_parser(subparsers, Args._list_of_paths)
+        # Configure commands
+        Args._configure_namespace_command(parser)
+        Args._configure_search_command(parser)
 
-        # Parse all arguments with command parser
-        command_args = command_parser.parse_args(argv[1:])
+        # Parse arguments
+        parsed = parser.parse_args(argv[1:])
 
         # Extract command and command-specific arguments
-        command, namespace, patterns, regexes = Args._extract_command_values(command_args)
+        command, namespace, patterns, regexes = Args._extract_command_values(parsed)
 
-        # Use global_args for global options (parsed from anywhere in argv)
+        # Convert to Args dataclass
         return Args(
             command=command,
             namespace=namespace,
             patterns=patterns,
             regexes=regexes,
-            no_color=global_args.no_color,
-            search_dirs=global_args.search_dirs,
-            verbose=global_args.verbose,
-            json_output=global_args.json_output,
-            completion=global_args.completion,
-            complete=global_args.complete,
-            install_completion=global_args.install_completion,
-            group_pattern=global_args.group_pattern,
+            no_color=parsed.no_color,
+            search_dirs=parsed.search_dirs,
+            verbose=parsed.verbose,
+            json_output=parsed.json_output,
+            completion=parsed.completion,
+            complete=parsed.complete,
+            install_completion=parsed.install_completion,
+            group_pattern=parsed.group_pattern,
         )
 
 
