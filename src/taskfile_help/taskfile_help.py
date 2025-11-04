@@ -258,6 +258,45 @@ def _show_main_or_namespace(config: Config, outputter: Outputter, namespace: str
     return 0
 
 
+def _handle_single_special_namespace(config: Config, outputter: Outputter, namespace: str) -> int:
+    """Handle single special namespace (all, ?, or regular namespace).
+
+    Args:
+        config: Configuration object containing discovery settings
+        outputter: Outputter instance for formatted output
+        namespace: The namespace to display
+
+    Returns:
+        int: Exit code
+    """
+    if namespace == "all":
+        return _show_all_tasks(config, outputter)
+    if namespace == "?":
+        return _show_available_namespaces(config, outputter)
+    return _show_main_or_namespace(config, outputter, namespace)
+
+
+def _handle_multiple_namespaces(config: Config, outputter: Outputter, namespaces: list[str]) -> int:
+    """Handle multiple namespaces - show each one with blank lines between.
+
+    Args:
+        config: Configuration object containing discovery settings
+        outputter: Outputter instance for formatted output
+        namespaces: List of namespaces to display
+
+    Returns:
+        int: Exit code (returns first non-zero exit code, or 0 if all succeed)
+    """
+    exit_code = 0
+    for i, namespace in enumerate(namespaces):
+        if i > 0:
+            outputter.output_message("")  # Blank line between namespaces
+        result = _show_main_or_namespace(config, outputter, namespace)
+        if result != 0:
+            exit_code = result
+    return exit_code
+
+
 def _handle_namespace_command(config: Config, outputter: Outputter) -> int:
     """Handle the namespace command (current behavior).
 
@@ -274,24 +313,12 @@ def _handle_namespace_command(config: Config, outputter: Outputter) -> int:
     if not namespaces:
         return _show_main_or_namespace(config, outputter, "")
 
-    # Handle single special namespaces
+    # Handle single namespace (including special ones)
     if len(namespaces) == 1:
-        namespace = namespaces[0]
-        if namespace == "all":
-            return _show_all_tasks(config, outputter)
-        if namespace == "?":
-            return _show_available_namespaces(config, outputter)
-        return _show_main_or_namespace(config, outputter, namespace)
+        return _handle_single_special_namespace(config, outputter, namespaces[0])
 
-    # Handle multiple namespaces - show each one
-    exit_code = 0
-    for i, namespace in enumerate(namespaces):
-        if i > 0:
-            outputter.output_message("")  # Blank line between namespaces
-        result = _show_main_or_namespace(config, outputter, namespace)
-        if result != 0:
-            exit_code = result
-    return exit_code
+    # Handle multiple namespaces
+    return _handle_multiple_namespaces(config, outputter, namespaces)
 
 
 def _collect_all_taskfiles(config: Config, outputter: Outputter) -> list[tuple[str, list[tuple[str, str, str]]]]:

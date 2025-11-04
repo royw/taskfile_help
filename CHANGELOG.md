@@ -10,11 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- extract helper methods from _handle_namespace_command (4dfa715)
+
 - remove dead code from TwoStepParser (bd15217)
 
 - use TwoStepParser for argument parsing (51a19bc)
+
 - add two-pass argument parsing explanation to architecture (566f3f2)
+
 - document flexible global option positioning (bcc65cd)
+
 - expand help and search task examples (24e3000)
 
 ### Fixed
