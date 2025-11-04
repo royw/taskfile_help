@@ -248,18 +248,52 @@ task search:"bump --regex m\S+or"  # Search for "bump" AND "minor" or "major"
 - Case-insensitive substring matching for patterns
 - Full regex support for regex filters
 
-## Common Options
+## Global Options
 
-### Disable Colors
+Global options can be placed before or after any subcommand, giving you flexibility in how you structure your commands.
+
+### Available Options
+
+- `--no-color` - Disable colored output
+- `-s, --search-dirs DIRS` - Colon-separated list of directories to search for taskfiles
+- `-v, --verbose` - Show verbose output including search directories
+- `--json` - Output tasks in JSON format
+- `--completion SHELL` - Generate completion script for specified shell
+- `--install-completion [SHELL]` - Install completion script
+- `-h, --help` - Show help message
+
+### Flexible Positioning
 
 ```bash
-taskfile-help --no-color
+# Global options before subcommand
+taskfile-help --no-color namespace dev
+taskfile-help --json search test
+taskfile-help -v --search-dirs /path namespace all
+
+# Global options after subcommand
+taskfile-help namespace dev --no-color
+taskfile-help search test --json
+taskfile-help namespace all -v --search-dirs /path
+
+# Mixed positions (before and after)
+taskfile-help --json namespace dev --verbose
+taskfile-help -s /path search test --no-color
 ```
 
-### JSON Output
+### Common Usage Examples
+
+#### Disable Colors
 
 ```bash
-taskfile-help --json
+taskfile-help --no-color namespace
+taskfile-help namespace --no-color
+```
+
+#### JSON Output
+
+```bash
+taskfile-help --json namespace
+taskfile-help namespace --json
 ```
 
 Output format:
@@ -277,17 +311,19 @@ Output format:
 }
 ```
 
-### Search in Different Directory
+#### Search in Different Directory
 
 ```bash
-taskfile-help --search-dirs /path/to/project
-taskfile-help -s ../other-project
+taskfile-help --search-dirs /path/to/project namespace
+taskfile-help -s ../other-project namespace
+taskfile-help namespace -s /path/to/project
 ```
 
-### Verbose Output
+#### Verbose Output
 
 ```bash
-taskfile-help --verbose
+taskfile-help --verbose namespace
+taskfile-help namespace --verbose
 ```
 
 Shows which directories are being searched.

@@ -164,6 +164,33 @@ Search features:
 - Supports multiple `--regex` options for advanced filtering
 - Case-insensitive substring matching
 
+## Global Options
+
+Global options can be placed before or after any subcommand:
+
+- `--no-color` - Disable colored output
+- `-s, --search-dirs DIRS` - Colon-separated list of directories to search for taskfiles
+- `-v, --verbose` - Show verbose output including search directories
+- `--json` - Output tasks in JSON format
+- `--completion SHELL` - Generate completion script for specified shell
+- `--install-completion [SHELL]` - Install completion script
+- `-h, --help` - Show help message
+
+Examples:
+
+```bash
+# Global options before subcommand
+taskfile-help --no-color namespace dev
+taskfile-help --json search test
+
+# Global options after subcommand
+taskfile-help namespace dev --no-color
+taskfile-help search test --json
+
+# Mixed positions
+taskfile-help --json namespace dev --verbose
+```
+
 See [Configuration](setup/configuration.md) for more details.
 
 ## Next Steps

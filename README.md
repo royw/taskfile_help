@@ -208,7 +208,7 @@ taskfile-help search deploy --regex "^deploy" --json --verbose
 
 ### Global Options
 
-Global options can be placed after any subcommand:
+Global options can be placed before or after any subcommand:
 
 - `--no-color` - Disable colored output
 - `-s, --search-dirs DIRS` - Colon-separated list of directories to search for taskfiles
@@ -217,6 +217,23 @@ Global options can be placed after any subcommand:
 - `--completion SHELL` - Generate completion script for specified shell (bash, zsh, fish, tcsh, ksh)
 - `--install-completion [SHELL]` - Install completion script (auto-detects shell if not specified)
 - `-h, --help` - Show help message
+
+Examples:
+
+```bash
+# Global options before subcommand
+taskfile-help --no-color namespace dev
+taskfile-help --json search test
+taskfile-help -v --search-dirs /path namespace all
+
+# Global options after subcommand
+taskfile-help namespace dev --no-color
+taskfile-help search test --json
+taskfile-help namespace all -v --search-dirs /path
+
+# Mixed positions
+taskfile-help --json namespace dev --verbose
+```
 
 ## Shell Completion
 
