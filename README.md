@@ -1,4 +1,4 @@
-# taskfile_help
+# Taskfile-Help
 
 [![CI/CD](https://github.com/royw/taskfile_help/actions/workflows/ci.yml/badge.svg)](https://github.com/royw/taskfile_help/actions/workflows/ci.yml)
 [![Documentation](https://github.com/royw/taskfile_help/actions/workflows/docs.yml/badge.svg)](https://github.com/royw/taskfile_help/actions/workflows/docs.yml)
@@ -6,32 +6,31 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://badge.fury.io/py/taskfile-help.svg)](https://badge.fury.io/py/taskfile-help)
 
-Dynamic Taskfile help generator.
+A dynamic [Taskfile](https://taskfile.dev/) help generator that parses Taskfile YAML files and outputs organized, colored help text
+similar to `task --list`, but with automatic grouping, namespace, and search support.
 
-Parses Taskfile YAML files and outputs organized, colored help text similar to
-`task --list`, but with automatic grouping and namespace support.
+## Features
+
+- **Group Organization**: Automatic task grouping using comment markers
+- **Namespace Support**: Organize tasks across multiple Taskfiles
+- **Smart Search**: Search across namespaces, groups, task names, and descriptions with multi-pattern AND logic
+- **Multi-Pattern Search**: Filter tasks with multiple patterns and regexes (all must match)
+- **JSON Output**: Export task information in JSON format
+- **Colored Output**: Automatic color support with TTY detection
+- **Internal Tasks**: Hide implementation details with `internal: true`
+- **Fast**: Simple line-by-line parsing without full YAML overhead
+
+**What is a Group?**
+
+In lieu of a task tag, a group is a set of tasks organized under a group comment marker. Group comments follow a known pattern like the default
+pattern: `# === <group name> ===` and all tasks following the comment belong to that group until the next group comment or end of file.
 
 **Links:**
 
+- [Taskfile.dev](https://taskfile.dev/)
 - [Documentation](https://royw.github.io/taskfile_help/)
 - [GitHub Repository](https://github.com/royw/taskfile_help)
 - [Issue Tracker](https://github.com/royw/taskfile_help/issues)
-
-## Why Taskfile Help?
-
-The built-in `task --list` command is useful, but has limitations:
-
-- No automatic grouping of related tasks
-- No namespace support for multiple Taskfiles
-- Limited customization options
-
-**taskfile-help** solves these problems by providing:
-
-- Automatic task grouping using comment markers
-- Support for multiple Taskfiles with namespaces
-- Flexible search paths and configuration
-- JSON output for integration with other tools
-- Consistent color handling (respects TTY detection)
 
 ## Integration with Taskfiles
 
@@ -125,7 +124,7 @@ Now you can search using the task command:
 ```bash
 task search:python              # Search for "python"
 task search:"version minor"     # Search for both "version" AND "minor"
-task search:test                # Search for "test"
+task search -- test                # Search for "test"
 ```
 
 ### Example Output

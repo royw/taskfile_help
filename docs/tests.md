@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-03 14:16:04
-> **Total Tests**: 361
+> **Auto-generated** on 2025-11-03 21:43:47
+> **Total Tests**: 363
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -51,6 +51,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestCLIWithTaskfiles | `test_all_namespace_with_color` | Test 'all' meta-namespace works with color output enabled. |
 | TestCLIWithTaskfiles | `test_json_output` | Test --json flag outputs tasks in JSON format. |
 | TestCLIWithTaskfiles | `test_json_output_no_color_codes` | Test JSON output never contains ANSI color codes. |
+| TestCLIWithTaskfiles | `test_multiple_specific_namespaces` | Test namespace command displays tasks from multiple specified namespaces. |
 | TestCLIWithTaskfiles | `test_no_color_from_current_dir` | Test --no-color flag disables ANSI color codes in output. |
 | TestCLIWithTaskfiles | `test_no_taskfile_error` | Test CLI returns error when no Taskfile is found. |
 | TestCLIWithTaskfiles | `test_nonexistent_namespace` | Test requesting nonexistent namespace returns error with suggestions. |
@@ -78,6 +79,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestArgs | `test_parse_args_json` | Test parsing args with --json flag. |
 | TestArgs | `test_parse_args_multiple_global_options_after_subcommand` | Multiple global options work after subcommand. |
 | TestArgs | `test_parse_args_multiple_global_options_before_subcommand` | Multiple global options work before subcommand. |
+| TestArgs | `test_parse_args_multiple_namespaces` | Test parsing args with multiple namespaces. |
 | TestArgs | `test_parse_args_namespace` | Test parsing args with namespace. |
 | TestArgs | `test_parse_args_namespace_with_no_color` | Test parsing namespace with --no-color flag. |
 | TestArgs | `test_parse_args_namespace_with_search_dirs` | Test parsing namespace with --search-dirs. |

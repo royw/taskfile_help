@@ -1,29 +1,30 @@
 # Taskfile-Help
 
-A dynamic Taskfile help generator that parses Taskfile YAML files and outputs organized, colored help text
-similar to `task --list`, but with automatic grouping and namespace support.
+A dynamic [Taskfile](https://taskfile.dev/) help generator that parses Taskfile YAML files and outputs organized, colored help text
+similar to `task --list`, but with automatic grouping, namespace, and search support.
 
-**Key Capabilities:**
+## Features
 
-- List tasks organized by namespace
-- Display tasks from a specific namespace
-- Search for substrings or regex patterns across namespaces, group names, task names, and task descriptions
+- **Group Organization**: Automatic task grouping using comment markers
+- **Namespace Support**: Organize tasks across multiple Taskfiles
+- **Smart Search**: Search across namespaces, groups, task names, and descriptions with multi-pattern AND logic
+- **Multi-Pattern Search**: Filter tasks with multiple patterns and regexes (all must match)
+- **JSON Output**: Export task information in JSON format
+- **Colored Output**: Automatic color support with TTY detection
+- **Internal Tasks**: Hide implementation details with `internal: true`
+- **Fast**: Simple line-by-line parsing without full YAML overhead
 
 **What is a Group?**
 
 In lieu of a task tag, a group is a set of tasks organized under a group comment marker. Group comments follow a known pattern like the default
 pattern: `# === <group name> ===` and all tasks following the comment belong to that group until the next group comment or end of file.
 
-## Features
+**Links:**
 
-- **Colored Output**: Automatic color support with TTY detection
-- **Namespace Support**: Organize tasks across multiple Taskfiles
-- **Smart Search**: Search across namespaces, groups, task names, and descriptions with multi-pattern AND logic
-- **JSON Output**: Export task information in JSON format
-- **Group Organization**: Automatic task grouping using comment markers
-- **Internal Tasks**: Hide implementation details with `internal: true`
-- **Fast**: Simple line-by-line parsing without full YAML overhead
-- **Multi-Pattern Search**: Filter tasks with multiple patterns and regexes (all must match)
+- [Taskfile.dev](https://taskfile.dev/)
+- [Documentation](https://royw.github.io/taskfile_help/)
+- [GitHub Repository](https://github.com/royw/taskfile_help)
+- [Issue Tracker](https://github.com/royw/taskfile_help/issues)
 
 ## Quick Start
 

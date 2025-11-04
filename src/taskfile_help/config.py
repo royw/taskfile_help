@@ -133,7 +133,7 @@ class Args:
     """Parsed command-line arguments."""
 
     command: str
-    namespace: str
+    namespace: list[str]
     patterns: list[str] | None
     regexes: list[str] | None
     no_color: bool
@@ -247,6 +247,7 @@ Examples:
   taskfile-help namespace              # Show main Taskfile
   taskfile-help namespace main         # Show main Taskfile (explicit)
   taskfile-help namespace dev          # Show dev namespace
+  taskfile-help namespace test release # Show test and release namespaces
   taskfile-help namespace all          # Show all namespaces
   taskfile-help namespace ?            # List available namespaces
             """,
@@ -254,9 +255,9 @@ Examples:
         )
         namespace_parser.add_argument(
             "namespace",
-            nargs="?",
-            default="",
-            help="Namespace to show (or 'main', 'all', '?' for meta-namespaces)",
+            nargs="*",
+            default=[],
+            help="Namespace(s) to show (or 'main', 'all', '?' for meta-namespaces)",
         )
         Args._add_global_arguments(namespace_parser, list_of_paths)
 
@@ -313,7 +314,9 @@ Examples:
         Args._add_global_arguments(search_parser, list_of_paths)
 
     @staticmethod
-    def _extract_command_values(parsed: argparse.Namespace) -> tuple[str, str, list[str] | None, list[str] | None]:
+    def _extract_command_values(
+        parsed: argparse.Namespace,
+    ) -> tuple[str, list[str], list[str] | None, list[str] | None]:
         """Extract command-specific arguments from parsed namespace.
 
         Args:
@@ -322,12 +325,15 @@ Examples:
         Returns:
             Tuple of (command, namespace, patterns, regexes) where:
             - command: The subcommand name ("namespace" or "search")
-            - namespace: The namespace argument (for namespace command)
+            - namespace: List of namespace arguments (for namespace command)
             - patterns: List of all search patterns (for search command)
             - regexes: List of all regex patterns (for search command)
         """
         command = parsed.command if parsed.command else "namespace"
-        namespace = getattr(parsed, "namespace", "")
+        namespace = getattr(parsed, "namespace", [])
+        # Ensure namespace is always a list
+        if not isinstance(namespace, list):
+            namespace = [namespace] if namespace else []
         patterns = getattr(parsed, "patterns", None)
         regexes = getattr(parsed, "regexes", None)
         return command, namespace, patterns, regexes
@@ -580,6 +586,6 @@ class Config:
         self.group_pattern = self._resolve_group_pattern(self.args.group_pattern, file_config)
 
     @property
-    def namespace(self) -> str:
-        """The requested namespace."""
+    def namespace(self) -> list[str]:
+        """The requested namespace(s)."""
         return self.args.namespace

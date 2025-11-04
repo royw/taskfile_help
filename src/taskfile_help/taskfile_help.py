@@ -268,17 +268,30 @@ def _handle_namespace_command(config: Config, outputter: Outputter) -> int:
     Returns:
         int: Exit code
     """
-    namespace = config.namespace
+    namespaces = config.namespace
 
-    # Handle special namespaces
-    if namespace == "all":
-        return _show_all_tasks(config, outputter)
+    # Handle empty namespace list (default to main)
+    if not namespaces:
+        return _show_main_or_namespace(config, outputter, "")
 
-    if namespace == "?":
-        return _show_available_namespaces(config, outputter)
+    # Handle single special namespaces
+    if len(namespaces) == 1:
+        namespace = namespaces[0]
+        if namespace == "all":
+            return _show_all_tasks(config, outputter)
+        if namespace == "?":
+            return _show_available_namespaces(config, outputter)
+        return _show_main_or_namespace(config, outputter, namespace)
 
-    # Handle main, empty, or specific namespace
-    return _show_main_or_namespace(config, outputter, namespace)
+    # Handle multiple namespaces - show each one
+    exit_code = 0
+    for i, namespace in enumerate(namespaces):
+        if i > 0:
+            outputter.output_message("")  # Blank line between namespaces
+        result = _show_main_or_namespace(config, outputter, namespace)
+        if result != 0:
+            exit_code = result
+    return exit_code
 
 
 def _collect_all_taskfiles(config: Config, outputter: Outputter) -> list[tuple[str, list[tuple[str, str, str]]]]:

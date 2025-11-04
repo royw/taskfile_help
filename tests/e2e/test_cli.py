@@ -188,6 +188,25 @@ tasks:
         assert "Run unit tests" in captured.out
         assert "Run integration tests" in captured.out
 
+    def test_multiple_specific_namespaces(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test namespace command displays tasks from multiple specified namespaces."""
+        monkeypatch.chdir(taskfiles_dir)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["taskfile-help", "namespace", "test", "dev"])
+        
+        assert result == 0
+        
+        captured = capsys.readouterr()
+        # Should show test namespace tasks
+        assert "unit" in captured.out
+        assert "integration" in captured.out
+        assert "Run unit tests" in captured.out
+        # Should also show dev namespace tasks
+        assert "serve" in captured.out
+        assert "watch" in captured.out
+        assert "Start development server" in captured.out
+
     def test_piped_output_no_color(self, taskfiles_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test piped output automatically disables ANSI color codes."""
         monkeypatch.chdir(taskfiles_dir)

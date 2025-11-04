@@ -17,7 +17,7 @@ class TestArgs:
         args = Args.parse_args(["script.py", "namespace"])
         
         assert args.command == "namespace"
-        assert args.namespace == ""
+        assert args.namespace == []
         assert args.no_color is False
         assert args.search_dirs is None
         assert args.verbose is False
@@ -28,7 +28,7 @@ class TestArgs:
         args = Args.parse_args(["script.py", "namespace", "dev"])
         
         assert args.command == "namespace"
-        assert args.namespace == "dev"
+        assert args.namespace == ["dev"]
         assert args.no_color is False
         assert args.search_dirs is None
         assert args.verbose is False
@@ -39,7 +39,18 @@ class TestArgs:
         args = Args.parse_args(["script.py", "namespace", "all"])
         
         assert args.command == "namespace"
-        assert args.namespace == "all"
+        assert args.namespace == ["all"]
+        assert args.no_color is False
+        assert args.search_dirs is None
+        assert args.verbose is False
+        assert args.json_output is False
+
+    def test_parse_args_multiple_namespaces(self) -> None:
+        """Test parsing args with multiple namespaces."""
+        args = Args.parse_args(["script.py", "namespace", "test", "release", "dev"])
+        
+        assert args.command == "namespace"
+        assert args.namespace == ["test", "release", "dev"]
         assert args.no_color is False
         assert args.search_dirs is None
         assert args.verbose is False
@@ -51,7 +62,7 @@ class TestArgs:
         
         assert args.command == "namespace"
         assert args.no_color is True
-        assert args.namespace == ""
+        assert args.namespace == []
         assert args.search_dirs is None
         assert args.verbose is False
         assert args.json_output is False
@@ -62,7 +73,7 @@ class TestArgs:
         
         assert args.command == "namespace"
         assert args.search_dirs == [Path("/path1"), Path("/path2")]
-        assert args.namespace == ""
+        assert args.namespace == []
         assert args.no_color is False
         assert args.verbose is False
         assert args.json_output is False
@@ -73,7 +84,7 @@ class TestArgs:
         
         assert args.command == "namespace"
         assert args.search_dirs == [Path("/path")]
-        assert args.namespace == ""
+        assert args.namespace == []
         assert args.no_color is False
         assert args.verbose is False
         assert args.json_output is False
@@ -84,7 +95,7 @@ class TestArgs:
         
         assert args.command == "namespace"
         assert args.verbose is True
-        assert args.namespace == ""
+        assert args.namespace == []
         assert args.no_color is False
         assert args.search_dirs is None
         assert args.json_output is False
@@ -95,7 +106,7 @@ class TestArgs:
         
         assert args.command == "namespace"
         assert args.verbose is True
-        assert args.namespace == ""
+        assert args.namespace == []
         assert args.no_color is False
         assert args.search_dirs is None
         assert args.json_output is False
@@ -106,7 +117,7 @@ class TestArgs:
         
         assert args.command == "namespace"
         assert args.json_output is True
-        assert args.namespace == ""
+        assert args.namespace == []
         assert args.no_color is False
         assert args.search_dirs is None
         assert args.verbose is False
@@ -116,7 +127,7 @@ class TestArgs:
         args = Args.parse_args(["script.py", "namespace", "dev", "--no-color"])
         
         assert args.command == "namespace"
-        assert args.namespace == "dev"
+        assert args.namespace == ["dev"]
         assert args.no_color is True
         assert args.verbose is False
         assert args.search_dirs is None
@@ -127,7 +138,7 @@ class TestArgs:
         args = Args.parse_args(["script.py", "namespace", "dev", "--verbose"])
         
         assert args.command == "namespace"
-        assert args.namespace == "dev"
+        assert args.namespace == ["dev"]
         assert args.no_color is False
         assert args.verbose is True
         assert args.search_dirs is None
@@ -138,7 +149,7 @@ class TestArgs:
         args = Args.parse_args(["script.py", "namespace", "dev", "--search-dirs", "/path"])
         
         assert args.command == "namespace"
-        assert args.namespace == "dev"
+        assert args.namespace == ["dev"]
         assert args.no_color is False
         assert args.verbose is False
         assert args.search_dirs == [Path("/path")]
@@ -192,7 +203,7 @@ class TestArgs:
         args = Args.parse_args(["script.py", "--no-color", "namespace", "dev"])
         
         assert args.command == "namespace"
-        assert args.namespace == "dev"
+        assert args.namespace == ["dev"]
         assert args.no_color is True
 
     def test_parse_args_search_dirs_before_subcommand(self) -> None:
@@ -207,7 +218,7 @@ class TestArgs:
         args = Args.parse_args(["script.py", "-s", "/path", "namespace", "main"])
         
         assert args.command == "namespace"
-        assert args.namespace == "main"
+        assert args.namespace == ["main"]
         assert args.search_dirs == [Path("/path")]
 
     def test_parse_args_verbose_before_subcommand(self) -> None:
@@ -504,13 +515,13 @@ search-dirs = [".", "../other"]
         """Test 'all' namespace."""
         config = Config(["script.py", "namespace", "all"])
         
-        assert config.namespace == "all"
+        assert config.namespace == ["all"]
 
     def test_config_namespace_property(self, tmp_path: Path) -> None:
         """Test namespace property."""
         config = Config(["script.py", "namespace", "dev"])
         
-        assert config.namespace == "dev"
+        assert config.namespace == ["dev"]
 
     def test_config_removes_duplicate_search_dirs(self, tmp_path: Path) -> None:
         """Test duplicate search directories are removed."""

@@ -142,9 +142,9 @@ tasks:
 
   # === Help ===
   help:
-    desc: Show available tasks from main Taskfile
-    summary: Displays tasks from main Taskfile
-    cmd: taskfile-help namespace main
+    desc: Show available tasks from a namespace (defaults to main)
+    summary: Displays tasks from the given namespace (defaults to main)
+    cmd: taskfile-help namespace {{.CLI_ARGS}}
     silent: true  # Suppress task command echo
 
   help:*:
