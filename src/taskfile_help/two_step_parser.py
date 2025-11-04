@@ -112,6 +112,42 @@ class TwoStepParser:
             global_parser.add_argument(*args, **kwargs)
         return global_parser
 
+    def _create_subcommand_parser(
+        self,
+        subparsers_action: "argparse._SubParsersAction[argparse.ArgumentParser]",
+        name: str,
+        config: dict[str, Any],
+    ) -> None:
+        """Create a single subcommand parser with placeholder arguments and global options.
+
+        Args:
+            subparsers_action: The subparsers action to add the parser to
+            name: Name of the subcommand
+            config: Configuration dict for the subcommand
+        """
+        # Get the placeholder parser with user-added arguments
+        placeholder = self._subparsers[name]
+
+        # Use formatter_class from config if provided, otherwise use default
+        parser_config = config.copy()
+        if "formatter_class" not in parser_config:
+            parser_config["formatter_class"] = self.formatter_class
+
+        # Create the actual subparser
+        subparser = subparsers_action.add_parser(
+            name,
+            **parser_config,
+        )
+
+        # Copy arguments from placeholder to actual subparser
+        for action in placeholder._actions:
+            if action.dest != "help":  # Skip help action
+                subparser._add_action(action)
+
+        # Add global arguments to subparser for help display
+        for args, kwargs in self._global_args:
+            subparser.add_argument(*args, **kwargs)
+
     def _create_command_parser(self) -> argparse.ArgumentParser:
         """Create full command parser with subcommands (second pass).
 
@@ -138,28 +174,7 @@ class TwoStepParser:
 
         # Create actual subcommand parsers
         for name, config in self._subparser_configs.items():
-            # Get the placeholder parser with user-added arguments
-            placeholder = self._subparsers[name]
-
-            # Use formatter_class from config if provided, otherwise use default
-            parser_config = config.copy()
-            if "formatter_class" not in parser_config:
-                parser_config["formatter_class"] = self.formatter_class
-
-            # Create the actual subparser
-            subparser = subparsers_action.add_parser(
-                name,
-                **parser_config,
-            )
-
-            # Copy arguments from placeholder to actual subparser
-            for action in placeholder._actions:
-                if action.dest != "help":  # Skip help action
-                    subparser._add_action(action)
-
-            # Add global arguments to subparser for help display
-            for args, kwargs in self._global_args:
-                subparser.add_argument(*args, **kwargs)
+            self._create_subcommand_parser(subparsers_action, name, config)
 
         return command_parser
 
