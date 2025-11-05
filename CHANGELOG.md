@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.4.0] - 2025-11-05
+
+### Added
+
 - add support for nested/recursive includes with hierarchical namespaces (ec960ba)
 
 - parse namespaces from includes section instead of filename regex (f6be2fd)
