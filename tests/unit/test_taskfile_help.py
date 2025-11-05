@@ -57,7 +57,9 @@ tasks:
         """Test main with 'all' namespace."""
         main_taskfile = tmp_path / "Taskfile.yml"
         main_taskfile.write_text("""version: '3'
-
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
 tasks:
   build:
     desc: Build the project
@@ -276,3 +278,73 @@ tasks:
         Colors.GREEN = "\033[32m"
         Colors.RED = "\033[31m"
         Colors.YELLOW = "\033[33m"
+
+    def test_main_multiple_namespaces_with_missing(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Multiple namespaces where one is missing returns non-zero exit code."""
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+tasks:
+  build:
+    desc: Build
+    cmds: []
+""")
+        dev_taskfile = tmp_path / "Taskfile-dev.yml"
+        dev_taskfile.write_text("""version: '3'
+tasks:
+  test:
+    desc: Test
+    cmds: []
+""")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            # Request dev (exists) and prod (doesn't exist)
+            result = main(["script.py", "namespace", "dev", "prod"])
+        
+        # Should return non-zero because prod doesn't exist
+        assert result == 1
+
+    def test_main_invalid_main_taskfile(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Invalid main taskfile shows warning but continues gracefully."""
+        taskfile = tmp_path / "Taskfile.yml"
+        # Write invalid YAML
+        taskfile.write_text("invalid: yaml: content: [[[")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["script.py", "namespace"])
+        
+        # Invalid taskfiles are handled gracefully with warnings
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Warning: Taskfile is not parseable" in captured.err
+        assert "No public tasks found" in captured.out
+
+    def test_main_invalid_namespace_taskfile(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Invalid namespace taskfile shows warning but continues gracefully."""
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+tasks:
+  build:
+    desc: Build
+    cmds: []
+""")
+        # Write invalid YAML for namespace taskfile
+        dev_taskfile = tmp_path / "Taskfile-dev.yml"
+        dev_taskfile.write_text("invalid: yaml: content: [[[")
+        monkeypatch.chdir(tmp_path)
+        
+        with patch("sys.stdout.isatty", return_value=False):
+            result = main(["script.py", "namespace", "dev"])
+        
+        # Invalid taskfiles are handled gracefully with warnings
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Warning: Taskfile is not parseable" in captured.err
+        assert "No public tasks found" in captured.out

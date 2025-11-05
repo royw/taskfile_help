@@ -79,11 +79,8 @@ class TaskfileDiscovery:
         # Ensure we're working with absolute resolved paths for cycle detection
         taskfile_path = taskfile_path.resolve()
 
-        # Prevent infinite recursion - check if this path is already in the current chain
-        if taskfile_path in visited:
-            return {}
-
         # Add to visited set for this recursion branch
+        # Note: Circular references are prevented by the caller checking visited before recursing
         visited = visited | {taskfile_path}  # Create new set to avoid modifying parent's set
 
         namespace_map: dict[str, Path] = {}

@@ -525,6 +525,41 @@ tasks: {}
         # Should not have foo:bar:foo (circular)
         assert len(result) == 2
 
+    def test_nested_includes_direct_circular_reference(self, tmp_path: Path) -> None:
+        """Direct circular reference A -> B -> A is prevented."""
+        # Create main Taskfile that includes foo
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create foo that tries to include main back (direct circular reference)
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        foo_taskfile = foo_dir / "Taskfile.yml"
+        foo_taskfile.write_text("""version: '3'
+includes:
+  bar:
+    taskfile: ../Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should handle circular reference gracefully
+        # Main includes foo, foo tries to include main as bar (circular)
+        # Should only find foo, not foo:bar (since bar would be circular back to main)
+        namespaces = [ns for ns, _ in result]
+        assert "foo" in namespaces
+        # foo:bar should NOT exist because it would be a circular reference back to main
+        assert "foo:bar" not in namespaces
+        assert len(result) == 1
+
     def test_find_namespace_taskfile_nested(self, tmp_path: Path) -> None:
         """Test finding a specific nested namespace taskfile."""
         # Create nested structure

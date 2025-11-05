@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-05 11:41:52
-> **Total Tests**: 373
+> **Auto-generated** on 2025-11-05 12:35:45
+> **Total Tests**: 377
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -231,6 +231,9 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestJsonOutputter | `test_output_warning` | Test outputting a warning in JSON format. |
 | TestMain | `test_main_all_with_no_taskfiles` | Test main 'all' namespace when no taskfiles exist. |
 | TestMain | `test_main_colors_disabled_for_json` | Test colors are disabled for JSON output. |
+| TestMain | `test_main_invalid_main_taskfile` | Invalid main taskfile shows warning but continues gracefully. |
+| TestMain | `test_main_invalid_namespace_taskfile` | Invalid namespace taskfile shows warning but continues gracefully. |
+| TestMain | `test_main_multiple_namespaces_with_missing` | Multiple namespaces where one is missing returns non-zero exit code. |
 | TestMain | `test_main_namespace_main_alias` | Test 'main' namespace is treated as main taskfile. |
 | TestMain | `test_main_namespace_not_found` | Test main when namespace taskfile is not found. |
 | TestMain | `test_main_taskfile_not_found` | Test main when taskfile is not found. |
@@ -331,6 +334,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestTaskfileDiscoveryNestedIncludes | `test_find_namespace_taskfile_nested` | Test finding a specific nested namespace taskfile. |
 | TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_basic` | Test basic nested includes with two levels. |
 | TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_circular_reference_prevention` | Test circular reference prevention in nested includes. |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_direct_circular_reference` | Direct circular reference A -> B -> A is prevented. |
 | TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_ignores_nonexistent_files` | Test nested includes gracefully handles nonexistent files. |
 | TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_mixed_with_flat` | Test mixing nested and flat includes. |
 | TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_multiple_branches` | Test nested includes with multiple branches. |
