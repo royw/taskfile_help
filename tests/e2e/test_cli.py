@@ -77,7 +77,11 @@ class TestCLIWithTaskfiles:
         # Main Taskfile.yaml
         main_taskfile = tmp_path / "Taskfile.yaml"
         main_taskfile.write_text("""version: '3'
-
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+  test:
+    taskfile: ./Taskfile-test.yaml
 tasks:
   # === Build ===
   build:
@@ -528,7 +532,16 @@ class TestCLICompletion:
     def test_complete_namespaces(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test --complete outputs list of available namespaces."""
         # Create taskfiles
-        (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  build:\n    desc: Build\n")
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+  test:
+    taskfile: ./Taskfile-test.yml
+tasks:
+  build:
+    desc: Build
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks:\n  serve:\n    desc: Serve\n")
         (tmp_path / "Taskfile-test.yml").write_text("version: '3'\ntasks:\n  unit:\n    desc: Unit\n")
         
@@ -545,6 +558,15 @@ class TestCLICompletion:
 
     def test_complete_partial_namespace(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test --complete filters namespaces by partial prefix match."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+  deploy:
+    taskfile: ./Taskfile-deploy.yml
+  test:
+    taskfile: ./Taskfile-test.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-deploy.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-test.yml").write_text("version: '3'\n")
@@ -561,6 +583,11 @@ class TestCLICompletion:
 
     def test_complete_task_names(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test --complete outputs task names for namespace:task completion."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("""version: '3'
 tasks:
   build:
@@ -583,6 +610,11 @@ tasks:
 
     def test_complete_partial_task_name(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
         """Test --complete filters task names by partial prefix match."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("""version: '3'
 tasks:
   build:
@@ -635,7 +667,11 @@ class TestCLISearch:
         # Main Taskfile.yaml
         main_taskfile = tmp_path / "Taskfile.yaml"
         main_taskfile.write_text("""version: '3'
-
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+  format:
+    taskfile: ./Taskfile-format.yml
 tasks:
   # === Build ===
   build:

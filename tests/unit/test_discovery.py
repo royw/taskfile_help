@@ -96,36 +96,6 @@ class TestTaskfileDiscovery:
         
         assert result == uppercase
 
-    def test_find_namespace_taskfile_hyphen(self, tmp_path: Path) -> None:
-        """Test finding namespace taskfile with hyphen separator."""
-        taskfile = tmp_path / "Taskfile-dev.yml"
-        taskfile.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.find_namespace_taskfile("dev")
-        
-        assert result == taskfile
-
-    def test_find_namespace_taskfile_underscore(self, tmp_path: Path) -> None:
-        """Test finding namespace taskfile with underscore separator."""
-        taskfile = tmp_path / "Taskfile_dev.yml"
-        taskfile.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.find_namespace_taskfile("dev")
-        
-        assert result == taskfile
-
-    def test_find_namespace_taskfile_yaml_extension(self, tmp_path: Path) -> None:
-        """Test finding namespace taskfile with .yaml extension."""
-        taskfile = tmp_path / "Taskfile-dev.yaml"
-        taskfile.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.find_namespace_taskfile("dev")
-        
-        assert result == taskfile
-
     def test_find_namespace_taskfile_not_found(self, tmp_path: Path) -> None:
         """Test when namespace taskfile is not found."""
         discovery = TaskfileDiscovery([tmp_path])
@@ -133,62 +103,12 @@ class TestTaskfileDiscovery:
         
         assert result is None
 
-    def test_get_all_namespace_taskfiles(self, tmp_path: Path) -> None:
-        """Test getting all namespace taskfiles."""
-        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-test.yml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 3
-        namespaces = [ns for ns, _ in result]
-        assert "dev" in namespaces
-        assert "prod" in namespaces
-        assert "test" in namespaces
-
-    def test_get_all_namespace_taskfiles_sorted(self, tmp_path: Path) -> None:
-        """Test namespace taskfiles are sorted alphabetically."""
-        (tmp_path / "Taskfile-zebra.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-alpha.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-beta.yml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        namespaces = [ns for ns, _ in result]
-        assert namespaces == ["alpha", "beta", "zebra"]
-
     def test_get_all_namespace_taskfiles_empty(self, tmp_path: Path) -> None:
         """Test getting namespace taskfiles when none exist."""
         discovery = TaskfileDiscovery([tmp_path])
         result = discovery.get_all_namespace_taskfiles()
         
         assert len(result) == 0
-
-    def test_get_all_namespace_taskfiles_ignores_main(self, tmp_path: Path) -> None:
-        """Test main taskfile is excluded from namespace list."""
-        (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 1
-        assert result[0][0] == "dev"
-
-    def test_get_all_namespace_taskfiles_removes_duplicates(self, tmp_path: Path) -> None:
-        """Test duplicate namespaces are removed."""
-        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile_dev.yaml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        # Should only have one 'dev' namespace
-        assert len(result) == 1
-        assert result[0][0] == "dev"
 
     def test_get_possible_paths_main(self, tmp_path: Path) -> None:
         """Test getting possible paths for main taskfile."""
@@ -220,138 +140,6 @@ class TestTaskfileDiscovery:
         assert tmp_path / "taskfile.dist.yml" in result
         assert tmp_path / "taskfile.dist.yaml" in result
 
-    def test_get_possible_paths_namespace(self, tmp_path: Path) -> None:
-        """Test getting possible paths for a namespace."""
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_possible_paths("dev")
-        
-        assert len(result) == 4
-        assert tmp_path / "Taskfile-dev.yml" in result
-        assert tmp_path / "Taskfile-dev.yaml" in result
-        assert tmp_path / "Taskfile_dev.yml" in result
-        assert tmp_path / "Taskfile_dev.yaml" in result
-
-    def test_get_possible_paths_multiple_dirs(self, tmp_path: Path) -> None:
-        """Test getting possible paths across multiple directories."""
-        dir1 = tmp_path / "dir1"
-        dir2 = tmp_path / "dir2"
-        dir1.mkdir()
-        dir2.mkdir()
-        
-        discovery = TaskfileDiscovery([dir1, dir2])
-        result = discovery.get_possible_paths("dev")
-        
-        assert len(result) == 8  # 4 patterns × 2 directories
-        assert dir1 / "Taskfile-dev.yml" in result
-        assert dir2 / "Taskfile-dev.yml" in result
-
-    def test_search_dirs_order_matters(self, tmp_path: Path) -> None:
-        """Test search directory order determines precedence (first match wins)."""
-        dir1 = tmp_path / "dir1"
-        dir2 = tmp_path / "dir2"
-        dir1.mkdir()
-        dir2.mkdir()
-        
-        taskfile1 = dir1 / "Taskfile-dev.yml"
-        taskfile2 = dir2 / "Taskfile-dev.yml"
-        taskfile1.write_text("version: '3'\ntasks: {}")
-        taskfile2.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([dir1, dir2])
-        result = discovery.find_namespace_taskfile("dev")
-        
-        assert result == taskfile1
-
-    def test_namespace_with_underscores(self, tmp_path: Path) -> None:
-        """Test namespace with underscores in the name."""
-        taskfile = tmp_path / "Taskfile-my_namespace.yml"
-        taskfile.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 1
-        assert result[0][0] == "my_namespace"
-        assert result[0][1] == taskfile
-
-    def test_namespace_with_numbers(self, tmp_path: Path) -> None:
-        """Test namespace with numbers in the name."""
-        taskfile = tmp_path / "Taskfile-v2_prod.yml"
-        taskfile.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 1
-        assert result[0][0] == "v2_prod"
-
-    def test_lowercase_taskfile_prefix(self, tmp_path: Path) -> None:
-        """Test lowercase 'taskfile' prefix is recognized."""
-        taskfile = tmp_path / "taskfile-dev.yml"
-        taskfile.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 1
-        assert result[0][0] == "dev"
-
-    def test_mixed_case_taskfile_prefix(self, tmp_path: Path) -> None:
-        """Test mixed case 'Taskfile' prefix is recognized."""
-        taskfile = tmp_path / "Taskfile-dev.yml"
-        taskfile.write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 1
-        assert result[0][0] == "dev"
-
-    def test_ignores_wrong_extension(self, tmp_path: Path) -> None:
-        """Test files with wrong extensions are ignored."""
-        (tmp_path / "Taskfile-dev.txt").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-dev.json").write_text("{}")
-        (tmp_path / "Taskfile-dev.py").write_text("# python file")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 0
-
-    def test_ignores_wrong_prefix(self, tmp_path: Path) -> None:
-        """Test files with wrong prefix are ignored."""
-        (tmp_path / "MyTaskfile-dev.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Task-dev.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "taskfile-dev.yml").write_text("version: '3'\ntasks: {}")  # Valid one
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        # Only the valid lowercase taskfile should be found
-        assert len(result) == 1
-        assert result[0][0] == "dev"
-
-    def test_ignores_empty_namespace(self, tmp_path: Path) -> None:
-        """Test files with empty namespace are ignored."""
-        (tmp_path / "Taskfile-.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile_.yml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 0
-
-    def test_ignores_directories(self, tmp_path: Path) -> None:
-        """Test directories matching the pattern are ignored."""
-        # Create a directory that matches the pattern
-        dir_with_pattern = tmp_path / "Taskfile-dev.yml"
-        dir_with_pattern.mkdir()
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 0
-
     def test_handles_nonexistent_search_dir(self, tmp_path: Path) -> None:
         """Test nonexistent search directories are handled gracefully."""
         nonexistent = tmp_path / "nonexistent"
@@ -361,19 +149,6 @@ class TestTaskfileDiscovery:
         
         assert len(result) == 0
 
-    def test_multiple_namespaces_mixed_separators(self, tmp_path: Path) -> None:
-        """Test multiple namespaces with mixed separators and extensions."""
-        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile_prod.yaml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "taskfile-test.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "taskfile_staging.yaml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        assert len(result) == 4
-        namespaces = [ns for ns, _ in result]
-        assert set(namespaces) == {"dev", "prod", "test", "staging"}
 
 
 class TestTaskfileDiscoveryIncludes:
@@ -485,38 +260,6 @@ tasks: {}
         assert len(result) == 1
         assert result[0][0] == "dev"
 
-    def test_parse_includes_fallback_to_filename_when_no_includes(self, tmp_path: Path) -> None:
-        """Test falls back to filename-based discovery when no includes section."""
-        # Create main Taskfile without includes
-        main_taskfile = tmp_path / "Taskfile.yml"
-        main_taskfile.write_text("version: '3'\ntasks: {}")
-        
-        # Create namespace taskfiles using filename pattern
-        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        # Should find both via filename pattern
-        assert len(result) == 2
-        namespaces = [ns for ns, _ in result]
-        assert set(namespaces) == {"dev", "prod"}
-
-    def test_parse_includes_fallback_when_no_main_taskfile(self, tmp_path: Path) -> None:
-        """Test falls back to filename-based discovery when no main Taskfile exists."""
-        # Create namespace taskfiles using filename pattern (no main Taskfile)
-        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
-        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.get_all_namespace_taskfiles()
-        
-        # Should find both via filename pattern
-        assert len(result) == 2
-        namespaces = [ns for ns, _ in result]
-        assert set(namespaces) == {"dev", "prod"}
-
     def test_find_namespace_taskfile_from_includes(self, tmp_path: Path) -> None:
         """Test finding a specific namespace taskfile from includes."""
         # Create main Taskfile with includes
@@ -539,34 +282,6 @@ tasks: {}
         result = discovery.find_namespace_taskfile("git")
         
         assert result == git_taskfile
-
-    def test_includes_takes_precedence_over_filename(self, tmp_path: Path) -> None:
-        """Test includes section takes precedence over filename-based discovery."""
-        # Create main Taskfile with includes pointing to subdirectory
-        main_taskfile = tmp_path / "Taskfile.yml"
-        main_taskfile.write_text("""version: '3'
-includes:
-  dev:
-    taskfile: ./taskfiles/Taskfile-dev.yml
-    dir: .
-tasks: {}
-""")
-        
-        # Create taskfile in subdirectory (should be found)
-        taskfiles_dir = tmp_path / "taskfiles"
-        taskfiles_dir.mkdir()
-        correct_taskfile = taskfiles_dir / "Taskfile-dev.yml"
-        correct_taskfile.write_text("version: '3'\ntasks: {}")
-        
-        # Create taskfile in main directory (should be ignored)
-        wrong_taskfile = tmp_path / "Taskfile-dev.yml"
-        wrong_taskfile.write_text("version: '3'\ntasks: {wrong: content}")
-        
-        discovery = TaskfileDiscovery([tmp_path])
-        result = discovery.find_namespace_taskfile("dev")
-        
-        # Should find the one from includes, not the filename-based one
-        assert result == correct_taskfile
 
     def test_parse_includes_with_mixed_formats(self, tmp_path: Path) -> None:
         """Test parsing includes with mixed dict and string formats."""

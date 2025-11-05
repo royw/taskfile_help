@@ -27,7 +27,14 @@ class TestGetCompletions:
     def test_complete_namespace_without_colon(self, tmp_path: Path) -> None:
         """Test completing namespace names."""
         # Create test taskfiles
-        (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  test:\n    desc: Test task\n")
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+tasks:
+  test:
+    desc: Test task
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks:\n  build:\n    desc: Build task\n")
 
         completions = get_completions("d", [tmp_path])
@@ -35,7 +42,12 @@ class TestGetCompletions:
 
     def test_complete_task_name_with_colon(self, tmp_path: Path) -> None:
         """Test completing task names within a namespace."""
-        # Create test taskfile
+        # Create test taskfiles
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text(
             "version: '3'\ntasks:\n  build:\n    desc: Build task\n  deploy:\n    desc: Deploy task\n"
         )
@@ -50,7 +62,14 @@ class TestGetCompletions:
 
     def test_empty_word_returns_all_namespaces(self, tmp_path: Path) -> None:
         """Test that empty word returns all available namespaces."""
-        (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  test:\n    desc: Test\n")
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+tasks:
+  test:
+    desc: Test
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks:\n  build:\n    desc: Build\n")
 
         completions = get_completions("", [tmp_path])
@@ -70,6 +89,15 @@ class TestCompleteNamespace:
 
     def test_filters_by_partial_match(self, tmp_path: Path) -> None:
         """Test filtering namespaces by partial match."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+  deploy:
+    taskfile: ./Taskfile-deploy.yml
+  test:
+    taskfile: ./Taskfile-test.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-deploy.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-test.yml").write_text("version: '3'\n")
@@ -81,6 +109,11 @@ class TestCompleteNamespace:
 
     def test_discovers_namespace_taskfiles(self, tmp_path: Path) -> None:
         """Test that namespace taskfiles are discovered."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  custom:
+    taskfile: ./Taskfile-custom.yml
+""")
         (tmp_path / "Taskfile-custom.yml").write_text("version: '3'\n")
 
         completions = _complete_namespace("", [tmp_path])
@@ -92,6 +125,11 @@ class TestCompleteTaskName:
 
     def test_completes_tasks_in_namespace(self, tmp_path: Path) -> None:
         """Test completing task names within a namespace."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text(
             "version: '3'\ntasks:\n  build:\n    desc: Build\n  test:\n    desc: Test\n"
         )
@@ -116,6 +154,11 @@ class TestCompleteTaskName:
 
     def test_handles_parsing_errors_gracefully(self, tmp_path: Path) -> None:
         """Test that parsing errors are handled gracefully."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  broken:
+    taskfile: ./Taskfile-broken.yml
+""")
         (tmp_path / "Taskfile-broken.yml").write_text("invalid: yaml: content:")
 
         completions = _complete_task_name("broken", "task", [tmp_path])
@@ -123,6 +166,11 @@ class TestCompleteTaskName:
 
     def test_handles_parse_taskfile_exception(self, tmp_path: Path) -> None:
         """Test that exceptions from parse_taskfile are caught and handled."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks:\n  build:\n    desc: Build\n")
 
         # Mock parse_taskfile to raise an exception
@@ -325,7 +373,14 @@ class TestIntegration:
     def test_complete_workflow_bash(self, tmp_path: Path) -> None:
         """Test complete workflow: discover, complete, generate."""
         # Setup test environment
-        (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  build:\n    desc: Build\n")
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+tasks:
+  build:
+    desc: Build
+""")
         (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks:\n  test:\n    desc: Test\n")
 
         # Test namespace completion
@@ -343,6 +398,15 @@ class TestIntegration:
 
     def test_partial_namespace_completion(self, tmp_path: Path) -> None:
         """Test partial namespace completion."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  development:
+    taskfile: ./Taskfile-development.yml
+  deploy:
+    taskfile: ./Taskfile-deploy.yml
+  test:
+    taskfile: ./Taskfile-test.yml
+""")
         (tmp_path / "Taskfile-development.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-deploy.yml").write_text("version: '3'\n")
         (tmp_path / "Taskfile-test.yml").write_text("version: '3'\n")
@@ -354,6 +418,11 @@ class TestIntegration:
 
     def test_partial_task_completion(self, tmp_path: Path) -> None:
         """Test partial task name completion."""
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+""")
         (tmp_path / "Taskfile-dev.yml").write_text(
             "version: '3'\ntasks:\n  build:\n    desc: Build\n  build-all:\n    desc: Build all\n  test:\n    desc: Test\n"
         )

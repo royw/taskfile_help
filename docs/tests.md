@@ -1,7 +1,7 @@
 # Test Documentation
 
-> **Auto-generated** on 2025-11-03 23:22:05
-> **Total Tests**: 377
+> **Auto-generated** on 2025-11-05 11:41:52
+> **Total Tests**: 373
 
 This page provides a comprehensive overview of all tests in the project, automatically extracted from test docstrings.
 
@@ -258,7 +258,7 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestMatchingFunctions | `test_matches_regex_invalid` | Test invalid regex returns False. |
 | TestMatchingFunctions | `test_matches_regex_no_match` | Test regex not matching. |
 | TestNamespaceQuestionMark | `test_namespace_question_mark_no_namespaces` | Test '?' namespace with no namespace taskfiles. |
-| TestNamespaceQuestionMark | `test_namespace_question_mark_with_namespaces` | Test '?' namespace shows available namespaces. |
+| TestNamespaceQuestionMark | `test_namespace_question_mark_with_namespaces` | Test '?' namespace lists available namespaces. |
 | TestOutputEdgeCases | `test_text_outputter_error_message` | Test error message output. |
 | TestOutputEdgeCases | `test_text_outputter_heading_message` | Test heading message output. |
 | TestOutputEdgeCases | `test_text_outputter_plain_message` | Test plain message output. |
@@ -316,30 +316,26 @@ This page provides a comprehensive overview of all tests in the project, automat
 | TestTaskfileDiscovery | `test_find_main_taskfile_prefers_yml` | Test .yml extension is preferred over .yaml. |
 | TestTaskfileDiscovery | `test_find_main_taskfile_yaml` | Test finding main Taskfile.yaml. |
 | TestTaskfileDiscovery | `test_find_main_taskfile_yml` | Test finding main Taskfile.yml. |
-| TestTaskfileDiscovery | `test_find_namespace_taskfile_hyphen` | Test finding namespace taskfile with hyphen separator. |
 | TestTaskfileDiscovery | `test_find_namespace_taskfile_not_found` | Test when namespace taskfile is not found. |
-| TestTaskfileDiscovery | `test_find_namespace_taskfile_underscore` | Test finding namespace taskfile with underscore separator. |
-| TestTaskfileDiscovery | `test_find_namespace_taskfile_yaml_extension` | Test finding namespace taskfile with .yaml extension. |
-| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles` | Test getting all namespace taskfiles. |
 | TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_empty` | Test getting namespace taskfiles when none exist. |
-| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_ignores_main` | Test main taskfile is excluded from namespace list. |
-| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_removes_duplicates` | Test duplicate namespaces are removed. |
-| TestTaskfileDiscovery | `test_get_all_namespace_taskfiles_sorted` | Test namespace taskfiles are sorted alphabetically. |
 | TestTaskfileDiscovery | `test_get_possible_paths_empty_namespace` | Test getting possible paths for empty namespace. |
 | TestTaskfileDiscovery | `test_get_possible_paths_main` | Test getting possible paths for main taskfile. |
-| TestTaskfileDiscovery | `test_get_possible_paths_multiple_dirs` | Test getting possible paths across multiple directories. |
-| TestTaskfileDiscovery | `test_get_possible_paths_namespace` | Test getting possible paths for a namespace. |
 | TestTaskfileDiscovery | `test_handles_nonexistent_search_dir` | Test nonexistent search directories are handled gracefully. |
-| TestTaskfileDiscovery | `test_ignores_directories` | Test directories matching the pattern are ignored. |
-| TestTaskfileDiscovery | `test_ignores_empty_namespace` | Test files with empty namespace are ignored. |
-| TestTaskfileDiscovery | `test_ignores_wrong_extension` | Test files with wrong extensions are ignored. |
-| TestTaskfileDiscovery | `test_ignores_wrong_prefix` | Test files with wrong prefix are ignored. |
-| TestTaskfileDiscovery | `test_lowercase_taskfile_prefix` | Test lowercase 'taskfile' prefix is recognized. |
-| TestTaskfileDiscovery | `test_mixed_case_taskfile_prefix` | Test mixed case 'Taskfile' prefix is recognized. |
-| TestTaskfileDiscovery | `test_multiple_namespaces_mixed_separators` | Test multiple namespaces with mixed separators and extensions. |
-| TestTaskfileDiscovery | `test_namespace_with_numbers` | Test namespace with numbers in the name. |
-| TestTaskfileDiscovery | `test_namespace_with_underscores` | Test namespace with underscores in the name. |
-| TestTaskfileDiscovery | `test_search_dirs_order_matters` | Test search directory order determines precedence (first match wins). |
+| TestTaskfileDiscoveryIncludes | `test_find_namespace_taskfile_from_includes` | Test finding a specific namespace taskfile from includes. |
+| TestTaskfileDiscoveryIncludes | `test_parse_includes_basic` | Test parsing basic includes section from main Taskfile. |
+| TestTaskfileDiscoveryIncludes | `test_parse_includes_caching` | Test includes are cached and not re-parsed on subsequent calls. |
+| TestTaskfileDiscoveryIncludes | `test_parse_includes_ignores_nonexistent_files` | Test includes parsing ignores references to nonexistent files. |
+| TestTaskfileDiscoveryIncludes | `test_parse_includes_simple_string_format` | Test parsing includes with simple string format. |
+| TestTaskfileDiscoveryIncludes | `test_parse_includes_with_mixed_formats` | Test parsing includes with mixed dict and string formats. |
+| TestTaskfileDiscoveryIncludes | `test_parse_includes_with_subdirectory` | Test parsing includes with taskfiles in subdirectory. |
+| TestTaskfileDiscoveryNestedIncludes | `test_find_namespace_taskfile_nested` | Test finding a specific nested namespace taskfile. |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_basic` | Test basic nested includes with two levels. |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_circular_reference_prevention` | Test circular reference prevention in nested includes. |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_ignores_nonexistent_files` | Test nested includes gracefully handles nonexistent files. |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_mixed_with_flat` | Test mixing nested and flat includes. |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_multiple_branches` | Test nested includes with multiple branches. |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_three_levels` | Test nested includes with three levels (foo:bar:baz). |
+| TestTaskfileDiscoveryNestedIncludes | `test_nested_includes_with_simple_string_format` | Test nested includes using simple string format. |
 | TestTaskfileHelpConfigFile | `test_load_config_empty_file` | Load config from empty taskfile_help.yml. |
 | TestTaskfileHelpConfigFile | `test_load_config_invalid_yaml` | Load config with invalid YAML. |
 | TestTaskfileHelpConfigFile | `test_load_config_no_file` | Load config when taskfile_help.yml doesn't exist. |

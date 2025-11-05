@@ -31,6 +31,12 @@ tasks:
 
     def test_main_with_namespace(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main with a namespace taskfile."""
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+""")
         taskfile = tmp_path / "Taskfile-dev.yml"
         taskfile.write_text("""version: '3'
 

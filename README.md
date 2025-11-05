@@ -369,16 +369,7 @@ tasks:
 
 This creates the namespace `foo:bar` with task `foo:bar:charlie`. Paths are resolved relative to each taskfile's directory, and circular references are automatically detected and prevented.
 
-**Fallback Behavior**: If no main Taskfile exists or it has no `includes:` section,
-taskfile-help falls back to filename-based discovery using these patterns
-(matches regex `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`):
-
-- `Taskfile-<namespace>.yml`, `Taskfile-<namespace>.yaml` (preferred)
-- `Taskfile_<namespace>.yml`, `Taskfile_<namespace>.yaml`
-- `taskfile-<namespace>.yml`, `taskfile-<namespace>.yaml`
-- `taskfile_<namespace>.yml`, `taskfile_<namespace>.yaml`
-
-Examples: `Taskfile-dev.yml`, `Taskfile_test.yaml`, `taskfile-rag.yml`
+**Note**: Namespaces must be explicitly defined in the main Taskfile's `includes:` section. taskfile-help does not automatically discover namespace taskfiles based on filename patterns.
 
 ## Taskfile Discovery
 

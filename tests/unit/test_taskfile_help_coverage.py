@@ -186,12 +186,16 @@ tasks:
 class TestNamespaceQuestionMark:
     """Tests for the '?' namespace feature."""
 
-    def test_namespace_question_mark_with_namespaces(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
-        """Test '?' namespace shows available namespaces."""
+    def test_namespace_question_mark_with_namespaces(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test '?' namespace lists available namespaces."""
         # Create main taskfile
         main_taskfile = tmp_path / "Taskfile.yml"
         main_taskfile.write_text("""version: '3'
-
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+  test:
+    taskfile: ./Taskfile-test.yml
 tasks:
   build:
     desc: Build the project

@@ -21,8 +21,7 @@ Namespace Discovery:
     - Supports nested includes for hierarchical namespaces (e.g., foo:bar:baz)
     - Included taskfiles can have their own includes, resolved relative to their directory
     - Circular references are automatically detected and prevented
-    - Falls back to filename-based discovery (Taskfile-<namespace>.yml) if no
-      main Taskfile exists or it has no includes section
+    - Namespaces must be explicitly defined in the includes section
 
 Search Behavior:
     - By default, searches for taskfiles in the current working directory
