@@ -374,3 +374,248 @@ class TestTaskfileDiscovery:
         assert len(result) == 4
         namespaces = [ns for ns, _ in result]
         assert set(namespaces) == {"dev", "prod", "test", "staging"}
+
+
+class TestTaskfileDiscoveryIncludes:
+    """Tests for includes-based namespace discovery."""
+
+    def test_parse_includes_basic(self, tmp_path: Path) -> None:
+        """Test parsing basic includes section from main Taskfile."""
+        # Create main Taskfile with includes
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+    dir: .
+  prod:
+    taskfile: ./Taskfile-prod.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create included taskfiles
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 2
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"dev", "prod"}
+
+    def test_parse_includes_with_subdirectory(self, tmp_path: Path) -> None:
+        """Test parsing includes with taskfiles in subdirectory."""
+        # Create main Taskfile with includes pointing to subdirectory
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  git:
+    taskfile: ./taskfiles/Taskfile-git.yml
+    dir: .
+  version:
+    taskfile: ./taskfiles/Taskfile-version.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create subdirectory and included taskfiles
+        taskfiles_dir = tmp_path / "taskfiles"
+        taskfiles_dir.mkdir()
+        (taskfiles_dir / "Taskfile-git.yml").write_text("version: '3'\ntasks: {}")
+        (taskfiles_dir / "Taskfile-version.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 2
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"git", "version"}
+        
+        # Verify paths are correct
+        for ns, path in result:
+            assert path.exists()
+            assert path.parent == taskfiles_dir
+
+    def test_parse_includes_simple_string_format(self, tmp_path: Path) -> None:
+        """Test parsing includes with simple string format."""
+        # Create main Taskfile with simple string includes
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev: ./Taskfile-dev.yml
+  prod: ./Taskfile-prod.yml
+tasks: {}
+""")
+        
+        # Create included taskfiles
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 2
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"dev", "prod"}
+
+    def test_parse_includes_ignores_nonexistent_files(self, tmp_path: Path) -> None:
+        """Test includes parsing ignores references to nonexistent files."""
+        # Create main Taskfile with includes (one file exists, one doesn't)
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+    dir: .
+  prod:
+    taskfile: ./Taskfile-prod.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Only create dev taskfile
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should only find dev, not prod
+        assert len(result) == 1
+        assert result[0][0] == "dev"
+
+    def test_parse_includes_fallback_to_filename_when_no_includes(self, tmp_path: Path) -> None:
+        """Test falls back to filename-based discovery when no includes section."""
+        # Create main Taskfile without includes
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("version: '3'\ntasks: {}")
+        
+        # Create namespace taskfiles using filename pattern
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find both via filename pattern
+        assert len(result) == 2
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"dev", "prod"}
+
+    def test_parse_includes_fallback_when_no_main_taskfile(self, tmp_path: Path) -> None:
+        """Test falls back to filename-based discovery when no main Taskfile exists."""
+        # Create namespace taskfiles using filename pattern (no main Taskfile)
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find both via filename pattern
+        assert len(result) == 2
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"dev", "prod"}
+
+    def test_find_namespace_taskfile_from_includes(self, tmp_path: Path) -> None:
+        """Test finding a specific namespace taskfile from includes."""
+        # Create main Taskfile with includes
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  git:
+    taskfile: ./taskfiles/Taskfile-git.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create included taskfile
+        taskfiles_dir = tmp_path / "taskfiles"
+        taskfiles_dir.mkdir()
+        git_taskfile = taskfiles_dir / "Taskfile-git.yml"
+        git_taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.find_namespace_taskfile("git")
+        
+        assert result == git_taskfile
+
+    def test_includes_takes_precedence_over_filename(self, tmp_path: Path) -> None:
+        """Test includes section takes precedence over filename-based discovery."""
+        # Create main Taskfile with includes pointing to subdirectory
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./taskfiles/Taskfile-dev.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create taskfile in subdirectory (should be found)
+        taskfiles_dir = tmp_path / "taskfiles"
+        taskfiles_dir.mkdir()
+        correct_taskfile = taskfiles_dir / "Taskfile-dev.yml"
+        correct_taskfile.write_text("version: '3'\ntasks: {}")
+        
+        # Create taskfile in main directory (should be ignored)
+        wrong_taskfile = tmp_path / "Taskfile-dev.yml"
+        wrong_taskfile.write_text("version: '3'\ntasks: {wrong: content}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.find_namespace_taskfile("dev")
+        
+        # Should find the one from includes, not the filename-based one
+        assert result == correct_taskfile
+
+    def test_parse_includes_with_mixed_formats(self, tmp_path: Path) -> None:
+        """Test parsing includes with mixed dict and string formats."""
+        # Create main Taskfile with mixed includes formats
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+    dir: .
+  prod: ./Taskfile-prod.yml
+tasks: {}
+""")
+        
+        # Create included taskfiles
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        (tmp_path / "Taskfile-prod.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        assert len(result) == 2
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"dev", "prod"}
+
+    def test_parse_includes_caching(self, tmp_path: Path) -> None:
+        """Test includes are cached and not re-parsed on subsequent calls."""
+        # Create main Taskfile with includes
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  dev:
+    taskfile: ./Taskfile-dev.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create included taskfile
+        (tmp_path / "Taskfile-dev.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        
+        # First call should parse and cache
+        result1 = discovery.get_all_namespace_taskfiles()
+        
+        # Second call should use cache
+        result2 = discovery.get_all_namespace_taskfiles()
+        
+        # Results should be identical
+        assert result1 == result2
+        assert len(result1) == 1
+        assert result1[0][0] == "dev"

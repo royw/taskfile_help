@@ -7,8 +7,19 @@ Parses Taskfile YAML files and outputs organized, colored help text similar to
 
 File Naming Conventions:
     - Main Taskfile: Taskfile.yml or Taskfile.yaml
-    - Namespace Taskfiles: Taskfile-<namespace>.yml or Taskfile-<namespace>.yaml
-      Examples: Taskfile-rag.yml, Taskfile-dev.yml, Taskfile-agent.yml
+
+Namespace Discovery:
+    - Namespaces are defined in the 'includes:' section of the main Taskfile
+    - Example:
+        includes:
+          git:
+            taskfile: ./taskfiles/Taskfile-git.yml
+            dir: .
+          version:
+            taskfile: ./taskfiles/Taskfile-version.yml
+            dir: .
+    - Falls back to filename-based discovery (Taskfile-<namespace>.yml) if no
+      main Taskfile exists or it has no includes section
 
 Search Behavior:
     - By default, searches for taskfiles in the current working directory

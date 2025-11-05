@@ -332,7 +332,23 @@ Supported names (matches regex `[Tt]askfile\.ya?ml`):
 
 ### Namespace Taskfiles
 
-Supported patterns (matches regex `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`):
+Namespaces are defined in the `includes:` section of the main Taskfile:
+
+```yaml
+version: '3'
+
+includes:
+  git:
+    taskfile: ./taskfiles/Taskfile-git.yml
+    dir: .
+  version:
+    taskfile: ./taskfiles/Taskfile-version.yml
+    dir: .
+```
+
+**Fallback Behavior**: If no main Taskfile exists or it has no `includes:` section,
+taskfile-help falls back to filename-based discovery using these patterns
+(matches regex `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`):
 
 - `Taskfile-<namespace>.yml`, `Taskfile-<namespace>.yaml` (preferred)
 - `Taskfile_<namespace>.yml`, `Taskfile_<namespace>.yaml`

@@ -1,5 +1,8 @@
 from pathlib import Path
 import re
+from typing import Any
+
+import yaml
 
 
 class TaskfileDiscovery:
@@ -35,6 +38,7 @@ class TaskfileDiscovery:
             search_dirs: List of directories to search for taskfiles
         """
         self.search_dirs = search_dirs
+        self._includes_cache: dict[str, Path] | None = None
 
     def find_main_taskfile(self) -> Path | None:
         """Find the main Taskfile in the search directories.
@@ -52,12 +56,24 @@ class TaskfileDiscovery:
     def find_namespace_taskfile(self, namespace: str) -> Path | None:
         """Find a Taskfile for a specific namespace.
 
+        First checks the includes section from the main Taskfile.
+        Falls back to filename-based search if not found in includes.
+
         Args:
             namespace: The namespace to search for (e.g., 'rag', 'dev')
 
         Returns:
             Path to namespace Taskfile if found, None otherwise
         """
+        # Use cached includes if available
+        if self._includes_cache is None:
+            self._includes_cache = self._parse_includes_from_main_taskfile() or {}
+
+        # Check includes first
+        if self._includes_cache and namespace in self._includes_cache:
+            return self._includes_cache[namespace]
+
+        # Fall back to filename-based search
         for search_dir in self.search_dirs:
             for pattern in self.NAMESPACE_PATTERNS:
                 for ext in self.EXTENSIONS:
@@ -67,8 +83,53 @@ class TaskfileDiscovery:
                         return path
         return None
 
+    def _parse_includes_from_main_taskfile(self) -> dict[str, Path] | None:
+        """Parse the includes section from the main Taskfile.
+
+        Returns:
+            Dictionary mapping namespace names to their taskfile paths,
+            or None if main Taskfile doesn't exist or has no includes
+        """
+        main_taskfile = self.find_main_taskfile()
+        if not main_taskfile:
+            return None
+
+        try:
+            with open(main_taskfile, encoding="utf-8") as f:
+                data: dict[str, Any] = yaml.safe_load(f) or {}
+                includes: dict[str, Any] = data.get("includes", {})
+
+                if not includes:
+                    return None
+
+                # Build namespace -> path mapping
+                namespace_map: dict[str, Path] = {}
+                main_dir = main_taskfile.parent
+
+                for namespace, include_config in includes.items():
+                    if isinstance(include_config, dict):
+                        taskfile_path = include_config.get("taskfile")
+                        if taskfile_path:
+                            # Resolve path relative to main Taskfile directory
+                            resolved_path = (main_dir / taskfile_path).resolve()
+                            if resolved_path.exists():
+                                namespace_map[namespace] = resolved_path
+                    elif isinstance(include_config, str):
+                        # Simple string format: namespace: path/to/taskfile.yml
+                        resolved_path = (main_dir / include_config).resolve()
+                        if resolved_path.exists():
+                            namespace_map[namespace] = resolved_path
+
+                return namespace_map if namespace_map else None
+
+        except Exception:
+            # If parsing fails, return None to fall back to filename-based discovery
+            return None
+
     def _find_namespace_taskfiles_in_dir(self, search_dir: Path, taskfiles: dict[str, Path]) -> None:
-        """Find namespace taskfiles in a single directory.
+        """Find namespace taskfiles in a single directory using filename regex.
+
+        This is a fallback method when includes section is not available.
 
         Args:
             search_dir: Directory to search in
@@ -87,14 +148,24 @@ class TaskfileDiscovery:
                     taskfiles[namespace] = path
 
     def get_all_namespace_taskfiles(self) -> list[tuple[str, Path]]:
-        """Find all namespace Taskfiles in the search directories.
+        """Find all namespace Taskfiles.
+
+        First tries to parse the includes section from the main Taskfile.
+        Falls back to filename-based discovery if includes are not available.
 
         Returns:
             List of (namespace, path) tuples sorted by namespace
         """
-        taskfiles: dict[str, Path] = {}
+        # Use cached includes if available
+        if self._includes_cache is None:
+            self._includes_cache = self._parse_includes_from_main_taskfile() or {}
 
-        # Search for all taskfiles matching the namespace pattern
+        # If we have includes from main Taskfile, use those
+        if self._includes_cache:
+            return sorted(self._includes_cache.items(), key=lambda x: x[0])
+
+        # Otherwise, fall back to filename-based discovery
+        taskfiles: dict[str, Path] = {}
         for search_dir in self.search_dirs:
             if search_dir.exists():
                 self._find_namespace_taskfiles_in_dir(search_dir, taskfiles)
