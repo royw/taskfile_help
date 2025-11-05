@@ -83,8 +83,83 @@ class TaskfileDiscovery:
                         return path
         return None
 
+    def _parse_includes_from_taskfile(
+        self,
+        taskfile_path: Path,
+        namespace_prefix: str = "",
+        visited: set[Path] | None = None,
+    ) -> dict[str, Path]:
+        """Recursively parse includes from a taskfile.
+
+        Args:
+            taskfile_path: Path to the taskfile to parse (should be absolute)
+            namespace_prefix: Prefix to prepend to namespace names (e.g., "foo:bar")
+            visited: Set of visited absolute paths in the current recursion chain to prevent cycles
+
+        Returns:
+            Dictionary mapping full namespace paths to their taskfile paths
+        """
+        if visited is None:
+            visited = set()
+
+        # Ensure we're working with absolute resolved paths for cycle detection
+        taskfile_path = taskfile_path.resolve()
+
+        # Prevent infinite recursion - check if this path is already in the current chain
+        if taskfile_path in visited:
+            return {}
+
+        # Add to visited set for this recursion branch
+        visited = visited | {taskfile_path}  # Create new set to avoid modifying parent's set
+
+        namespace_map: dict[str, Path] = {}
+
+        try:
+            with open(taskfile_path, encoding="utf-8") as f:
+                data: dict[str, Any] = yaml.safe_load(f) or {}
+                includes: dict[str, Any] = data.get("includes", {})
+
+                if not includes:
+                    return {}
+
+                taskfile_dir = taskfile_path.parent
+
+                for namespace, include_config in includes.items():
+                    # Build the full namespace path
+                    full_namespace = f"{namespace_prefix}:{namespace}" if namespace_prefix else namespace
+
+                    # Extract the taskfile path from the config
+                    included_taskfile_path: str | None = None
+                    if isinstance(include_config, dict):
+                        included_taskfile_path = include_config.get("taskfile")
+                    elif isinstance(include_config, str):
+                        included_taskfile_path = include_config
+
+                    if included_taskfile_path:
+                        # Resolve path relative to current taskfile's directory
+                        resolved_path = (taskfile_dir / included_taskfile_path).resolve()
+                        if resolved_path.exists() and resolved_path not in visited:
+                            # Only add if not already in the visited chain (prevents cycles)
+                            namespace_map[full_namespace] = resolved_path
+
+                            # Recursively parse includes from the included taskfile
+                            # Pass the updated visited set that includes current path
+                            nested_includes = self._parse_includes_from_taskfile(
+                                resolved_path,
+                                full_namespace,
+                                visited,  # This already includes taskfile_path
+                            )
+                            namespace_map.update(nested_includes)
+
+        except Exception:  # noqa: S110
+            # If parsing fails, just return what we have so far
+            # We silently ignore errors to allow partial results and maintain backward compatibility
+            pass
+
+        return namespace_map
+
     def _parse_includes_from_main_taskfile(self) -> dict[str, Path] | None:
-        """Parse the includes section from the main Taskfile.
+        """Parse the includes section from the main Taskfile recursively.
 
         Returns:
             Dictionary mapping namespace names to their taskfile paths,
@@ -94,37 +169,8 @@ class TaskfileDiscovery:
         if not main_taskfile:
             return None
 
-        try:
-            with open(main_taskfile, encoding="utf-8") as f:
-                data: dict[str, Any] = yaml.safe_load(f) or {}
-                includes: dict[str, Any] = data.get("includes", {})
-
-                if not includes:
-                    return None
-
-                # Build namespace -> path mapping
-                namespace_map: dict[str, Path] = {}
-                main_dir = main_taskfile.parent
-
-                for namespace, include_config in includes.items():
-                    if isinstance(include_config, dict):
-                        taskfile_path = include_config.get("taskfile")
-                        if taskfile_path:
-                            # Resolve path relative to main Taskfile directory
-                            resolved_path = (main_dir / taskfile_path).resolve()
-                            if resolved_path.exists():
-                                namespace_map[namespace] = resolved_path
-                    elif isinstance(include_config, str):
-                        # Simple string format: namespace: path/to/taskfile.yml
-                        resolved_path = (main_dir / include_config).resolve()
-                        if resolved_path.exists():
-                            namespace_map[namespace] = resolved_path
-
-                return namespace_map if namespace_map else None
-
-        except Exception:
-            # If parsing fails, return None to fall back to filename-based discovery
-            return None
+        namespace_map = self._parse_includes_from_taskfile(main_taskfile)
+        return namespace_map if namespace_map else None
 
     def _find_namespace_taskfiles_in_dir(self, search_dir: Path, taskfiles: dict[str, Path]) -> None:
         """Find namespace taskfiles in a single directory using filename regex.

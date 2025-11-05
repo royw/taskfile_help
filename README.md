@@ -346,6 +346,29 @@ includes:
     dir: .
 ```
 
+**Nested Includes**: Included taskfiles can themselves have includes, creating hierarchical namespaces:
+
+```yaml
+# Main Taskfile.yml
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+
+# foo/Taskfile.yml
+includes:
+  bar:
+    taskfile: ../bar/Taskfile.yml
+    dir: .
+
+# bar/Taskfile.yml
+tasks:
+  charlie:
+    desc: A task in the bar namespace
+```
+
+This creates the namespace `foo:bar` with task `foo:bar:charlie`. Paths are resolved relative to each taskfile's directory, and circular references are automatically detected and prevented.
+
 **Fallback Behavior**: If no main Taskfile exists or it has no `includes:` section,
 taskfile-help falls back to filename-based discovery using these patterns
 (matches regex `[Tt]askfile[-_](?P<namespace>\w+)\.ya?ml`):

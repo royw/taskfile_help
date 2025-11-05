@@ -619,3 +619,323 @@ tasks: {}
         assert result1 == result2
         assert len(result1) == 1
         assert result1[0][0] == "dev"
+
+
+class TestTaskfileDiscoveryNestedIncludes:
+    """Tests for nested/recursive includes support."""
+
+    def test_nested_includes_basic(self, tmp_path: Path) -> None:
+        """Test basic nested includes with two levels."""
+        # Create main Taskfile
+        main_taskfile = tmp_path / "Taskfile.yml"
+        main_taskfile.write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create foo directory and taskfile with nested include
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        (foo_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  bar:
+    taskfile: ../bar/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create bar directory and taskfile
+        bar_dir = tmp_path / "bar"
+        bar_dir.mkdir()
+        (bar_dir / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find both foo and foo:bar
+        assert len(result) == 2
+        namespaces = [ns for ns, _ in result]
+        assert "foo" in namespaces
+        assert "foo:bar" in namespaces
+        
+        # Verify paths
+        namespace_dict = dict(result)
+        assert namespace_dict["foo"] == foo_dir / "Taskfile.yml"
+        assert namespace_dict["foo:bar"] == bar_dir / "Taskfile.yml"
+
+    def test_nested_includes_three_levels(self, tmp_path: Path) -> None:
+        """Test nested includes with three levels (foo:bar:baz)."""
+        # Create main Taskfile
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create foo
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        (foo_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  bar:
+    taskfile: ./bar/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create bar
+        bar_dir = foo_dir / "bar"
+        bar_dir.mkdir()
+        (bar_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  baz:
+    taskfile: ./baz/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create baz
+        baz_dir = bar_dir / "baz"
+        baz_dir.mkdir()
+        (baz_dir / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find foo, foo:bar, and foo:bar:baz
+        assert len(result) == 3
+        namespaces = [ns for ns, _ in result]
+        assert "foo" in namespaces
+        assert "foo:bar" in namespaces
+        assert "foo:bar:baz" in namespaces
+
+    def test_nested_includes_multiple_branches(self, tmp_path: Path) -> None:
+        """Test nested includes with multiple branches."""
+        # Create main Taskfile with two top-level includes
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+  qux:
+    taskfile: ./qux/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create foo with nested include
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        (foo_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  bar:
+    taskfile: ./bar/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        bar_dir = foo_dir / "bar"
+        bar_dir.mkdir()
+        (bar_dir / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
+        
+        # Create qux with nested include
+        qux_dir = tmp_path / "qux"
+        qux_dir.mkdir()
+        (qux_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  quux:
+    taskfile: ./quux/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        quux_dir = qux_dir / "quux"
+        quux_dir.mkdir()
+        (quux_dir / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find all namespaces
+        assert len(result) == 4
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"foo", "foo:bar", "qux", "qux:quux"}
+
+    def test_nested_includes_circular_reference_prevention(self, tmp_path: Path) -> None:
+        """Test circular reference prevention in nested includes."""
+        # Create main Taskfile
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create foo that includes bar
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        (foo_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  bar:
+    taskfile: ../bar/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create bar that includes foo (circular reference)
+        bar_dir = tmp_path / "bar"
+        bar_dir.mkdir()
+        (bar_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ../foo/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should handle circular reference gracefully
+        # Should find foo and foo:bar, but not infinite recursion
+        namespaces = [ns for ns, _ in result]
+        assert "foo" in namespaces
+        assert "foo:bar" in namespaces
+        # Should not have foo:bar:foo (circular)
+        assert len(result) == 2
+
+    def test_find_namespace_taskfile_nested(self, tmp_path: Path) -> None:
+        """Test finding a specific nested namespace taskfile."""
+        # Create nested structure
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        (foo_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  bar:
+    taskfile: ./bar/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        bar_dir = foo_dir / "bar"
+        bar_dir.mkdir()
+        bar_taskfile = bar_dir / "Taskfile.yml"
+        bar_taskfile.write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        
+        # Should find the nested namespace
+        result = discovery.find_namespace_taskfile("foo:bar")
+        assert result == bar_taskfile
+
+    def test_nested_includes_with_simple_string_format(self, tmp_path: Path) -> None:
+        """Test nested includes using simple string format."""
+        # Create main Taskfile with simple string format
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo: ./foo/Taskfile.yml
+tasks: {}
+""")
+        
+        # Create foo with simple string format
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        (foo_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  bar: ./bar/Taskfile.yml
+tasks: {}
+""")
+        
+        bar_dir = foo_dir / "bar"
+        bar_dir.mkdir()
+        (bar_dir / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find both namespaces
+        namespaces = [ns for ns, _ in result]
+        assert "foo" in namespaces
+        assert "foo:bar" in namespaces
+
+    def test_nested_includes_ignores_nonexistent_files(self, tmp_path: Path) -> None:
+        """Test nested includes gracefully handles nonexistent files."""
+        # Create main Taskfile
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  foo:
+    taskfile: ./foo/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create foo with include to nonexistent file
+        foo_dir = tmp_path / "foo"
+        foo_dir.mkdir()
+        (foo_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  bar:
+    taskfile: ./nonexistent/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find foo but not foo:bar
+        assert len(result) == 1
+        assert result[0][0] == "foo"
+
+    def test_nested_includes_mixed_with_flat(self, tmp_path: Path) -> None:
+        """Test mixing nested and flat includes."""
+        # Create main Taskfile with both flat and nested includes
+        (tmp_path / "Taskfile.yml").write_text("""version: '3'
+includes:
+  flat:
+    taskfile: ./Taskfile-flat.yml
+    dir: .
+  nested:
+    taskfile: ./nested/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        # Create flat taskfile (no nested includes)
+        (tmp_path / "Taskfile-flat.yml").write_text("version: '3'\ntasks: {}")
+        
+        # Create nested taskfile with includes
+        nested_dir = tmp_path / "nested"
+        nested_dir.mkdir()
+        (nested_dir / "Taskfile.yml").write_text("""version: '3'
+includes:
+  deep:
+    taskfile: ./deep/Taskfile.yml
+    dir: .
+tasks: {}
+""")
+        
+        deep_dir = nested_dir / "deep"
+        deep_dir.mkdir()
+        (deep_dir / "Taskfile.yml").write_text("version: '3'\ntasks: {}")
+        
+        discovery = TaskfileDiscovery([tmp_path])
+        result = discovery.get_all_namespace_taskfiles()
+        
+        # Should find all namespaces
+        namespaces = [ns for ns, _ in result]
+        assert set(namespaces) == {"flat", "nested", "nested:deep"}
