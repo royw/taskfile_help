@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - parse namespaces from includes section instead of filename regex (f6be2fd)
 
 ### Changed
-- reduce complexity of _parse_includes_from_taskfile (f784fa3)
+
+- reduce complexity of \_parse_includes_from_taskfile (f784fa3)
 
 - remove unnecessary list check in config.py (b5e0d49)
 
