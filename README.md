@@ -32,6 +32,14 @@ pattern: `# === <group name> ===` and all tasks following the comment belong to 
 - [GitHub Repository](https://github.com/royw/taskfile_help)
 - [Issue Tracker](https://github.com/royw/taskfile_help/issues)
 
+## Installation
+
+Installs from [PyPI](https://pypi.org/project/taskfile-help/) using [pipx](https://pipx.readthedocs.io/en/stable/):
+
+```bash
+pipx install taskfile-help
+```
+
 ## Integration with Taskfiles
 
 Designed to be called from Taskfile help tasks. Here's how to integrate it into your workflow:
