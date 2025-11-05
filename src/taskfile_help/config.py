@@ -264,9 +264,6 @@ Examples:
         """
         command = parsed.command if parsed.command else "namespace"
         namespace = getattr(parsed, "namespace", [])
-        # Ensure namespace is always a list
-        if not isinstance(namespace, list):
-            namespace = [namespace] if namespace else []
         patterns = getattr(parsed, "patterns", None)
         regexes = getattr(parsed, "regexes", None)
         return command, namespace, patterns, regexes
