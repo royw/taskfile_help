@@ -57,6 +57,112 @@ class TaskfileDiscovery:
         # Return the namespace from includes
         return self._includes_cache.get(namespace) if self._includes_cache else None
 
+    @staticmethod
+    def _extract_taskfile_path(include_config: dict[str, Any] | str) -> str | None:
+        """Extract taskfile path from include config.
+
+        Args:
+            include_config: Either a dict with 'taskfile' key or a string path
+
+        Returns:
+            Taskfile path string or None if not found
+        """
+        if isinstance(include_config, dict):
+            return include_config.get("taskfile")
+        if isinstance(include_config, str):
+            return include_config
+
+    @staticmethod
+    def _build_full_namespace(namespace_prefix: str, namespace: str) -> str:
+        """Build full namespace path with prefix.
+
+        Args:
+            namespace_prefix: Prefix to prepend (e.g., "foo:bar")
+            namespace: Namespace name to append
+
+        Returns:
+            Full namespace path (e.g., "foo:bar:baz" or just "baz" if no prefix)
+        """
+        return f"{namespace_prefix}:{namespace}" if namespace_prefix else namespace
+
+    def _process_include(
+        self,
+        namespace: str,
+        include_config: dict[str, Any] | str,
+        namespace_prefix: str,
+        taskfile_dir: Path,
+        visited: set[Path],
+    ) -> dict[str, Path]:
+        """Process a single include entry.
+
+        Args:
+            namespace: Namespace name
+            include_config: Include configuration (dict or string)
+            namespace_prefix: Prefix for namespace path
+            taskfile_dir: Directory of current taskfile
+            visited: Set of visited paths to prevent cycles
+
+        Returns:
+            Dictionary mapping namespace paths to taskfile paths
+        """
+        full_namespace = self._build_full_namespace(namespace_prefix, namespace)
+        included_taskfile_path = self._extract_taskfile_path(include_config)
+
+        if not included_taskfile_path:
+            return {}
+
+        resolved_path = (taskfile_dir / included_taskfile_path).resolve()
+        if not resolved_path.exists() or resolved_path in visited:
+            return {}
+
+        # Add this namespace and recursively parse its includes
+        namespace_map = {full_namespace: resolved_path}
+        nested_includes = self._parse_includes_from_taskfile(
+            resolved_path,
+            full_namespace,
+            visited,
+        )
+        namespace_map.update(nested_includes)
+        return namespace_map
+
+    def _parse_includes_from_file(
+        self,
+        taskfile_path: Path,
+        namespace_prefix: str,
+        taskfile_dir: Path,
+        visited: set[Path],
+    ) -> dict[str, Path]:
+        """Parse includes from a taskfile's YAML content.
+
+        Args:
+            taskfile_path: Path to the taskfile to parse
+            namespace_prefix: Prefix to prepend to namespace names
+            taskfile_dir: Directory of the taskfile
+            visited: Set of visited paths to prevent cycles
+
+        Returns:
+            Dictionary mapping namespace paths to taskfile paths
+        """
+        with open(taskfile_path, encoding="utf-8") as f:
+            data: dict[str, Any] = yaml.safe_load(f) or {}
+            includes: dict[str, Any] = data.get("includes", {})
+
+            if not includes:
+                return {}
+
+            namespace_map: dict[str, Path] = {}
+            for namespace, include_config in includes.items():
+                result = self._process_include(
+                    namespace,
+                    include_config,
+                    namespace_prefix,
+                    taskfile_dir,
+                    visited,
+                )
+                namespace_map.update(result)
+
+            return namespace_map
+
     def _parse_includes_from_taskfile(
         self,
         taskfile_path: Path,
@@ -76,58 +182,20 @@ class TaskfileDiscovery:
         if visited is None:
             visited = set()
 
-        # Ensure we're working with absolute resolved paths for cycle detection
         taskfile_path = taskfile_path.resolve()
-
-        # Add to visited set for this recursion branch
-        # Note: Circular references are prevented by the caller checking visited before recursing
-        visited = visited | {taskfile_path}  # Create new set to avoid modifying parent's set
-
-        namespace_map: dict[str, Path] = {}
+        visited = visited | {taskfile_path}
 
         try:
-            with open(taskfile_path, encoding="utf-8") as f:
-                data: dict[str, Any] = yaml.safe_load(f) or {}
-                includes: dict[str, Any] = data.get("includes", {})
-
-                if not includes:
-                    return {}
-
-                taskfile_dir = taskfile_path.parent
-
-                for namespace, include_config in includes.items():
-                    # Build the full namespace path
-                    full_namespace = f"{namespace_prefix}:{namespace}" if namespace_prefix else namespace
-
-                    # Extract the taskfile path from the config
-                    included_taskfile_path: str | None = None
-                    if isinstance(include_config, dict):
-                        included_taskfile_path = include_config.get("taskfile")
-                    elif isinstance(include_config, str):
-                        included_taskfile_path = include_config
-
-                    if included_taskfile_path:
-                        # Resolve path relative to current taskfile's directory
-                        resolved_path = (taskfile_dir / included_taskfile_path).resolve()
-                        if resolved_path.exists() and resolved_path not in visited:
-                            # Only add if not already in the visited chain (prevents cycles)
-                            namespace_map[full_namespace] = resolved_path
-
-                            # Recursively parse includes from the included taskfile
-                            # Pass the updated visited set that includes current path
-                            nested_includes = self._parse_includes_from_taskfile(
-                                resolved_path,
-                                full_namespace,
-                                visited,  # This already includes taskfile_path
-                            )
-                            namespace_map.update(nested_includes)
-
+            return self._parse_includes_from_file(
+                taskfile_path,
+                namespace_prefix,
+                taskfile_path.parent,
+                visited,
+            )
         except Exception:  # noqa: S110
             # If parsing fails, just return what we have so far
             # We silently ignore errors to allow partial results and maintain backward compatibility
-            pass
-
-        return namespace_map
+            return {}
 
     def _parse_includes_from_main_taskfile(self) -> dict[str, Path] | None:
         """Parse the includes section from the main Taskfile recursively.
