@@ -18,6 +18,42 @@ tests/
 
 ## Running Tests
 
+### Using Task Commands
+
+```bash
+# All tests (sequential, default)
+task test
+
+# All tests (parallel, faster)
+task test:parallel
+
+# Only unit tests
+task test:unit
+
+# Only functional tests
+task test:functional
+
+# Only integration tests
+task test:integration
+
+# Only e2e tests
+task test:e2e
+
+# Pattern matching tests specifically
+task test:pattern-matching
+
+# Regression tests (uses network)
+task test:regression
+
+# All tests with detailed coverage
+task test:coverage
+
+# Test against all Python versions
+task test:all
+```
+
+### Using pytest Directly
+
 ```bash
 # All tests
 uv run pytest

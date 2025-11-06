@@ -93,7 +93,7 @@ tasks:
       - task: format
       - task: lint
       - task: metrics:complexity
-      - task: test:parallel
+      - task: test
 
   # === Build ===
   build:

@@ -59,6 +59,9 @@ Thank you for considering contributing to taskfile-help!
 - **Complexity**: Cyclomatic complexity shall be ≤10
   - Valid reason required for complexities >5
 - **No emojis**: Do not use emojis in production code (use words instead to lower chance of misinterpretation)
+  - Use `task lint:fix:emoji` to automatically remove emojis from markdown and test files
+  - The system replaces emojis with text equivalents (e.g., ✅ → PASS, ❌ → FAIL)
+  - Emojis are allowed in Taskfile.yml for developer experience
 - **No hard-coded paths**: Do not use hard-coded paths (e.g., use `tempfile` package instead of `/tmp`)
 
 ## Commit Messages

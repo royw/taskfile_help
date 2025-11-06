@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- update documentation for taskfile system backport (216ef8a)
 - backport improved Taskfile system from appimage-updater (8e7be48)
 
 ### Fixed

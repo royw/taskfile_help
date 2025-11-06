@@ -507,7 +507,7 @@ This increments the patch version in `pyproject.toml` and reminds you to run the
 #### Step 2: Prepare Release
 
 ```bash
-task release
+task release:prepare
 ```
 
 This comprehensive task:
@@ -540,7 +540,7 @@ git commit -m "fix: resolve bug"
 
 # Ready to release
 task version:bump    # 0.1.0 → 0.1.1
-task release         # Verify, test, prepare, build
+task release:prepare # Verify, test, prepare, build
 
 # Publish release (optional)
 task release:tag     # Create and push git tag
@@ -551,7 +551,7 @@ git commit -m "feat: next feature"  # Auto-updates CHANGELOG
 
 #### Manual CHANGELOG Edits
 
-You can manually edit CHANGELOG.md before running `task release`:
+You can manually edit CHANGELOG.md before running `task release:prepare`:
 
 - Reorganize entries for clarity
 - Add breaking changes notes

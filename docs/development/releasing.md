@@ -22,10 +22,10 @@ First, bump the version and prepare the release:
 task version:bump minor
 
 # Prepare release (runs tests, updates CHANGELOG, commits changes)
-task release:build
+task release:prepare
 ```
 
-The `release:build` task will:
+The `release:prepare` task will:
 
 - Verify working directory is clean
 - Check version has been bumped
@@ -140,7 +140,7 @@ Changes are automatically added to the `[Unreleased]` section by the post-commit
 
 ### During Release
 
-The `release:build` task automatically:
+The `release:prepare` task automatically:
 
 1. Moves `[Unreleased]` content to a new version section
 2. Adds the version number and date
@@ -150,7 +150,7 @@ The `release:build` task automatically:
 
 ### Release Build Fails
 
-If `task release:build` fails:
+If `task release:prepare` fails:
 
 - **Uncommitted changes**: Commit or stash changes first
 - **Version not bumped**: Run `task version:bump`
@@ -206,7 +206,7 @@ The release workflow requires:
 ```bash
 # Complete release process
 task version:bump minor    # Bump version
-task release:build         # Prepare release
+task release:prepare       # Prepare release
 task release:tag           # Create tag (triggers automation)
 
 # Monitor
