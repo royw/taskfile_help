@@ -1,34 +1,34 @@
 version: '3'
 
 includes:
-  git:
-    taskfile: ./taskfiles/Taskfile-git.yml
-    dir: .
-  version:
-    taskfile: ./taskfiles/Taskfile-version.yml
-    dir: .
   docs:
     taskfile: ./taskfiles/Taskfile-docs.yml
-    dir: .
-  metrics:
-    taskfile: ./taskfiles/Taskfile-metrics.yml
-    dir: .
-  lint:
-    taskfile: ./taskfiles/Taskfile-lint.yml
-    dir: .
-  test:
-    taskfile: ./taskfiles/Taskfile-test.yml
-    dir: .
-  format:
-    taskfile: ./taskfiles/Taskfile-format.yml
-    dir: .
-  release:
-    taskfile: ./taskfiles/Taskfile-release.yml
     dir: .
   env:
     taskfile: ./taskfiles/Taskfile-env.yml
     dir: .
-
+  format:
+    taskfile: ./taskfiles/Taskfile-format.yml
+    dir: .
+  git:
+    taskfile: ./taskfiles/Taskfile-git.yml
+    dir: .
+  lint:
+    taskfile: ./taskfiles/Taskfile-lint.yml
+    dir: .
+  metrics:
+    taskfile: ./taskfiles/Taskfile-metrics.yml
+    dir: .
+  release:
+    taskfile: ./taskfiles/Taskfile-release.yml
+    dir: .
+  test:
+    taskfile: ./taskfiles/Taskfile-test.yml
+    dir: .
+  version:
+    taskfile: ./taskfiles/Taskfile-version.yml
+    dir: .
+  
 vars:
   # Application name derived from pyproject.toml (hyphens replaced with underscores for Python module name)
   APP_NAME:
@@ -59,6 +59,9 @@ vars:
   # Test timeout in seconds
   TEST_TIMEOUT: 30
   
+  # Development scripts
+  SCRIPTS: scripts/
+
   # All Python versions from .python-versions file (space-separated)
   PYTHON_VERSIONS:
     sh: cat .python-versions | grep -v '^$' | tr '\n' ' ' | sed 's/[[:space:]]*$//'
@@ -67,10 +70,18 @@ vars:
   PYTHON_VERSION:
     sh: cat .python-version | head -n1
 
+  # Global emoji replacements dictionary - single source of truth
+  # Format: "emoji:replacement emoji:replacement ..."
+  # Used by both lint:emoji (keys) and fix:emoji (full mapping)
+  EMOJI_REPLACEMENTS_MAP: '✅:PASS ❌:FAIL ⚠️:WARNING 🔍:SEARCH 📦:PACKAGE 🐧:LINUX 🚀:DEPLOY 🎯:TARGET 🏆:SUCCESS 🎉:COMPLETE 📊:REPORT 🧪:TEST 🔴:HIGH 🟡:MEDIUM 🟢:LOW 📚:DOCS 🌍:SERVER 🏗️:BUILD 📈:BUMP 📝:COMMIT 🐍:PYTHON 📋:LIST ✓:DONE 📁:FOLDER 🌐:NETWORK 🎭:MOCK ⚡:EXECUTE 📤:STDOUT 📥:STDERR 💥:EXCEPTION 🔧:VERSION 📄:FILE 🌳:TREE 🏁:COMPLETE 🔒:LOCK 🔓:UNLOCK 🐛:BUG 🛠️:TOOLS 🚨:0'
+
 tasks:
+  # === Default ===
   default:
+    desc: Show available tasks
     cmds:
-     - task --list --sort none
+      - echo "Available tasks:"
+      - task --list --sort none
     silent: true
 
   # === Quality Checks ===
@@ -78,10 +89,11 @@ tasks:
     desc: Run all code quality checks including end-to-end tests
     summary: Runs formatting, linting, complexity checks, and all tests
     cmds:
+      - task: lint:fix:emoji
       - task: format
       - task: lint
       - task: metrics:complexity
-      - task: test
+      - task: test:parallel
 
   # === Build ===
   build:
@@ -90,25 +102,23 @@ tasks:
     deps:
       - env:clean
     cmds:
-      - cmd: echo "🏗️  Building distribution packages..."
-        silent: true
+      - echo "🏗️  Building distribution packages..."
       - uv build {{.CLI_ARGS}}
-      - cmd: echo "✅ Build complete! Packages created in dist/"
-        silent: true
+      - echo "✅ Build complete! Packages created in dist/"
       - ls -la dist/
+    silent: true
 
   make:
     desc: Complete build pipeline - run all checks, build, docs, and show version
     summary: Full CI/CD pipeline - quality checks, build packages, generate docs
     cmds:
-      - cmd: echo "🚀 Starting build pipeline..."
-        silent: true
+      - echo "🚀 Starting build pipeline..."
       - task: check
       - task: build
       - task: docs:build
       - task: version:current
-      - cmd: echo "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
-        silent: true
+      - echo "✅ Build pipeline completed successfully! Ready to push to GitHub 🎉"
+    silent: true
 
   # === CI/CD Pipeline ===
   ci:
@@ -126,11 +136,10 @@ tasks:
     deps:
       - build
     cmds:
-      - cmd: echo "🚀 Installing locally with pipx..."
-        silent: true
+      - echo "🚀 Installing locally with pipx..."
       - pipx install --force dist/*.whl
-      - cmd: echo "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
-        silent: true
+      - echo "✅ Successfully deployed  {{.APP_NAME}} v$(task version) locally!"
+    silent: true
 
   # === Running ===
   run:
@@ -159,12 +168,13 @@ tasks:
     cmd: taskfile-help namespace {{.NAMESPACE}}
     silent: true  # Suppress task command echo
 
+  # === Search ===
   search:
     desc: Search for tasks
     summary: Search for tasks in all Taskfiles
     cmd: taskfile-help search {{.CLI_ARGS}}
     silent: true  # Suppress task command echo
-    
+
   search:*:
     desc: Search for tasks
     summary: Search for tasks in all Taskfiles

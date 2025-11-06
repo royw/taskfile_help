@@ -2,6 +2,8 @@ version: '3'
 
 tasks:
 
+  # `task docs` is equivalent to `task docs:serve`
+  # intentionally not using a desc:, instead the serve: task has the description and indicates it is the default task
   default:
     cmds:
       - task: serve
@@ -13,9 +15,14 @@ tasks:
     desc: Generate test documentation table from test docstrings
     summary: Extracts test info and creates docs/tests.md
     cmds:
-      - cmd: echo "📝 Generating test documentation..."
-        silent: true
-      - python3 scripts/generate_test_docs.py
+      - echo "📝 Generating test documentation..."
+      - |
+        if [ ! -f scripts/generate_test_docs.py ]; then
+          echo "WARNING: scripts/generate_test_docs.py not found, skipping test documentation generation"
+          exit 0
+        fi
+        python3 scripts/generate_test_docs.py
+    silent: true
 
   build:
     desc: Build documentation with MkDocs
@@ -23,18 +30,37 @@ tasks:
     deps:
       - generate-tests
     cmds:
-      - cmd: echo "📚 Building documentation..."
-        silent: true
-      - cmd: |
-          set -o pipefail
-          uv run mkdocs build --strict {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library"
-      - cmd: echo "✅ Documentation built successfully in site/"
-        silent: true
+      - echo "📚 Building documentation..."
+      - |
+        set -o pipefail
+        uv run mkdocs build --strict {{.CLI_ARGS}} 2>&1 | grep -v "MERMAID2.*Found superfences config" | grep -v "MERMAID2.*Initialization arguments" | grep -v "MERMAID2.*Using javascript library"
+      - echo "✅ Documentation built successfully in site/"
+    silent: true
 
   serve:
     desc: Serve documentation locally for development (default docs task)
     summary: Starts local server with live reload at http://127.0.0.1:8000
     cmds:
-      - cmd: echo "🌍 Starting documentation server..."
-        silent: true
+      - echo "🌍 Starting documentation server..."
       - uv run mkdocs serve {{.CLI_ARGS}}
+    silent: true
+
+  clean:
+    desc: Clean generated documentation files
+    summary: Removes site/ directory and generated docs/tests.md
+    cmds:
+      - echo "🧹 Cleaning documentation files..."
+      - rm -rf site/
+      - rm -f docs/tests.md
+      - echo "✅ Documentation files cleaned"
+    silent: true
+
+  watch:
+    desc: Build and serve documentation with live reload
+    summary: Combines build and serve for development workflow
+    deps:
+      - build
+    cmds:
+      - task: serve
+    silent: true
+

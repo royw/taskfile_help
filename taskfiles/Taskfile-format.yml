@@ -2,6 +2,8 @@ version: '3'
 
 tasks:
 
+  # `task format` is equivalent to `task format:all`
+  # intentionally not using a desc:, instead the all: task has the description and indicates it is the default task
   default:
     cmds:
       - task: all
@@ -42,3 +44,10 @@ tasks:
       - lint:fix:tests
     cmds:
       - uv run ruff format {{.CLI_ARGS | default .TESTS}}  # Format code
+
+  scripts:
+    desc: Format scripts with ruff (including import sorting)
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SCRIPTS}}  # Fix import sorting
+      - uv run ruff format {{.CLI_ARGS | default .SCRIPTS}}  # Format code
+    silent: true

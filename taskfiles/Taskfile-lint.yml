@@ -2,6 +2,8 @@ version: '3'
 
 tasks:
 
+  # `task lint` is equivalent to `task lint:src`
+  # intentionally not using a desc:, instead the src: task has the description and indicates it is the default task
   default:
     cmds:
       - task: src
@@ -49,6 +51,7 @@ tasks:
       - task: ruff
       - task: mypy
       - task: markdown
+      - task: emoji
       - task: deadcode
       - task: packages
       - task: _check_tmp
@@ -89,6 +92,15 @@ tasks:
     cmds:
       - uv run ruff check --fix --select I {{.CLI_ARGS | default .TESTS}}
 
+  scripts:
+    desc: Run linting with ruff and check for hardcoded /tmp/ paths
+    cmds:
+      - uv run ruff check --fix --select I {{.CLI_ARGS | default .SCRIPTS}}
+      - uv run mypy {{.CLI_ARGS | default .SCRIPTS}}
+      - task: _check_tmp
+        vars:
+          SEARCH_PATH: "{{.SCRIPTS}}"
+
   markdown:
     desc: Lint markdown files with pymarkdownlnt
     summary: Checks markdown formatting and style issues
@@ -104,8 +116,7 @@ tasks:
     desc: Find dead (unreachable/unused) code with deadcode (config in pyproject.toml)
     summary: Detects unused functions, classes, and imports
     cmds:
-      - cmd: echo "Checking deadcode..."
-        silent: true
+      - echo "Checking deadcode..."
       - uv run deadcode {{.CLI_ARGS | default .SRC}}
     silent: true
 
@@ -172,6 +183,119 @@ tasks:
     desc: Check for duplicate code using pylint
     summary: Finds similar code blocks that could be refactored
     cmds:
-      - cmd: echo "Checking for code duplication..."
-        silent: true
+      - echo "Checking for code duplication..."
       - uv run pylint --disable=all --enable=duplicate-code {{.CLI_ARGS | default .SRC}}
+    silent: true
+
+  emoji:
+    desc: Search for emojis in source code, docs, and configuration files
+    cmds:
+      - cmd: |
+          echo "SEARCH Searching for emojis in codebase..."
+          EMOJI_FOUND=0
+          
+          # Extract emoji keys from global EMOJI_REPLACEMENTS_MAP
+          EMOJI_MAP='{{.EMOJI_REPLACEMENTS_MAP}}'
+          
+          # Extract just the emojis (keys before the colon)
+          EMOJI_LIST=$(echo "$EMOJI_MAP" | tr ' ' '\n' | cut -d':' -f1)
+          
+          # Search in source code
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.py" -F {} src/ 2>/dev/null; then
+            echo "FAIL Emojis found in source code (src/)"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in tests
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.py" -F {} tests/ 2>/dev/null; then
+            echo "FAIL Emojis found in tests (tests/)"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in docs
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn --include="*.md" -F {} docs/ 2>/dev/null; then
+            echo "FAIL Emojis found in documentation (docs/)"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in README.md
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn -F {} README.md 2>/dev/null; then
+            echo "FAIL Emojis found in README.md"
+            EMOJI_FOUND=1
+          fi
+          
+          # Search in mkdocs.yml
+          if echo "$EMOJI_LIST" | xargs -I {} grep -rn -F {} mkdocs.yml 2>/dev/null; then
+            echo "FAIL Emojis found in mkdocs.yml"
+            EMOJI_FOUND=1
+          fi
+          
+          if [ $EMOJI_FOUND -eq 0 ]; then
+            echo "PASS No emojis found in codebase"
+          else
+            echo "FAIL Emoji check failed - emojis found in codebase"
+            exit 1
+          fi
+        silent: true
+
+  fix:emoji:
+    desc: Remove emojis from markdown and test files (*.md, docs/*.md, tests/*.py)
+    cmds:
+      - cmd: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import glob
+          from pathlib import Path
+          
+          # Build emoji replacements map from Taskfile variable
+          EMOJI_MAP = '{{.EMOJI_REPLACEMENTS_MAP}}'
+          
+          # Parse the map into a dictionary
+          replacements = {}
+          for pair in EMOJI_MAP.split():
+              if ':' in pair:
+                  emoji, replacement = pair.split(':', 1)
+                  replacements[emoji] = replacement
+          
+          print("Removing emojis from markdown and test files...")
+          
+          def process_file(filepath):
+              """Process a single file and replace emojis."""
+              try:
+                  with open(filepath, 'r', encoding='utf-8') as f:
+                      content = f.read()
+                  
+                  original_content = content
+                  
+                  # Apply all emoji replacements
+                  for emoji, replacement in replacements.items():
+                      content = content.replace(emoji, replacement)
+                  
+                  # Only write if content changed
+                  if content != original_content:
+                      with open(filepath, 'w', encoding='utf-8') as f:
+                          f.write(content)
+                      print(f"  - Emojis removed from {filepath}")
+              except Exception as e:
+                  print(f"  ! Error processing {filepath}: {e}")
+          
+          print("Processing markdown files...")
+          # Process markdown files in project root (max depth 1)
+          for md_file in glob.glob("*.md"):
+              process_file(md_file)
+          
+          # Process markdown files in docs/ directory
+          if os.path.isdir("docs"):
+              for md_file in Path("docs").rglob("*.md"):
+                  process_file(str(md_file))
+          
+          print("Processing test Python files...")
+          # Process all test python files (including subdirectories)
+          if os.path.isdir("tests"):
+              for py_file in Path("tests").rglob("*.py"):
+                  process_file(str(py_file))
+          
+          print("Emoji removal complete!")
+          PYTHON_SCRIPT
+        silent: true
+

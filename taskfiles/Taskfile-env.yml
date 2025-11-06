@@ -2,6 +2,8 @@ version: '3'
 
 tasks:
 
+  # `task env` is equivalent to `task env:check`
+  # intentionally not using a desc:, instead the check: task has the description and indicates it is the default task
   default:
     cmds:
       - task: check
@@ -13,8 +15,7 @@ tasks:
     desc: Verify development environment setup (default env task)
     summary: Checks versions of required tools (python3, uv, task)
     cmds:
-      - cmd: echo "Checking Prerequisite versions..."
-        silent: true
+      - echo "Checking Prerequisite versions..."
       - uv --version
       - uv run python --version
       - git --version
@@ -57,3 +58,4 @@ tasks:
       - rm -rf build/
       - rm -rf site/
     silent: true
+
