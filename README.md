@@ -84,22 +84,21 @@ tasks:
 
   # === Help ===
   help:
-    desc: Show available tasks from this main Taskfile
-    summary: Displays tasks from this main Taskfile, nicely grouped and formatted
-    cmd: taskfile-help main
+    desc: Show available tasks from a namespace (defaults to main)
+    summary: Displays tasks from the given namespace (defaults to main)
+    cmd: taskfile-help namespace {{.CLI_ARGS}}
     silent: true  # Suppress task command echo
 
   help:*:
-    desc: Show available tasks for the given namespace(s)
+    desc: Show available tasks for "all" or the given namespace or for "?" list available namespaces
     summary: |
-      Displays tasks from for the given namespace or all Taskfiles if "all" is specified
-      or list available namespaces if "?" is specified
+      Displays tasks for "all" or the given namespace or list available namespaces if "?" is specified
       help:<namespace>    - Displays tasks from the given namespace
       help:all            - Displays tasks from all Taskfiles
       help:?              - Lists available namespaces
     vars:
       NAMESPACE: '{{index .MATCH 0}}'
-    cmd: taskfile-help {{.NAMESPACE}}
+    cmd: taskfile-help namespace {{.NAMESPACE}}
     silent: true  # Suppress task command echo
 ```
 
@@ -120,13 +119,19 @@ You can also add a search wrapper task for convenient searching:
 
 ```yaml
   # === Search ===
+  search:
+    desc: Search for tasks
+    summary: Search for tasks in all Taskfiles
+    cmd: taskfile-help search {{.CLI_ARGS}}
+    silent: true  # Suppress task command echo
+
   search:*:
     desc: Search for tasks
     summary: Search for tasks in all Taskfiles
     vars:
       PATTERN: '{{index .MATCH 0}}'
     cmd: taskfile-help search {{.PATTERN}}
-    silent: true
+    silent: true  # Suppress task command echo
 ```
 
 Now you can search using the task command:
