@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+## [0.4.1] - 2025-11-06
+
+### Added
+
+### Changed
+
 - update help and search task definitions to match Taskfile.yml (1f12dc9)
 
 - add installation section to README (7dd659f)
